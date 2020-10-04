@@ -1,0 +1,55 @@
+# This file contains metadata for your plugin. Since 
+# version 2.0 of QGIS this is the proper way to supply 
+# information about a plugin. The old method of 
+# embedding metadata in __init__.py will 
+# is no longer supported since version 2.0.
+
+# This file should be included when you package your plugin.# Mandatory items:
+
+[general]
+name=Cruise Tools
+qgisMinimumVersion=3.8
+description=Tool box for various GIS tasks for cruise planning, etc.
+version=0.5
+author=Simon Dreutter & Fynn Warnke
+email=simon.dreutter@awi.de
+
+about=Tool box for various GIS tasks for cruise planning, etc.
+
+tracker=https://github.com/simondreutter/cruisetools/issues
+repository=https://github.com/simondreutter/cruisetools
+# End of mandatory metadata
+
+# Recommended items:
+
+# Uncomment the following line and add your changelog:
+changelog=0.5 (2020-01-22)
+    - changed from ESRI Shapefile to GeoPackage
+    - minor adjustments to make Cruise Tools ready to be published
+  0.4 (2019-10-01)
+    - added interval option to "Create Contours"
+    - some other minor fixes
+  0.3 (2019-08-20)
+    - fixed "Write Point Coordinates" for non EPSG:4395 features
+    - fixed "Write Line Length" for different projections
+    - some other minor fixes
+  0.2 (2019-07-10)
+    - added "Load Bathymetry"
+    - added "Create Contours"
+    - added "Swap Vectors"
+  0.1 (2019-06-12)
+    - added "Write Point Coordinates"
+    - added "Write Line Length"
+
+# Tags are comma separated with spaces allowed
+tags=research, cruise, bathymetry
+
+homepage=https://github.com/simondreutter/cruisetools
+category=Plugins
+icon=images/icon.png
+# experimental flag
+experimental=False
+
+# deprecated flag (applies to the whole plugin, not just a single version)
+deprecated=False
+

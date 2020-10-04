@@ -1,0 +1,14 @@
+<RCC>
+    <qresource prefix="/plugins/cruisetools" >
+        <file>images/icon.png</file>
+        <file>images/write_point_coordinates.png</file>
+        <file>images/write_line_length.png</file>
+        <file>images/load_bathy.png</file>
+        <file>images/create_contours.png</file>
+        <file>images/swap_vectors.png</file>
+        <file>styles/style_bathy.qml</file>
+        <file>styles/style_hillshade_prj.qml</file>
+        <file>styles/style_hillshade_geo.qml</file>
+        <file>styles/style_contours.qml</file>
+    </qresource>
+</RCC>
