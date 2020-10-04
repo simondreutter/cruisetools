@@ -1,8 +1,8 @@
 [general]
 name=Cruise Tools
-qgisMinimumVersion=3.8
+qgisMinimumVersion=3.10
 description=Tool box for various GIS tasks for cruise planning, etc.
-version=1.0
+version=1.1
 author=Simon Dreutter & Fynn Warnke
 email=simon.dreutter@awi.de
 
@@ -32,7 +32,15 @@ experimental=False
 deprecated=False
 
 changelog=
-  1.0 (2020-02-17)
+  1.1 (2020-09-17) [Spitzbergen]
+    - added "Calculate MBES Coverage"
+    - added tool tips
+    - finally fixed "Write Line Length" for different projections
+    - some improvements (speed, cleaner code, etc.)
+    - some design changes in the code (indents, etc.)
+  1.0.1 (2020-02-24)
+    - bugfix
+  1.0 (2020-02-17) [Kerguelen Islands]
     - Version 1.0 was due with some major improvements
       coded during night shifts on board RV Sonne.
     - added a number of new features as well as some simple gui
