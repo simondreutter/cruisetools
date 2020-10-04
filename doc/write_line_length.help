@@ -1,0 +1,6 @@
+Add length attributes to line features. Lengths can be added as:
+Meters
+Kilometers
+Nautical Miles
+
+This will delete all fields previously created by Cruise Tools.

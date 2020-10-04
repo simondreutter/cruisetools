@@ -2,22 +2,22 @@
 name=Cruise Tools
 qgisMinimumVersion=3.10
 description=The toolbox you need for marine research cruises (planning and stuff)!
-version=1.1.1
+version=2.0
 author=Simon Dreutter & Fynn Warnke
 email=simon.dreutter@awi.de
 
 about=
-  On marine research cruises, one has to perform reoccuring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer one click (or two click) solutions for some of these tasks.
+  On marine research cruises, one has to perform reoccuring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer two click (or three click) solutions for some of these tasks.
   
   This includes:
     - loading, coloring and shading bathymetry grids
     - exporting colored and shaded RGB grids
     - calculating raster coverage
     - creating smooth filtered contours
-    - generating DD and DDM coordinate attributes for point features
-    - generating length (m and nm) attributes for line features
+    - generating DD, DDM, and XY coordinate attributes for point features
+    - generating length (m, km, and nm) attributes for line features
     - generating area (m2 and km2) attributes for polygon features
-    - as well as some cruise planning mechanisms
+    - as well as some cruise planning mechanisms like estimate MBES coverage
   
   Cruise Tools is developed for Windows 10, but we intend to check OS compatibility in the future.
 
@@ -27,16 +27,25 @@ tags=research,cruise,bathymetry
 homepage=https://github.com/simondreutter/cruisetools
 
 category=Plugins
-icon=images/icon.png
+icon=icons/icon.png
 experimental=False
 deprecated=False
 
 changelog=
-  1.1.1 (2020-09-22) [Spitzbergen
+  2.0 (2020-10-04) [Barents Sea]
+    - Version 2.0 was due with some major rewrites
+      coded during night shifts on board RV Maria S. Merian.
+    - Cruise Tools now available as processing tools
+    - generally more options for the tools' outputs
+    - new readme window
+    - settings dialog not necessary anymore
+    - some minor bugfixes
+  ----------------------------------------------------------------
+  1.1.1 (2020-09-22) [Spitzbergen]
     - bugfixes
     - new style concept for contours
   1.1 (2020-09-17) [Spitzbergen]
-    - added "Calculate MBES Coverage"
+    - added "Estimate MBES Coverage"
     - added tool tips
     - finally fixed "Write Line Length" for different projections
     - some improvements (speed, cleaner code, etc.)

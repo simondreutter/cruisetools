@@ -1,0 +1,6 @@
+Add coordinate attributes to point features. Coordinates can be added as:
+Lat Lon - DD.DDDDDD
+Lat Lon - (D)DD°MM.MMM'[WESN]
+XY - [x and y in CRS]
+
+This will delete all fields previously created by Cruise Tools.

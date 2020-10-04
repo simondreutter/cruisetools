@@ -1,0 +1,8 @@
+Create shaded RGB version of our raster DEM. Colors will be taken from the current symbology and shading will be done according to selected shading mode.
+Cruise Tools offers three multiplication based shading modes:
+[ Hillshade ]
+Shading by synthetic light source, 315° Azimuth, 45° Altitude.
+[ Slope ]
+Shading by stretched slope inclination.
+[ Combo ]
+Shading by a combination of the two, bringing together the best aspects of both methods. Also widely known as "Simon's magical relief visualization"

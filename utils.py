@@ -5,12 +5,26 @@ from PyQt5.QtWidgets import *
 
 # import some tools
 from qgis.core import *
-import math
 import os
 import random
+import math
 
-def dd2ddm(latitude, longitude):
-    '''Convert decimal degree (DD) in degree and decimal minutes (DDM)'''
+def dd2ddm(latitude,longitude):
+    '''Convert decimal degree (DD) in degree and decimal minutes (DDM)
+
+    Parameters
+    ----------
+    latitude : float
+        latitude
+    longitude : float
+        longitude
+
+    Returns
+    -------
+    lat_DDM, lon_DDM : (str, str)
+        latitude, longitude as DDM strings
+
+    '''
     # latitude
     if latitude > 0.:
         hemisphere = 'N'
@@ -35,81 +49,74 @@ def dd2ddm(latitude, longitude):
     
     return lat_DDM, lon_DDM
 
-def get_features(layer,selected=True):
-    '''Get features from vector layer.'''
-    # check if any features are selected and only use those in that case
-    if (layer.selectedFeatureCount() == 0) or (selected == False):
-        features = layer.getFeatures()
-    elif layer.selectedFeatureCount() > 0:
-        features = layer.getSelectedFeatures()
-    
-    return features
-
-def mkdir(directory):
-    '''Create a new folder if it doesn't exist already'''
-    if not os.path.isdir(directory):
-        os.makedirs(directory)
-    
-    return directory
-
-def select_output_file(title,path,filter):
-    '''Select output file'''
-    if title == None:
-        title = 'Export'
-    if path == None:
-        path = QgsProject.instance().homePath()
-    dialog = QFileDialog()
-    f, _filter = QFileDialog.getSaveFileName(dialog, title, path, filter)
-    if f == '':
-        return 1, None
-    
-    return 0, f
-
-def select_input_file(title,path,filter):
-    '''Select input file'''
-    if title == None:
-        title = 'Import'
-    if path == None:
-        path = QgsProject.instance().homePath()
-    dialog = QFileDialog()
-    f, _filter = QFileDialog.getOpenFileName(dialog, title, path, filter)
-    if f == '':
-        return 1, None
-    
-    return 0, f
-
 def get_driver_from_path(file_path):
-    '''Get GDAL driver from file path'''
+    '''Get GDAL driver from file path
+
+    Parameters
+    ----------
+    file_path : str
+        input file path
+
+    Returns
+    -------
+    driver : str
+        GDAL driver name
+
+    '''
+    driver = None
     ext = os.path.splitext(file_path)[1].upper()
     if '.TIF' in ext:
-        return 'GTiff'
+        driver = 'GTiff'
     elif ext == '.GPKG':
-        return 'GPKG'
+        driver = 'GPKG'
     elif ext == '.SHP':
-        return 'ESRI Shapefile'
+        driver = 'ESRI Shapefile'
     elif ext == '.XLSX':
-        return 'xlsx'
+        driver = 'xlsx'
     
-    return None
+    return driver
 
 def get_info_from_path(file_path):
-    '''Get file info from file path'''
+    '''Get file info from file path
+
+    Parameters
+    ----------
+    file_path : str
+        input file path
+
+    Returns
+    -------
+    base_path,base_name,ext : (str,str,str)
+        base path, base name, and extension
+
+    '''
     file_info = QFileInfo(file_path)
-    # base path to create contours directory
     base_path = file_info.absolutePath()
-    # base name for output
     base_name = file_info.baseName()
-    # extension
     ext = os.path.splitext(file_path)[1]
     
     return base_path,base_name,ext
 
 def return_file_link(path):
-    '''Return link to file base directory for messageBar'''
-    return f'<a href="{os.path.dirname(path)}">{path}</a>'
+    '''
+
+    Parameters
+    ----------
+    path : str
+        path to file
+
+    Returns
+    -------
+    link: str
+        HTML link to base path
+
+    '''
+    link = f'<a href="{os.path.dirname(path)}">{path}</a>'
+    
+    return link
 
 def return_success():
-    '''Return success message'''
+    '''Return an awesome success message for Cruise Tools'''
     success_messages = ['Aye',
                         'BOING',
                         'Boom',
@@ -130,7 +137,7 @@ def return_success():
                         'Sweet',
                         'Turbo',
                         'Turbo Nice',
-                        'Ultron'
+                        'Ultron',
                         'Whoop',
                         'Yeah',
                         'Yiihaa']

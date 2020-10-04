@@ -1,0 +1,5 @@
+Add area attributes to polygon features. Areas can be added as:
+Square Meters
+Square Kilometers
+
+This will delete all fields previously created by Cruise Tools.

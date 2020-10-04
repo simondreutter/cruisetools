@@ -1,0 +1,3 @@
+Export planning layer to a specific exchange format to get your coordinates up in the ship's ECDIS. Lines will be converted to route vertices and coordinates will be extracted and attached to the attributes.
+So far only a default CSV export (all fields, all values) as well as a SAM Route Exchange style CSV format are supported, but more will come.
+The SAM Route Exchange format for example is compatible with research vessels RV Maria S. Merian and RV Sonne.

@@ -1,0 +1,4 @@
+Create smooth (depth) contours with a decent symbology and labels.
+If the output is a GPKG (recommended), the style will be written to the file as Default.
+Contour features will have length (m) attribute for filtering short lines.
+Sometimes, for unknown reasons, the CRS is not properly set on the GDAL Contour output. In this case simply retry and hope for the best.

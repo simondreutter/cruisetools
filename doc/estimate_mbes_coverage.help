@@ -1,0 +1,4 @@
+Estimate Multibeam Echosounder coverage as polygon of swath width depending on coarse depth information.
+Select a survey line layer. If a field with the (total) swath angle is present, select that, if not set a swath angle fallback value.
+Select a bathymetry raster layer (e.g. GEBCO) and band and retrieve an estimate of your MBES coverage results.
+The prediction assumes a flat seafloor. In regions with high topographic variations, results might vary strongly from actual achievable MBES coverage.

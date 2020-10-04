@@ -1,0 +1,2 @@
+This little tool lets you calculate the coverage of a loaded raster band. It will first calculate the entire covered area of the square grid. If an NoData value is set, it will additionally give you the actual data coverage in the grid (calculated by percentage of non-NaN values). Coverages are calculated based on the WGS84 ellipsoid.
+The output will be shown in the Log, but can additionaly be written to a *.txt file.
