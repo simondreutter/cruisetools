@@ -1,14 +1,37 @@
 <RCC>
     <qresource prefix="/plugins/cruisetools" >
         <file>images/icon.png</file>
+        <file>images/bathy_menu.png</file>
+        <file>images/load_bathy.png</file>
+        <file>images/export_bathy.png</file>
+        <file>images/export_combo.png</file>
+        <file>images/export_hs.png</file>
+        <file>images/export_slope.png</file>
+        <file>images/raster_coverage.png</file>
+        <file>images/contours_menu.png</file>
+        <file>images/create_contours_1.png</file>
+        <file>images/create_contours_5.png</file>
+        <file>images/create_contours_10.png</file>
+        <file>images/create_contours_50.png</file>
+        <file>images/create_contours_100.png</file>
+        <file>images/create_contours_500.png</file>
+        <file>images/create_contours_1000.png</file>
+        <file>images/vector_menu.png</file>
         <file>images/write_point_coordinates.png</file>
         <file>images/write_line_length.png</file>
-        <file>images/load_bathy.png</file>
-        <file>images/create_contours.png</file>
+        <file>images/write_polygon_area.png</file>
         <file>images/swap_vectors.png</file>
-        <file>styles/style_bathy.qml</file>
+        <file>images/planning_menu.png</file>
+        <file>images/create_point_planning.png</file>
+        <file>images/create_line_planning.png</file>
+        <file>images/create_line_vertices.png</file>
+        <file>images/export_to_bridge.png</file>
+        <file>images/settings.png</file>
         <file>styles/style_hillshade_prj.qml</file>
         <file>styles/style_hillshade_geo.qml</file>
         <file>styles/style_contours.qml</file>
+        <file>styles/style_planning_lines.qml</file>
+        <file>styles/style_planning_points.qml</file>
+        <file>styles/style_planning_lines_vertices.qml</file>
     </qresource>
 </RCC>

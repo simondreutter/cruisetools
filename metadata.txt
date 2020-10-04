@@ -1,29 +1,45 @@
-# This file contains metadata for your plugin. Since 
-# version 2.0 of QGIS this is the proper way to supply 
-# information about a plugin. The old method of 
-# embedding metadata in __init__.py will 
-# is no longer supported since version 2.0.
-
-# This file should be included when you package your plugin.# Mandatory items:
-
 [general]
 name=Cruise Tools
 qgisMinimumVersion=3.8
 description=Tool box for various GIS tasks for cruise planning, etc.
-version=0.5
+version=1.0
 author=Simon Dreutter & Fynn Warnke
 email=simon.dreutter@awi.de
 
-about=Tool box for various GIS tasks for cruise planning, etc.
+about=
+  On marine research cruises, one has to perform reoccuring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer one click (or two click) solutions for some of these tasks.
+  
+  This includes:
+    - loading, coloring and shading bathymetry grids
+    - exporting colored and shaded RGB grids
+    - calculating raster coverage
+    - creating smooth filtered contours
+    - generating DD and DDM coordinate attributes for point features
+    - generating length (m and nm) attributes for line features
+    - generating area (m2 and km2) attributes for polygon features
+    - as well as some cruise planning mechanisms
+  
+  Cruise Tools is developed for Windows 10, but we intend to check OS compatibility in the future.
 
 tracker=https://github.com/simondreutter/cruisetools/issues
 repository=https://github.com/simondreutter/cruisetools
-# End of mandatory metadata
+tags=research,cruise,bathymetry
+homepage=https://github.com/simondreutter/cruisetools
 
-# Recommended items:
+category=Plugins
+icon=images/icon.png
+experimental=False
+deprecated=False
 
-# Uncomment the following line and add your changelog:
-changelog=0.5 (2020-01-22)
+changelog=
+  1.0 (2020-02-17)
+    - Version 1.0 was due with some major improvements
+      coded during night shifts on board RV Sonne.
+    - added a number of new features as well as some simple gui
+    - new button design
+    - some code streamlining (like more reusable functions)
+  ----------------------------------------------------------------
+  0.5 (2020-01-22)
     - changed from ESRI Shapefile to GeoPackage
     - minor adjustments to make Cruise Tools ready to be published
   0.4 (2019-10-01)
@@ -40,16 +56,3 @@ changelog=0.5 (2020-01-22)
   0.1 (2019-06-12)
     - added "Write Point Coordinates"
     - added "Write Line Length"
-
-# Tags are comma separated with spaces allowed
-tags=research, cruise, bathymetry
-
-homepage=https://github.com/simondreutter/cruisetools
-category=Plugins
-icon=images/icon.png
-# experimental flag
-experimental=False
-
-# deprecated flag (applies to the whole plugin, not just a single version)
-deprecated=False
-
