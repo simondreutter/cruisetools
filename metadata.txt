@@ -1,8 +1,8 @@
 [general]
 name=Cruise Tools
 qgisMinimumVersion=3.10
-description=Tool box for various GIS tasks for cruise planning, etc.
-version=1.1
+description=The toolbox you need for marine research cruises (planning and stuff)!
+version=1.1.1
 author=Simon Dreutter & Fynn Warnke
 email=simon.dreutter@awi.de
 
@@ -32,6 +32,9 @@ experimental=False
 deprecated=False
 
 changelog=
+  1.1.1 (2020-09-22) [Spitzbergen
+    - bugfixes
+    - new style concept for contours
   1.1 (2020-09-17) [Spitzbergen]
     - added "Calculate MBES Coverage"
     - added tool tips

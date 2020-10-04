@@ -3,7 +3,7 @@
 /***************************************************************************
  CruiseTools
                                  A QGIS plugin
- Tool box for various GIS tasks for cruise planning, etc.
+ The toolbox you need for marine research cruises (planning and stuff)!
                               -------------------
         begin                : 2019-06-12
         git sha              : $Format:%H$

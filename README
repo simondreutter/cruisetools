@@ -5,12 +5,12 @@
         | |___ | |   | |_| || |\__ \|  __/   | |  | (_) || (_) || |\__ \
          \____||_|    \__,_||_||___/ \___|   |_|   \___/  \___/ |_||___/
 
-                               v1.1 [Spitzbergen]
+                              v1.1.1 [Spitzbergen]
 
 ===============================================================================
 ===============================================================================
                                 A QGIS plugin
- Tool box for various GIS tasks for cruise planning, etc.
+The toolbox you need for marine research cruises (planning and stuff)!
                               -------------------
         begin                : 2019-06-12
         copyright            : (C) 2019 by Simon Dreutter & Fynn Warnke
