@@ -1,10 +1,10 @@
 [general]
 name=Cruise Tools
-qgisMinimumVersion=3.10
+qgisMinimumVersion=3.22
 description=The toolbox you need for marine research cruises (planning and stuff)!
-version=2.0
+version=2.0.1
 author=Simon Dreutter & Fynn Warnke
-email=simon.dreutter@awi.de
+email=simon.dreutter@awi.de;fynn.warnke@awi.de
 
 about=
   On marine research cruises, one has to perform reoccuring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer two click (or three click) solutions for some of these tasks.
@@ -32,6 +32,11 @@ experimental=False
 deprecated=False
 
 changelog=
+  2.0.1 (2022-07-27) [Barents Sea]
+    - fixed "Load Bathymetry" layer tree issue
+    - fixed "Swap Vectors"
+    - added Multidrectional shading to "Export Shaded Bathymetry"
+    - some code harmonization
   2.0 (2020-10-04) [Barents Sea]
     - Version 2.0 was due with some major rewrites
       coded during night shifts on board RV Maria S. Merian.

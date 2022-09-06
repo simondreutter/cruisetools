@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
-'''
+"""
 /***************************************************************************
  CruiseTools
                                  A QGIS plugin
  The toolbox you need for marine research cruises (planning and stuff)!
                               -------------------
         begin                : 2019-06-12
-        git sha              : $Format:%H$
         copyright            : (C) 2019 by Simon Dreutter & Fynn Warnke
         email                : simon.dreutter@awi.de / fynn.warnke@awi.de
  ***************************************************************************/
@@ -19,7 +18,7 @@
  *   (at your option) any later version.                                   *
  *                                                                         *
  ***************************************************************************/
-'''
+"""
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
@@ -44,9 +43,9 @@ from . import utils
 from .gui.readme import ReadmeWindow
 
 class CruiseTools:
-    '''QGIS Plugin - Cruise Tools'''
+    """QGIS Plugin - Cruise Tools"""
     def __init__(self, iface):
-        '''Constructor.
+        """Constructor.
 
         Parameters
         ----------
@@ -55,7 +54,7 @@ class CruiseTools:
             which provides the hook by which you can manipulate the QGIS
             application at run time.
 
-        '''
+        """
         # Save reference to the QGIS interface
         self.iface = iface
         
@@ -97,7 +96,7 @@ class CruiseTools:
 
     # noinspection PyMethodMayBeStatic
     def tr(self, message):
-        '''Get the translation for a string using Qt translation API.
+        """Get the translation for a string using Qt translation API.
         
         We implement this ourselves since we do not inherit QObject.
 
@@ -111,7 +110,7 @@ class CruiseTools:
         translation : str
             QCoreApplication.translate()
 
-        '''
+        """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
         return QCoreApplication.translate('CruiseTools', message)
 
@@ -126,7 +125,7 @@ class CruiseTools:
         status_tip=None,
         whats_this=None,
         parent=None):
-        '''Add a toolbar icon to the toolbar.
+        """Add a toolbar icon to the toolbar.
 
         Parameters
         ----------
@@ -160,7 +159,7 @@ class CruiseTools:
         action : QAction
             
 
-        '''
+        """
         
         icon = QIcon(icon_path)
         action = QAction(icon, text, parent)
@@ -191,7 +190,7 @@ class CruiseTools:
         QgsApplication.processingRegistry().addProvider(self.provider)
 
     def initGui(self):
-        '''Create the menu entries and toolbar icons inside the QGIS GUI.'''
+        """Create the menu entries and toolbar icons inside the QGIS GUI."""
         self.initProcessing()
         
         # get first start indication
@@ -338,7 +337,7 @@ class CruiseTools:
         self.tranformToolbar = self.toolbar.addWidget(self.planningButton)
 
     def unload(self):
-        '''Removes the plugin menu item and icon from QGIS GUI.'''
+        """Removes the plugin menu item and icon from QGIS GUI."""
         
         #print "** UNLOAD CruiseTools"
         
@@ -352,13 +351,13 @@ class CruiseTools:
         
         # remove from processing toolbox
         QgsApplication.processingRegistry().removeProvider(self.provider)
-    
+
 #===============================================================================
 #=================================   README   ==================================
 #===============================================================================
 
     def run_readme(self):
-        '''Show README'''
+        """Show README"""
         # load README.md
         with open(os.path.join(self.plugin_dir, 'README.md'), 'r') as f:
             readme_text = f.read()
@@ -372,21 +371,21 @@ class CruiseTools:
 #===============================================================================
 
     def run_load_bathymetry(self):
-        '''Run LoadBathymetry module'''
+        """Run LoadBathymetry module"""
         result = processing.execAlgorithmDialog('cruisetools:loadbathymetry', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Grid loaded successfully!', level=Qgis.Success)
         return
 
     def run_export_shaded_bathymetry(self):
-        '''Run ExportShadedBathymetry module'''
+        """Run ExportShadedBathymetry module"""
         result = processing.execAlgorithmDialog('cruisetools:exportshadedbathymetry', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Shaded bathymetry file is created: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
         return
 
     def run_calculate_raster_coverage(self):
-        '''Run CalculateRasterCoverage module'''
+        """Run CalculateRasterCoverage module"""
         result = processing.execAlgorithmDialog('cruisetools:calculaterastercoverage', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Raster area has been calculated!', level=Qgis.Success)
@@ -397,7 +396,7 @@ class CruiseTools:
 #===============================================================================
 
     def run_create_contours(self):
-        '''Run CreateContours module'''
+        """Run CreateContours module"""
         result = processing.execAlgorithmDialog('cruisetools:createcontours', {})
         if not result == {}:
             iface.activeLayer().setSubsetString('"length_m" > 1000')
@@ -409,28 +408,28 @@ class CruiseTools:
 #===============================================================================
 
     def run_write_point_coordinates(self):
-        '''Run WritePointCoordinates module'''
+        """Run WritePointCoordinates module"""
         result = processing.execAlgorithmDialog('cruisetools:writepointcoordinates', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Coordinates are in!', level=Qgis.Success)
         return
 
     def run_write_line_length(self):
-        '''Run WriteLineLength module'''
+        """Run WriteLineLength module"""
         result = processing.execAlgorithmDialog('cruisetools:writelinelength', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Lengths are in!', level=Qgis.Success)
         return
 
     def run_write_polygon_area(self):
-        '''Run WritePolygonArea module'''
+        """Run WritePolygonArea module"""
         result = processing.execAlgorithmDialog('cruisetools:writepolygonarea', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Areas are in!', level=Qgis.Success)
         return
 
     def run_swap_vectors(self):
-        '''Run SwapVectors module'''
+        """Run SwapVectors module"""
         result = processing.execAlgorithmDialog('cruisetools:swapvectors', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Vectors swapped successfully!', level=Qgis.Success)
@@ -441,28 +440,28 @@ class CruiseTools:
 #===============================================================================
 
     def run_create_planning_file(self):
-        '''Run CreatePlanningFile module'''
+        """Run CreatePlanningFile module"""
         result = processing.execAlgorithmDialog('cruisetools:createplanningfile', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Point Planning file: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
         return
 
     def run_planning_lines_to_vertices(self):
-        '''Run PlanningLinesToVertices module'''
+        """Run PlanningLinesToVertices module"""
         result = processing.execAlgorithmDialog('cruisetools:planninglinestovertices', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Line Vertices file: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
         return
 
     def run_estimate_mbes_coverage(self):
-        '''Run EstimateMBESCoverage module'''
+        """Run EstimateMBESCoverage module"""
         result = processing.execAlgorithmDialog('cruisetools:estimatembescoverage', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! MBES coverage has been estimated: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
         return
 
     def run_export_to_bridge(self):
-        '''Run ExportToBridge module'''
+        """Run ExportToBridge module"""
         result = processing.execAlgorithmDialog('cruisetools:exporttobridge', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Exported file: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)

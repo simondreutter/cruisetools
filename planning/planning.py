@@ -12,16 +12,16 @@ from qgis.PyQt.QtCore import QVariant
 from .. import config
 
 class Planning(object):
-    '''Base class for planning modules'''
+    """Base class for planning modules"""
 
     def __init__(self):
-        '''Initialize Planning'''
+        """Initialize Planning"""
         self.module = 'PLANNING'
         self.config = config.CruiseToolsConfig()
         self.plugin_dir = f'{os.path.dirname(__file__)}/..'
 
-    def lines_to_vertices(self,features,fields):
-        '''Create Vertex features from Line features
+    def lines_to_vertices(self, features, fields):
+        """Create Vertex features from Line features
 
         Parameters
         ----------
@@ -35,7 +35,7 @@ class Planning(object):
         vertices : QgsFeature list
             output vertex features
 
-        '''
+        """
         # create empty list for vertices
         vertices = []
         
@@ -63,10 +63,10 @@ class Planning(object):
                     # if field exists in input fields
                     if field.name() in fields.names():
                         # set attribute from line to vertex
-                        vertex.setAttribute(field.name(),feature.attribute(field.name()))
+                        vertex.setAttribute(field.name(), feature.attribute(field.name()))
                 
                 # set fid
-                vertex.setAttribute('fid',i)
+                vertex.setAttribute('fid', i)
                 i += 1
                 
                 # append vertex to vertices list
@@ -74,8 +74,8 @@ class Planning(object):
         
         return vertices
 
-    def get_UTM_zone(self,lat,lon):
-        '''Get appropriated UTM zone EPSG ID for line feature
+    def get_UTM_zone(self, lat, lon):
+        """Get appropriated UTM zone EPSG ID for line feature
 
         Parameters
         ----------
@@ -89,7 +89,7 @@ class Planning(object):
         crs_utm : QgsCoordinateReferenceSystem
             CRS of UTM zone
 
-        '''
+        """
         # get UTM band from longitude
         utm_band = int((floor((lon + 180) / 6 ) % 60) + 1)
         

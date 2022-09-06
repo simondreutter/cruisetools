@@ -10,7 +10,7 @@ import random
 import math
 
 def dd2ddm(latitude,longitude):
-    '''Convert decimal degree (DD) in degree and decimal minutes (DDM)
+    """Convert decimal degree (DD) in degree and decimal minutes (DDM)
 
     Parameters
     ----------
@@ -24,7 +24,7 @@ def dd2ddm(latitude,longitude):
     lat_DDM, lon_DDM : (str, str)
         latitude, longitude as DDM strings
 
-    '''
+    """
     # latitude
     if latitude > 0.:
         hemisphere = 'N'
@@ -50,7 +50,7 @@ def dd2ddm(latitude,longitude):
     return lat_DDM, lon_DDM
 
 def get_driver_from_path(file_path):
-    '''Get GDAL driver from file path
+    """Get GDAL driver from file path
 
     Parameters
     ----------
@@ -62,7 +62,7 @@ def get_driver_from_path(file_path):
     driver : str
         GDAL driver name
 
-    '''
+    """
     driver = None
     ext = os.path.splitext(file_path)[1].upper()
     if '.TIF' in ext:
@@ -77,7 +77,7 @@ def get_driver_from_path(file_path):
     return driver
 
 def get_info_from_path(file_path):
-    '''Get file info from file path
+    """Get file info from file path
 
     Parameters
     ----------
@@ -89,16 +89,16 @@ def get_info_from_path(file_path):
     base_path,base_name,ext : (str,str,str)
         base path, base name, and extension
 
-    '''
+    """
     file_info = QFileInfo(file_path)
     base_path = file_info.absolutePath()
     base_name = file_info.baseName()
     ext = os.path.splitext(file_path)[1]
     
-    return base_path,base_name,ext
+    return base_path, base_name, ext
 
 def return_file_link(path):
-    '''
+    """Return HTML link to file from file path
 
     Parameters
     ----------
@@ -110,13 +110,13 @@ def return_file_link(path):
     link: str
         HTML link to base path
 
-    '''
+    """
     link = f'<a href="{os.path.dirname(path)}">{path}</a>'
     
     return link
 
 def return_success():
-    '''Return an awesome success message for Cruise Tools'''
+    """Return an awesome success message for Cruise Tools"""
     success_messages = ['Aye',
                         'BOING',
                         'Boom',
@@ -140,7 +140,8 @@ def return_success():
                         'Ultron',
                         'Whoop',
                         'Yeah',
-                        'Yiihaa']
+                        'Yiihaa',
+                        'Zweet']
     success_message = random.choice(success_messages)
     
     return success_message

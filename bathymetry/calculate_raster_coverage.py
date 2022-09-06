@@ -18,8 +18,8 @@ from PyQt5.QtGui import QIcon
 from .bathymetry import Bathymetry
 from .. import utils
 
-class CalculateRasterCoverage(QgsProcessingAlgorithm,Bathymetry):
-    '''Calculate Raster Coverage'''
+class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
+    """Calculate Raster Coverage"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -32,7 +32,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm,Bathymetry):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize CalculateRasterCoverage'''
+        """Initialize CalculateRasterCoverage"""
         super(CalculateRasterCoverage, self).__init__()
         
         # area of Bremen in km^2
@@ -67,9 +67,9 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm,Bathymetry):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables
-        raster_layer = self.parameterAsRasterLayer(parameters,self.INPUT,context)
-        band_number = self.parameterAsInt(parameters,self.BAND,context)
-        output = self.parameterAsFileOutput(parameters,self.OUTPUT,context)
+        raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT, context)
+        band_number = self.parameterAsInt(parameters, self.BAND, context)
+        output = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
         
         # layer name
         name = raster_layer.name()
@@ -91,7 +91,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm,Bathymetry):
         
         # Initialize Area calculator class with ellipsoid
         da = QgsDistanceArea()
-        da.setSourceCrs(crs_raster,trans_context)
+        da.setSourceCrs(crs_raster, trans_context)
         da.setEllipsoid(ellipsoid)
         
         # get raster extent
@@ -133,7 +133,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm,Bathymetry):
             coverage_m2 = area_m2 * (1 - nodata_percentage)
             coverage_percentage = (1 - nodata_percentage)
         else:
-            feedback.reportError(self.tr('Missing NoData value(s) detected. Check settings of the raster layer!'),fatalError=False)
+            feedback.reportError(self.tr('Missing NoData value(s) detected. Check settings of the raster layer!'), fatalError=False)
             coverage_m2 = area_m2
             coverage_percentage = 1.0
         
@@ -148,12 +148,12 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm,Bathymetry):
         
         feedback.pushConsoleInfo(self.tr(f'Raster Coverage of Layer [ {name} ]:\n'))
         
-        feedback.pushConsoleInfo(self.tr(f'Raster Area [km2] ....... : {round(area_km2,3)}'))
-        feedback.pushConsoleInfo(self.tr(f'Data Coverage [km2] ..... : {round(coverage_km2,3)}'))
-        feedback.pushConsoleInfo(self.tr(f'Data Coverage [m2] ...... : {round(coverage_m2,2)}'))
-        feedback.pushConsoleInfo(self.tr(f'Data Coverage [%] ....... : {round(coverage_percentage * 100,2)}\n'))
+        feedback.pushConsoleInfo(self.tr(f'Raster Area [km2] ....... : {round(area_km2, 3)}'))
+        feedback.pushConsoleInfo(self.tr(f'Data Coverage [km2] ..... : {round(coverage_km2, 3)}'))
+        feedback.pushConsoleInfo(self.tr(f'Data Coverage [m2] ...... : {round(coverage_m2, 2)}'))
+        feedback.pushConsoleInfo(self.tr(f'Data Coverage [%] ....... : {round(coverage_percentage * 100, 2)}\n'))
         
-        feedback.pushConsoleInfo(self.tr(f'This is {round(coverage_km2 / self.bremen_area,2)} times the area of Bremen\n'))
+        feedback.pushConsoleInfo(self.tr(f'This is {round(coverage_km2 / self.bremen_area, 2)} times the area of Bremen\n'))
         
         feedback.pushConsoleInfo(self.tr(f'------------------------------------------\n'))
         
@@ -168,12 +168,12 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm,Bathymetry):
                   self.OUTPUT : output}
         
         if output != '':
-            self.write_output(name,result,output)
+            self.write_output(name, result, output)
         
         return result
 
-    def write_output(self,name,result,output):
-        '''Write output to TXT file
+    def write_output(self, name, result, output):
+        """Write output to TXT file
 
         Parameters
         ----------
@@ -184,25 +184,23 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm,Bathymetry):
         output : str
             file path to output file
 
-        '''
+        """
         area_km2 = result[self.RASTER_AREA_KM2]
         coverage_km2 = result[self.DATA_COVERAGE_KM2]
         coverage_m2 = result[self.DATA_COVERAGE_M2]
         coverage_percentage = result[self.DATA_COVERAGE_PERCENT]
         content = f'''Raster Coverage of Layer [ {name} ]:
 
-Raster Area [km2]:     {round(area_km2,3)}
-Data Coverage [km2]:   {round(coverage_km2,3)}
-Data Coverage [m2]:    {round(coverage_m2,2)}
-Data Coverage [%]:     {round(coverage_percentage * 100,2)}
+Raster Area [km2]:     {round(area_km2, 3)}
+Data Coverage [km2]:   {round(coverage_km2, 3)}
+Data Coverage [m2]:    {round(coverage_m2, 2)}
+Data Coverage [%]:     {round(coverage_percentage * 100, 2)}
 
-This is {round(coverage_km2 / self.bremen_area,2)} times the area of Bremen
+This is {round(coverage_km2 / self.bremen_area, 2)} times the area of Bremen
 
 '''
-        with open(output,'w') as f:
+        with open(output, 'w') as f:
             f.write(content)
-        
-        return
 
     def name(self):
         return 'calculaterastercoverage'
@@ -221,7 +219,7 @@ This is {round(coverage_km2 / self.bremen_area,2)} times the area of Bremen
         return 'bathymetry'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/calculate_raster_coverage.help'

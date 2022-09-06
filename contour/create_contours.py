@@ -19,8 +19,8 @@ from .. import config
 from .. import utils
 from .. import vector
 
-class CreateContours(QgsProcessingAlgorithm,Contour):
-    '''Create Contours'''
+class CreateContours(QgsProcessingAlgorithm, Contour):
+    """Create Contours"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -31,7 +31,7 @@ class CreateContours(QgsProcessingAlgorithm,Contour):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize CreateContours'''
+        """Initialize CreateContours"""
         super(CreateContours, self).__init__()
         self.initConfig()
         
@@ -39,8 +39,8 @@ class CreateContours(QgsProcessingAlgorithm,Contour):
         self.style_contours = ':/plugins/cruisetools/styles/style_contours.qml'
 
     def initConfig(self):
-        '''Get default values from CruiseToolsConfig'''
-        self.interval = self.config.getint(self.module,'interval')
+        """Get default values from CruiseToolsConfig"""
+        self.interval = self.config.getint(self.module, 'interval')
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -87,30 +87,30 @@ class CreateContours(QgsProcessingAlgorithm,Contour):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables
-        raster_layer = self.parameterAsRasterLayer(parameters,self.INPUT,context)
-        band_number = self.parameterAsInt(parameters,self.BAND,context)
-        z_pos_down = self.parameterAsBoolean(parameters,self.Z_POS_DOWN,context)
-        interval = self.parameterAsInt(parameters,self.INTERVAL,context)
-        output = self.parameterAsOutputLayer(parameters,self.OUTPUT,context)
+        raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT, context)
+        band_number = self.parameterAsInt(parameters, self.BAND, context)
+        z_pos_down = self.parameterAsBoolean(parameters, self.Z_POS_DOWN, context)
+        interval = self.parameterAsInt(parameters, self.INTERVAL, context)
+        output = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
         
         # set new default values in config
         feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
-        self.config.set(self.module,'interval',interval)
+        self.config.set(self.module, 'interval', interval)
         
         # 5% done
         feedback.setProgress(5)
         
         # get output file extension (.gpkg or .shp)
-        base_path,base_name,ext = utils.get_info_from_path(output)
+        base_path, base_name, ext = utils.get_info_from_path(output)
         
         # get CRS from raster file (for some reasons gdal:contour is assigning a false CRS otherwise...)
         crs = raster_layer.crs()
         
         # get temporary folder
-        temp_folder = QgsProcessingUtils.tempFolder()
+        tmp_folder = QgsProcessingUtils.tempFolder()
         
         # temp file for raw contours
-        contours_raw = os.path.join(temp_folder,f'contours_raw.{ext}')
+        contours_raw = os.path.join(tmp_folder, f'contours_raw.{ext}')
         
         # parameters for contour algortihm
         params_contour = {'INPUT': raster_layer,
@@ -131,7 +131,7 @@ class CreateContours(QgsProcessingAlgorithm,Contour):
         feedback.setProgress(35)
         
         # temp file for raw contours
-        contours_smooth = os.path.join(temp_folder,f'contours_smooth.{ext}')
+        contours_smooth = os.path.join(tmp_folder, f'contours_smooth.{ext}')
         
         # parameters for smoothing
         params_smooth = {'INPUT': contours_raw,
@@ -177,7 +177,7 @@ class CreateContours(QgsProcessingAlgorithm,Contour):
         # to adjust labels, swap vectors (except if grid is Z positive down)
         if not self.z_pos_down:
             feedback.pushConsoleInfo(self.tr(f'Swapping contour direction...'))
-            vector_mod.swap_vectors(contours_layer,selected=False)
+            vector_mod.swap_vectors(contours_layer, selected=False)
         
         # 70% done
         feedback.setProgress(70)
@@ -186,7 +186,7 @@ class CreateContours(QgsProcessingAlgorithm,Contour):
         feedback.pushConsoleInfo(self.tr(f'Adding length attributes...'))
         ellipsoid = context.project().crs().ellipsoidAcronym()
         transform_context = context.project().transformContext()
-        vector_mod.write_line_length(contours_layer,ellipsoid,transform_context,m=True)
+        vector_mod.write_line_length(contours_layer, ellipsoid, transform_context, m=True)
         
         # 98% done
         feedback.setProgress(98)
@@ -229,7 +229,7 @@ class CreateContours(QgsProcessingAlgorithm,Contour):
         return 'contour'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/create_contours.help'

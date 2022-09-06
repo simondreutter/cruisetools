@@ -1,5 +1,5 @@
 # Cruise Tools
-*v2.0 [Barents Sea]*
+*v2.0.1 [Barents Sea]*
 
 ## Info
 **The toolbox you need for marine research cruises (planning and stuff)!**  
@@ -8,7 +8,7 @@
     License :   Gnu GPL v3
     Email   :   simon.dreutter@awi.de / fynn.warnke@awi.de
 
-Cruise Tools is a python plugin for QGIS (>3.10) that is supposed to fill a niche for cruise planning purposes. There are a handful of steps that we go through each time we extract coordinates for the bridge (DDM, not DD) or load a bathymetry grid (set color scale, hillshade, etc.) or similar. This is annoying and time consuming, hence, there needs to be a quicker way. This is what Cruise Tools was created for. It's supposed to create one (or two or three) click solutions to substitute 10 (or twenty or thirty) clicks.  
+Cruise Tools is a python plugin for QGIS (>3.22) that is supposed to fill a niche for cruise planning purposes. There are a handful of steps that we go through each time we extract coordinates for the bridge (DDM, not DD) or load a bathymetry grid (set color scale, hillshade, etc.) or similar. This is annoying and time consuming, hence, there needs to be a quicker way. This is what Cruise Tools was created for. It's supposed to create one (or two or three) click solutions to substitute 10 (or twenty or thirty) clicks.  
 The toolbox is a work in progress, however, it’s functional and should be used along the way of development.
 
 ### Installation
@@ -18,7 +18,7 @@ Sad side note: So far, Cruise Tools is developed on and for Windows only. It mig
 
 ## Bathymetry
 ### Load Bathymetry
-You want to load a bathymetry (or topography) grid with hillshade and a nice color scale. Doing this manually takes about 1000 clicks (depending on how crazy your render settings are). Cruise Tools simply lets you select a grid file (`GeoTIFF` or `netCDF`), sets some color settings and overlays it with a hillshade that’s not just half transparently chucked on there like Ar\*GIS users tend to do, and adds everything into a handy sub group.  
+You want to load a bathymetry (or topography) grid with hillshade and a nice color scale. Doing this manually takes about 1000 clicks (depending on how crazy your render settings are). Cruise Tools simply lets you select a grid file (`GeoTIFF` or `netCDF`), sets some color settings and overlays it with a hillshade that’s not just half transparently chucked on there like ArghGIS users tend to do, and adds everything into a handy sub group.  
 You can adjust the color bar and min/max values in the dialog or later in the layer symbology.
 ___
 
@@ -27,7 +27,8 @@ While it's nice to view your (floating point) bathymetry in color and with an ad
 Cruise Tools offers three multiplication based shading modes:  
   - **Hillshade** is shaded with a synthetic light source, 315° Azimuth, 45° Altitude
   - **Slope** is shaded with the stretched slope inclination
-  - **Combo shaded** is a combination of the two, bringing together the best aspects of both methods. Also widely known as *Simon's magical relief visualization*
+  - **Combined** is shaded with a combination of Hillshade and Slope, bringing together the best aspects of both methods. Also widely known as *Simon's magical relief visualization*
+  - **Multidirectional** is shaded with a combination of synthetic light sources from 225°, 270°, 315°, and 360° Azimuth
 
 Note: The created raster will be loaded into the canvas. Please don't freak out
 if you have holes in the grid. The reason might be your selection of color bar
@@ -36,13 +37,13 @@ and the fact that QGIS reads any RGB value that contains a 0 on any band as
 ___
 
 ### Calculate Raster Coverage
-This little tool lets you calculate the coverage of a loaded raster band. It will first calculate the entire covered area of the square grid. If a `NoData` value is set, it will additionally give you the actual data coverage in the grid (calculated by percentage of `NoData` values).  
+This little tool lets you calculate the coverage of a loaded raster band. It will first calculate the entire covered area of the rectangular grid. If a `NoData` value is set, it will additionally give you the actual data coverage in the grid (calculated by percentage of `NoData` values).  
 Coverages are calculated based on the project's CRS ellipsoid.
 
 ## Contour
 ### Create Contours
 You just used the Load Bathymetry function to show your beautiful seafloor topography. But now you want contour lines to make it a bit more readable.  
-Creating contours in QGIS is usually a quicky, however, that’s where the work begins. You might want to have smoothed contours, you might want to filter the little short bits out, and you might want to add some contour labels that are pointing in the cartographically correct direction (up hill). Simply select the bathymetry raster layer and click the button, select your interval and Cruise Tools will create the smoothed contours and apply the style you might have been looking for.  
+Creating contours in QGIS is usually a quicky, however, that’s where the work begins. You might want to have smoothed contours, you might want to filter the short bits out, and you might want to add some contour labels that are pointing in the cartographically correct direction (up hill). Simply select the bathymetry raster layer and click the button, select your interval and Cruise Tools will create the smoothed contours and apply the style you might have been looking for.  
 Contours are filtered by length by a SQL subset filter that is easily adjusted (only when using the toolbar icon, not the toolbox algortihm).
 
 ## Vector
@@ -57,6 +58,7 @@ ___
 
 ### Write Polygon Area
 You just selected an area of interest (or multiple) for your cruise and now you need an idea of the area size in square meters or square kilometers. Use Cruise Tools to do those measurements and fill the attribute table of your layer. **\***  
+
 **\*** All measurements are ellipsoidal based on the project's CRS ellipsoid. Latitude/Longitude coordinates refer to `WGS84 (EPSG:4326)`.
 ___
 
@@ -78,8 +80,8 @@ Convert a line layer to a point feature layer with vertices. If a selection in t
 ___
 
 ### Calculate MBES Coverage
-Planned your survey over a coarse resolution bathymetry grid like `GEBCO` and need to check if the coverage of your lawn mower pattern create sufficient overlap? This tool lets you combine line planning and bathymetry base in order to get an approximated MBES coverage at specific swath angle settings (depth dependet buffer) to visualize your potential survey coverage results.  
-Your segments (from vertex to vertex) will be projected in `Mercator (EPSG:3395)` cartesian lines and the buffer distance is calculated in an apropriate `UTM projection`.  
+Planned your survey over a coarse resolution bathymetry grid like `GEBCO` and need to check if the coverage of your lawn mower pattern create sufficient overlap? This tool lets you combine line planning and a bathymetry base to get an approximated MBES coverage at specific swath angle settings (depth dependet buffer) to visualize your potential survey coverage results.  
+Your segments (from vertex to vertex) will be projected in `Mercator (EPSG:3395)` cartesian lines and the buffer distance is calculated in an appropriate `UTM projection`.  
 All independent of your layer and project CRS.
 ___
 
@@ -89,4 +91,4 @@ Export a planning layer to your vessel specific exchange format. The export tool
 ## Issues
 If you have any issues with the plugin, we are on GitHub:  
 https://github.com/simondreutter/cruisetools  
-But feel free to contact us via email if you have any comments or wishes or suggestions for improvement, and we’ll see what we can do!s
+But feel free to contact us via email if you have any comments or wishes or suggestions for improvement, and we’ll see what we can do!

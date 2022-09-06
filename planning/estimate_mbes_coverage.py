@@ -29,8 +29,8 @@ from .planning import Planning
 from .. import config
 from .. import utils
 
-class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
-    '''Estimate MBES Coverage'''
+class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
+    """Estimate MBES Coverage"""
     #processing parameters
     # inputs:
     INPUT_LINE = 'INPUT_LINE'
@@ -42,7 +42,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize CreatePlanningFile'''
+        """Initialize CreatePlanningFile"""
         super(EstimateMBESCoverage, self).__init__()
         
         # style files for mbes coverage layers
@@ -56,8 +56,8 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
         self.initConfig()
 
     def initConfig(self):
-        '''Get default values from CruiseToolsConfig'''
-        self.swath_angle = self.config.getint(self.module,'swath_angle')
+        """Get default values from CruiseToolsConfig"""
+        self.swath_angle = self.config.getint(self.module, 'swath_angle')
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -116,18 +116,18 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables
-        source = self.parameterAsSource(parameters,self.INPUT_LINE,context)
-        swath_angle_field = self.parameterAsString(parameters,self.SWATH_ANGLE_FIELD,context)
-        swath_angle_fallback = self.parameterAsInt(parameters,self.SWATH_ANGLE,context)
-        raster_layer = self.parameterAsRasterLayer(parameters,self.INPUT_RASTER,context)
-        band_number = self.parameterAsInt(parameters,self.BAND,context)
+        source = self.parameterAsSource(parameters, self.INPUT_LINE, context)
+        swath_angle_field = self.parameterAsString(parameters, self.SWATH_ANGLE_FIELD, context)
+        swath_angle_fallback = self.parameterAsInt(parameters, self.SWATH_ANGLE, context)
+        raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT_RASTER, context)
+        band_number = self.parameterAsInt(parameters, self.BAND, context)
         
         # copy of the field name for later
         swath_angle_field_name = swath_angle_field
         
         # set new default values in config
         feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
-        self.config.set(self.module,'swath_angle',swath_angle_fallback)
+        self.config.set(self.module, 'swath_angle', swath_angle_fallback)
         
         # get crs's
         crs_line = source.sourceCrs()
@@ -220,9 +220,9 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
                     segment_geom_dense = segment_geom.densifyByCount(extra_vertices - 1)
                     
                     # initialize additional fields
-                    feature_id_field = QgsField('feature_id',QVariant.Int,'Integer',len=5,prec=0)
-                    part_id_field = QgsField('part_id',QVariant.Int,'Integer',len=5,prec=0)
-                    segment_id_field = QgsField('segment_id',QVariant.Int,'Integer',len=5,prec=0)
+                    feature_id_field = QgsField('feature_id', QVariant.Int, 'Integer', len=5, prec=0)
+                    part_id_field = QgsField('part_id', QVariant.Int, 'Integer', len=5, prec=0)
+                    segment_id_field = QgsField('segment_id', QVariant.Int, 'Integer', len=5, prec=0)
                     
                     # list for segment buffers
                     buffer_list = []
@@ -266,13 +266,13 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
                             swath_angle = swath_angle_fallback
                         
                         # calculate buffer radius (swath width from depth and swath angle)
-                        buffer_radius = round(tan(radians(swath_angle/2)) * abs(pointXY_depth),0)
+                        buffer_radius = round(tan(radians(swath_angle/2)) * abs(pointXY_depth), 0)
                         
                         # transform point from mercator zu UTM
                         fpoint_geom.transform(trans_merc2utm)
                         
                         # create buffer
-                        buffer = fpoint_geom.buffer(buffer_radius,10)
+                        buffer = fpoint_geom.buffer(buffer_radius, 10)
                         
                         # transform buffer back to initial input CRS
                         buffer.transform(trans_utm2line)
@@ -305,7 +305,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
                     # if no input swath_angle field was selected on input, create one
                     if swath_angle_field == '':
                         swath_angle_field_name = 'mbes_swath_angle'
-                        buffer_fields.append(QgsField(swath_angle_field_name,QVariant.Int,'Integer',len=5,prec=0))
+                        buffer_fields.append(QgsField(swath_angle_field_name, QVariant.Int, 'Integer', len=5, prec=0))
                     
                     # initialize polygon feature
                     fpoly = QgsFeature(buffer_fields)
@@ -315,13 +315,13 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
                         # ignore 'fid' again
                         if field.name() != 'fid':
                             # set attribute from feature to buffer
-                            fpoly.setAttribute(field.name(),feature.attribute(field.name()))
+                            fpoly.setAttribute(field.name(), feature.attribute(field.name()))
                     
                     # set addtional buffer fields
                     fpoly.setAttribute('feature_id', feature_id)
                     fpoly.setAttribute('part_id', part_id)
                     fpoly.setAttribute('segment_id', segment_id)
-                    fpoly.setAttribute(swath_angle_field_name,swath_angle)
+                    fpoly.setAttribute(swath_angle_field_name, swath_angle)
                     
                     # set geometry
                     fpoly.setGeometry(buffer_union)
@@ -399,7 +399,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm,Planning):
         return 'planning'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/estimate_mbes_coverage.help'

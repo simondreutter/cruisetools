@@ -8,11 +8,13 @@ from qgis.core import (
     QgsLayerTreeLayer,
     QgsProcessing,
     QgsProcessingAlgorithm,
+    QgsProcessingContext,
     QgsProcessingException,
     QgsProcessingParameterBoolean,
     QgsProcessingParameterEnum,
     QgsProcessingParameterFile,
     QgsProcessingParameterNumber,
+    QgsProject,
     QgsRasterLayer,
     QgsRasterShader,
     QgsSingleBandPseudoColorRenderer)
@@ -23,8 +25,8 @@ from PyQt5.QtGui import QIcon, QColor
 from .bathymetry import Bathymetry
 from .. import utils
 
-class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
-    '''Load Bathymetry'''
+class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
+    """Load Bathymetry"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -33,13 +35,15 @@ class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
     MIN = 'MIN'
     MAX = 'MAX'
     Z_POS_DOWN = 'Z_POS_DOWN'
+    # process:
+    LAYERS = {}
     # outputs:
     GROUP = 'GROUP'
     DEM_LAYER = 'DEM_LAYER'
     HILLSHADE_LAYER = 'HILLSHADE_LAYER'
 
     def __init__(self):
-        '''Initialize LoadBathymetry'''
+        """Initialize LoadBathymetry"""
         super(LoadBathymetry, self).__init__()
         
         # available color_ramps
@@ -64,9 +68,9 @@ class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
         self.initConfig()
 
     def initConfig(self):
-        '''Get default values from CruiseToolsConfig'''
-        self.min,self.max = self.config.get_minmax()
-        self.color_ramp_default = self.config.getint(self.module,'color_ramp')
+        """Get default values from CruiseToolsConfig"""
+        self.min, self.max = self.config.get_minmax()
+        self.color_ramp_default = self.config.getint(self.module, 'color_ramp')
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -112,21 +116,21 @@ class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables
-        raster = self.parameterAsFile(parameters,self.INPUT,context)
-        color_ramp = self.parameterAsEnum(parameters,self.COLORRAMP,context)
+        raster = self.parameterAsFile(parameters, self.INPUT, context)
+        color_ramp = self.parameterAsEnum(parameters, self.COLORRAMP, context)
         colors = self.color_ramps[self.colors_list[color_ramp]]
-        min = self.parameterAsInt(parameters,self.MIN,context)
-        max = self.parameterAsInt(parameters,self.MAX,context)
-        z_pos_down = self.parameterAsBoolean(parameters,self.Z_POS_DOWN,context)
+        min = self.parameterAsInt(parameters, self.MIN, context)
+        max = self.parameterAsInt(parameters, self.MAX, context)
+        z_pos_down = self.parameterAsBoolean(parameters, self.Z_POS_DOWN, context)
         
         # set new default values in config
         feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
-        self.config.set(self.module,'min',min)
-        self.config.set(self.module,'max',max)
-        self.config.set(self.module,'color_ramp',color_ramp)
+        self.config.set(self.module, 'min', min)
+        self.config.set(self.module, 'max', max)
+        self.config.set(self.module, 'color_ramp', color_ramp)
         
         # get file info
-        base_path,base_name,ext = utils.get_info_from_path(raster)
+        base_path, base_name, ext = utils.get_info_from_path(raster)
         
         # BATHY:
         # load grid
@@ -151,7 +155,7 @@ class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
         # create color_ramp
         ramp = []
         for i, item in enumerate(colors):
-            ramp.append(QgsColorRampShader.ColorRampItem(values[i],QColor(str(item)),str(values[i])))
+            ramp.append(QgsColorRampShader.ColorRampItem(values[i], QColor(str(item)), str(values[i])))
         color_ramp = QgsColorRampShader()
         color_ramp.setColorRampItemList(ramp)
         color_ramp.setColorRampType(QgsColorRampShader.Interpolated)
@@ -163,7 +167,7 @@ class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
         
         # create renderer
         feedback.pushConsoleInfo(self.tr(f'Creating raster renderer...'))
-        renderer = QgsSingleBandPseudoColorRenderer(dem_layer.dataProvider(),dem_layer.type(),shader)
+        renderer = QgsSingleBandPseudoColorRenderer(dem_layer.dataProvider(), dem_layer.type(), shader)
         
         # set min max values
         renderer.setClassificationMin(min)
@@ -185,19 +189,12 @@ class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
         resample_filter.setZoomedInResampler(QgsBilinearRasterResampler())
         resample_filter.setZoomedOutResampler(QgsBilinearRasterResampler())
         
-        # create group with layer base_name
-        feedback.pushConsoleInfo(self.tr(f'Creating layer group...'))
-        root = context.project().layerTreeRoot()
-        bathy_group = root.addGroup(base_name)
-        
-        # add bathy layer to group
-        bathy_group.insertChildNode(1, QgsLayerTreeLayer(dem_layer))
-        
-        # add bathy layer to project
-        dem_layer.triggerRepaint()        
-        context.project().addMapLayer(dem_layer, False)
+        # trigger repaint
+        dem_layer.triggerRepaint()
         
         # 50% done
+        if feedback.isCanceled():
+            return {}
         feedback.setProgress(50)
         
         # HILLSHADE:
@@ -218,18 +215,40 @@ class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
         else:
             hillshade_layer.loadNamedStyle(self.style_hillshade_prj)
         
-        # add hillshade layer to group
-        bathy_group.insertChildNode(0, QgsLayerTreeLayer(hillshade_layer))
-        
-        # add hillshade layer to project
+        # trigger repaint
         hillshade_layer.triggerRepaint()
-        context.project().addMapLayer(hillshade_layer, False)
+        
+        # pack layers and base name for postProcessAlgorithm()
+        self.LAYERS['base_name'] = base_name
+        self.LAYERS['dem_layer'] = dem_layer
+        self.LAYERS['hillshade_layer'] = hillshade_layer
         
         # 100% done
+        if feedback.isCanceled():
+            return {}
         feedback.setProgress(100)
         feedback.pushInfo(self.tr(f'{utils.return_success()}! Grid loaded successfully!\n'))
         
-        result = {self.GROUP : bathy_group,
+        return {}
+
+    def postProcessAlgorithm(self, context, feedback):
+        project = context.project()
+        
+        # create group
+        root = project.instance().layerTreeRoot()
+        group = root.addGroup(self.LAYERS['base_name'])
+        
+        # load dem layer
+        dem_layer = self.LAYERS['dem_layer']
+        project.addMapLayer(dem_layer, False)
+        group.insertLayer(1, dem_layer)
+        
+        # load hillshade layer
+        hillshade_layer = self.LAYERS['hillshade_layer']
+        project.addMapLayer(hillshade_layer, False)
+        group.insertLayer(0, hillshade_layer)
+        
+        result = {self.GROUP : group,
                   self.DEM_LAYER : dem_layer,
                   self.HILLSHADE_LAYER : hillshade_layer}
         
@@ -252,7 +271,7 @@ class LoadBathymetry(QgsProcessingAlgorithm,Bathymetry):
         return 'bathymetry'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/load_bathymetry.help'

@@ -21,8 +21,8 @@ from .planning import Planning
 from .. import config
 from .. import utils
 
-class ExportToBridge(QgsProcessingAlgorithm,Planning):
-    '''Export To Bridge'''
+class ExportToBridge(QgsProcessingAlgorithm, Planning):
+    """Export To Bridge"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -31,15 +31,15 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
     OUTPUT = 'OUTPUT'
     
     def __init__(self):
-        '''Initialize ExportToBridge'''
+        """Initialize ExportToBridge"""
         super(ExportToBridge, self).__init__()
         
         # initialize default configuration
         self.initConfig()
 
     def initConfig(self):
-        '''Get default values from CruiseToolsConfig'''
-        self.export_format = self.config.getint(self.module,'export_format')
+        """Get default values from CruiseToolsConfig"""
+        self.export_format = self.config.getint(self.module, 'export_format')
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -73,13 +73,13 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables
-        source = self.parameterAsSource(parameters,self.INPUT,context)
-        export_format = self.parameterAsEnum(parameters,self.EXPORT_FORMAT,context)
-        output = self.parameterAsFileOutput(parameters,self.OUTPUT,context)
+        source = self.parameterAsSource(parameters, self.INPUT, context)
+        export_format = self.parameterAsEnum(parameters, self.EXPORT_FORMAT, context)
+        output = self.parameterAsFileOutput(parameters, self.OUTPUT, context)
         
         # set new default values in config
         feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
-        self.config.set(self.module,'export_format',export_format)
+        self.config.set(self.module, 'export_format', export_format)
         
         # coordinate transformation
         trans = QgsCoordinateTransform(source.sourceCrs(), QgsCoordinateReferenceSystem('EPSG:4326'), context.transformContext())
@@ -97,7 +97,7 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
             
             # if source does not have fid field, create it in fields
             if 'fid' not in source_fields.names():
-                fields.append(QgsField('fid',QVariant.Int,'',4,0))
+                fields.append(QgsField('fid', QVariant.Int, '', 4, 0))
             
             # add all fields from source to fields variable
             for field in source_fields:
@@ -108,14 +108,14 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
             
             # get vertices from features
             feedback.pushConsoleInfo(self.tr(f'Converting lines to vertices...'))
-            points = self.lines_to_vertices(features,fields)
+            points = self.lines_to_vertices(features, fields)
         
         elif geom_type == QgsWkbTypes.PointGeometry:
             # get points directly
             points = source.getFeatures()
         
         else:
-            feedback.reportError(self.tr('Unknown Geometry WKB Type'),fatalError=True)
+            feedback.reportError(self.tr('Unknown Geometry WKB Type'), fatalError=True)
             return {}
         
         # empty table for point features and their attributes
@@ -136,7 +136,7 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
                 feature_attributes.append('')
             
             # zip lists to dict
-            feature_dict = dict(zip(feature_fields,feature_attributes))
+            feature_dict = dict(zip(feature_fields, feature_attributes))
             
             # get geometry of feature
             geom = feature.geometry().asPoint()
@@ -154,7 +154,7 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
             
             # clean up NULL values:
             for key, value in feature_dict.items():
-                if not type(value) in [float,int,str,bool]:
+                if not type(value) in [float, int, str, bool]:
                     if value.isNull():
                         feature_dict[key] = None
             
@@ -163,12 +163,12 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
         # export functions
         feedback.pushConsoleInfo(self.tr(f'Exporting table...'))
         if export_format == 0:
-            error, result = self.export_csv(table,output)
+            error, result = self.export_csv(table, output)
         elif export_format == 1:
-            error, result = self.export_SAM_route(table,output)
+            error, result = self.export_SAM_route(table, output)
         
         if error:
-            feedback.reportError(self.tr(result),fatalError=True)
+            feedback.reportError(self.tr(result), fatalError=True)
             return {}
         
         # 100% done
@@ -179,8 +179,8 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
         
         return result
 
-    def export_csv(self,table,output):
-        '''Export table as Comma Separated Value [CSV]
+    def export_csv(self, table, output):
+        """Export table as Comma Separated Value [CSV]
 
         Parameters
         ----------
@@ -196,11 +196,11 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
         result : str
             output or error msg if error == 1
 
-        '''
+        """
         # open file with ANSI encoding for excel to understand things
-        with open(output,'w',newline='',encoding='ansi') as csvfile:
+        with open(output, 'w', newline='', encoding='ansi') as csvfile:
             # create csv writer with excel dialect
-            csv_writer = csv.writer(csvfile,dialect='excel')
+            csv_writer = csv.writer(csvfile, dialect='excel')
             
             # write header as list of fields
             header = [x for x in table[0].keys()]
@@ -209,13 +209,13 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
             # loop over features
             for feature in table:
                 # write feature attributes
-                row = [str(feature[key]).replace('NULL','') for key in feature.keys()]
+                row = [str(feature[key]).replace('NULL', '').replace('None', '') for key in feature.keys()]
                 csv_writer.writerow(row)
         
         return 0, output
 
-    def export_SAM_route(self,table,output):
-        '''Export table as SAM Route to bridge Comma Separated Value [CSV]
+    def export_SAM_route(self, table, output):
+        """Export table as SAM Route to bridge Comma Separated Value [CSV]
 
         Parameters
         ----------
@@ -231,14 +231,14 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
         result : str
             output or error msg if error == 1
 
-        '''
+        """
         # open file with ANSI encoding for excel to understand things
-        with open(output,'w',newline='',encoding='ansi') as csvfile:
+        with open(output, 'w', newline='', encoding='ansi') as csvfile:
             # create csv writer with excel dialect
-            csv_writer = csv.writer(csvfile,dialect='excel')
+            csv_writer = csv.writer(csvfile, dialect='excel')
             
             # write header as list of fields
-            header = ['Name','Latitude [°]','Longitude [°]','Turn Radius [NM]','Max. Speed [kn]','XTD [m]','Sailmode','Additional Notes']
+            header = ['Name', 'Latitude [°]', 'Longitude [°]', 'Turn Radius [NM]', 'Max. Speed [kn]', 'XTD [m]', 'Sailmode', 'Additional Notes']
             csv_writer.writerow(header)
             
             # loop over features
@@ -249,15 +249,15 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
                 else:
                     name_out = str(feature['fid']) + '_' + str(feature['name'])
                 
-                # add additional fields as None, if they don't exist
-                for key in ['turn_radius_nm','speed_kn','notes']:
+                # add additional fields as None,  if they don't exist
+                for key in ['turn_radius_nm', 'speed_kn', 'notes']:
                     if not key in feature:
                         feature[key] = None
                 
                 # compose row
                 row = [name_out,
-                      round(feature['lat_DD'],6),
-                      round(feature['lon_DD'],6),
+                      round(feature['lat_DD'], 6),
+                      round(feature['lon_DD'], 6),
                       feature['turn_radius_nm'],
                       feature['speed_kn'],
                       '',
@@ -286,7 +286,7 @@ class ExportToBridge(QgsProcessingAlgorithm,Planning):
         return 'planning'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/export_to_bridge.help'

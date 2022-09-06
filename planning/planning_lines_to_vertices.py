@@ -18,8 +18,8 @@ from PyQt5.QtGui import QIcon
 from .planning import Planning
 from .. import utils
 
-class PlanningLinesToVertices(QgsProcessingAlgorithm,Planning):
-    '''Planning Lines To Vertices'''
+class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
+    """Planning Lines To Vertices"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -27,7 +27,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm,Planning):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize PlanningLinesToVertices'''
+        """Initialize PlanningLinesToVertices"""
         super(PlanningLinesToVertices, self).__init__()
         
         # style files for planning layer
@@ -54,7 +54,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm,Planning):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables
-        source = self.parameterAsSource(parameters,self.INPUT,context)
+        source = self.parameterAsSource(parameters, self.INPUT, context)
         
         # fields to be created (empty)
         feedback.pushConsoleInfo(self.tr(f'Creating attribute fields...'))
@@ -65,7 +65,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm,Planning):
         
         # if source does not have fid field, create it in fields
         if 'fid' not in source_fields.names():
-            fields.append(QgsField('fid',QVariant.Int,'',4,0))
+            fields.append(QgsField('fid', QVariant.Int, '', 4, 0))
         
         # add all fields from source to fields variable
         for field in source_fields:
@@ -80,7 +80,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm,Planning):
         features = source.getFeatures()
         
         # get vertices from features
-        vertices = self.lines_to_vertices(features,fields)
+        vertices = self.lines_to_vertices(features, fields)
         
         # write vertex features to sink
         sink.addFeatures(vertices, QgsFeatureSink.FastInsert)
@@ -132,7 +132,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm,Planning):
         return 'planning'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/planning_lines_to_vertices.help'

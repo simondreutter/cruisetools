@@ -1,13 +1,13 @@
 import sys
 from PyQt5.QtCore import *
 from PyQt5.QtWidgets import (QApplication, QWidget, QGridLayout, QVBoxLayout, QLabel, QToolBox, QPushButton, QTextEdit, QLineEdit)
-from PyQt5.QtGui import QColor,QFont,QIcon
+from PyQt5.QtGui import QColor, QFont, QIcon
 
 
 class ReadmeWindow(QWidget):
 
-    def __init__(self,readme_text):
-        '''Initialize ReadmeWindow'''
+    def __init__(self, readme_text):
+        """Initialize ReadmeWindow"""
         super().__init__()
         # icon path
         self.icon_path = ':/plugins/cruisetools/icons'
@@ -70,9 +70,9 @@ class ReadmeWindow(QWidget):
         for line in blocks[0].splitlines():
             line = line.strip()
             if line.startswith('# '):
-                title_text = line.replace("# ","")
+                title_text = line.replace('# ', '')
             elif line.startswith('*v'):
-                version_text = line.replace("*","")
+                version_text = line.replace('*', '')
         
         # set version and title text
         title.setText(title_text)
@@ -82,7 +82,7 @@ class ReadmeWindow(QWidget):
         idx = 0
         for block in blocks[1:]:
             # get block title and content
-            block_title,md = block.split('\n',1)
+            block_title, md = block.split('\n', 1)
             
             # convert markdown to html (cheap way) << setMarkdown in PyQt 5.15
             html = self.markdown(md)
@@ -103,15 +103,15 @@ class ReadmeWindow(QWidget):
             icon = self.get_icon(block_title)
             
             # set block icon
-            toolbox.setItemIcon(idx,icon)
+            toolbox.setItemIcon(idx, icon)
             
             idx = idx + 1
         
         # set window layout
         self.setLayout(layout)
 
-    def markdown(self,md):
-        '''Convert Markdown Readme to HTML (cheap solution)
+    def markdown(self, md):
+        """Convert Markdown Readme to HTML (cheap solution)
 
         Parameters
         ----------
@@ -123,7 +123,7 @@ class ReadmeWindow(QWidget):
         html : str
             converted markdown string in html
 
-        '''
+        """
         # empty list for html lines
         html_list = []
         # loop over lines in block text
@@ -134,15 +134,15 @@ class ReadmeWindow(QWidget):
                 if line.startswith('### Installation'):
                     break
                 else:
-                    line = f'<b>{line.replace("### ","")}</b><br>'
+                    line = f'<b>{line.replace("### ", "")}</b><br>'
             #if line is a url make it a link
             if line.startswith('http'):
                 line = f'<br><a href="{line}">{line}</a><br>'
             # clean up some markup stuff
-            line = line.replace('\\*','*')
-            line = line.replace('**','')
-            line = line.replace('`','')
-            line = line.replace('___','<hr>')
+            line = line.replace('\\*', '*')
+            line = line.replace('**', '')
+            line = line.replace('`', '')
+            line = line.replace('___', '<hr>')
             
             # add line to html list
             html_list.append(line)
@@ -152,8 +152,8 @@ class ReadmeWindow(QWidget):
         
         return html
 
-    def get_icon(self,title):
-        '''Get Icon for Readme Dialog
+    def get_icon(self, title):
+        """Get Icon for Readme Dialog
 
         Parameters
         ----------
@@ -165,7 +165,7 @@ class ReadmeWindow(QWidget):
         icon : QIcon
             icon to be displayed in the toolbox
 
-        '''
+        """
         title = title.lower()
         if title == 'bathymetry':
             icon = QIcon(f'{self.icon_path}/bathymetry_menu.png')

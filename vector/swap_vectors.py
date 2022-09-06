@@ -16,7 +16,7 @@ from .. import config
 from .. import utils
 
 class SwapVectors(QgsProcessingAlgorithm,Vector):
-    '''Swap Vectors'''
+    """Swap Vectors"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -25,7 +25,7 @@ class SwapVectors(QgsProcessingAlgorithm,Vector):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize SwapVectors'''
+        """Initialize SwapVectors"""
         super(SwapVectors, self).__init__()
 
     def initAlgorithm(self, config=None):
@@ -49,14 +49,14 @@ class SwapVectors(QgsProcessingAlgorithm,Vector):
         # get input variables as self.* for use in post processing
         self.vector_layer = self.parameterAsVectorLayer(parameters,self.INPUT,context)
         self.selected = self.parameterAsBoolean(parameters,self.SELECTED,context)
-
+        
         result = {}
         
         return result
 
     def postProcessAlgorithm(self, context, feedback):
         # layer in-place editing is not working very well in the processAlgortihm
-        # therefor it was moved here to post processing
+        # therefore it was moved here to post processing
         
         # run the function from Vector base class
         feedback.pushConsoleInfo(self.tr(f'Swapping vectors...\n'))

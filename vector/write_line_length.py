@@ -15,8 +15,8 @@ from .vector import Vector
 from .. import config
 from .. import utils
 
-class WriteLineLength(QgsProcessingAlgorithm,Vector):
-    '''Write Line Length'''
+class WriteLineLength(QgsProcessingAlgorithm, Vector):
+    """Write Line Length"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -27,17 +27,17 @@ class WriteLineLength(QgsProcessingAlgorithm,Vector):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize WriteLineLength'''
+        """Initialize WriteLineLength"""
         super(WriteLineLength, self).__init__()
         
         # initialize default configuration
         self.initConfig()
 
     def initConfig(self):
-        '''Get default values from CruiseToolsConfig'''
-        self.m = self.config.getboolean(self.module,'m')
-        self.km = self.config.getboolean(self.module,'km')
-        self.nm = self.config.getboolean(self.module,'nm')
+        """Get default values from CruiseToolsConfig"""
+        self.m = self.config.getboolean(self.module, 'm')
+        self.km = self.config.getboolean(self.module, 'km')
+        self.nm = self.config.getboolean(self.module, 'nm')
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -72,16 +72,16 @@ class WriteLineLength(QgsProcessingAlgorithm,Vector):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables as self.* for use in post processing
-        self.vector_layer = self.parameterAsVectorLayer(parameters,self.INPUT,context)
-        self.m = self.parameterAsBoolean(parameters,self.M,context)
-        self.km = self.parameterAsBoolean(parameters,self.KM,context)
-        self.nm = self.parameterAsBoolean(parameters,self.NM,context)
+        self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
+        self.m = self.parameterAsBoolean(parameters, self.M, context)
+        self.km = self.parameterAsBoolean(parameters, self.KM, context)
+        self.nm = self.parameterAsBoolean(parameters, self.NM, context)
         
         # set new default values in config
         feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
-        self.config.set(self.module,'m',self.m)
-        self.config.set(self.module,'km',self.km)
-        self.config.set(self.module,'nm',self.nm)
+        self.config.set(self.module, 'm', self.m)
+        self.config.set(self.module, 'km', self.km)
+        self.config.set(self.module, 'nm', self.nm)
         
         result = {}
         
@@ -89,7 +89,7 @@ class WriteLineLength(QgsProcessingAlgorithm,Vector):
 
     def postProcessAlgorithm(self, context, feedback):
         # layer in-place editing is not working very well in the processAlgortihm
-        # therefor it was moved here to post processing
+        # therefore it was moved here to post processing
         
         # get project ellipsoid and transformContext for ellipsoidal measurements
         ellipsoid = context.project().crs().ellipsoidAcronym()
@@ -97,9 +97,9 @@ class WriteLineLength(QgsProcessingAlgorithm,Vector):
         
         # run the function from Vector base class
         feedback.pushConsoleInfo(self.tr(f'Adding length attributes...\n'))
-        error, result = self.write_line_length(self.vector_layer,ellipsoid,transform_context,m=self.m,km=self.km,nm=self.nm)
+        error, result = self.write_line_length(self.vector_layer, ellipsoid, transform_context, m=self.m, km=self.km, nm=self.nm)
         if error:
-            feedback.reportError(self.tr(result),fatalError=True)
+            feedback.reportError(self.tr(result), fatalError=True)
             return {}
         
         # 100% done
@@ -127,7 +127,7 @@ class WriteLineLength(QgsProcessingAlgorithm,Vector):
         return 'vector'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/write_line_length.help'

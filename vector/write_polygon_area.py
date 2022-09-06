@@ -15,8 +15,8 @@ from .vector import Vector
 from .. import config
 from .. import utils
 
-class WritePolygonArea(QgsProcessingAlgorithm,Vector):
-    '''Write Polygon Area'''
+class WritePolygonArea(QgsProcessingAlgorithm, Vector):
+    """Write Polygon Area"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -26,16 +26,16 @@ class WritePolygonArea(QgsProcessingAlgorithm,Vector):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize WritePolygonArea'''
+        """Initialize WritePolygonArea"""
         super(WritePolygonArea, self).__init__()
         
         # initialize default configuration
         self.initConfig()
 
     def initConfig(self):
-        '''Get default values from CruiseToolsConfig'''
-        self.m2 = self.config.getboolean(self.module,'m2')
-        self.km2 = self.config.getboolean(self.module,'km2')
+        """Get default values from CruiseToolsConfig"""
+        self.m2 = self.config.getboolean(self.module, 'm2')
+        self.km2 = self.config.getboolean(self.module, 'km2')
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -63,14 +63,14 @@ class WritePolygonArea(QgsProcessingAlgorithm,Vector):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables as self.* for use in post processing
-        self.vector_layer = self.parameterAsVectorLayer(parameters,self.INPUT,context)
-        self.m2 = self.parameterAsBoolean(parameters,self.M2,context)
-        self.km2 = self.parameterAsBoolean(parameters,self.KM2,context)
+        self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
+        self.m2 = self.parameterAsBoolean(parameters, self.M2, context)
+        self.km2 = self.parameterAsBoolean(parameters, self.KM2, context)
         
         # set new default values in config
         feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
-        self.config.set(self.module,'m2',self.m2)
-        self.config.set(self.module,'km2',self.km2)
+        self.config.set(self.module, 'm2', self.m2)
+        self.config.set(self.module, 'km2', self.km2)
         
         result = {}
         
@@ -78,7 +78,7 @@ class WritePolygonArea(QgsProcessingAlgorithm,Vector):
 
     def postProcessAlgorithm(self, context, feedback):
         # layer in-place editing is not working very well in the processAlgortihm
-        # therefor it was moved here to post processing
+        # therefore it was moved here to post processing
         
         # get project ellipsoid and transformContext for ellipsoidal measurements
         ellipsoid = context.project().crs().ellipsoidAcronym()
@@ -86,9 +86,9 @@ class WritePolygonArea(QgsProcessingAlgorithm,Vector):
         
         # run the function from Vector base class
         feedback.pushConsoleInfo(self.tr(f'Adding area attributes...\n'))
-        error, result = self.write_polygon_area(self.vector_layer,ellipsoid,transform_context,m2=self.m2,km2=self.km2)
+        error, result = self.write_polygon_area(self.vector_layer, ellipsoid, transform_context, m2=self.m2, km2=self.km2)
         if error:
-            feedback.reportError(self.tr(result),fatalError=True)
+            feedback.reportError(self.tr(result), fatalError=True)
             return {}
         
         # 100% done
@@ -116,7 +116,7 @@ class WritePolygonArea(QgsProcessingAlgorithm,Vector):
         return 'vector'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/write_polygon_area.help'

@@ -16,8 +16,8 @@ from .vector import Vector
 from .. import config
 from .. import utils
 
-class WritePointCoordinates(QgsProcessingAlgorithm,Vector):
-    '''Write Point Coordinates'''
+class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
+    """Write Point Coordinates"""
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -29,17 +29,17 @@ class WritePointCoordinates(QgsProcessingAlgorithm,Vector):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize WritePointCoordinates'''
+        """Initialize WritePointCoordinates"""
         super(WritePointCoordinates, self).__init__()
         
         # initialize default configuration
         self.initConfig()
 
     def initConfig(self):
-        '''Get default values from CruiseToolsConfig'''
-        self.latlon_dd = self.config.getboolean(self.module,'latlon_dd')
-        self.latlon_ddm = self.config.getboolean(self.module,'latlon_ddm')
-        self.xy = self.config.getboolean(self.module,'xy')
+        """Get default values from CruiseToolsConfig"""
+        self.latlon_dd = self.config.getboolean(self.module, 'latlon_dd')
+        self.latlon_ddm = self.config.getboolean(self.module, 'latlon_ddm')
+        self.xy = self.config.getboolean(self.module, 'xy')
 
     def initAlgorithm(self, config=None):
         self.addParameter(
@@ -81,17 +81,17 @@ class WritePointCoordinates(QgsProcessingAlgorithm,Vector):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables as self.* for use in post processing
-        self.vector_layer = self.parameterAsVectorLayer(parameters,self.INPUT,context)
-        self.latlon_dd = self.parameterAsBoolean(parameters,self.LATLON_DD,context)
-        self.latlon_ddm = self.parameterAsBoolean(parameters,self.LATLON_DDM,context)
-        self.xy = self.parameterAsBoolean(parameters,self.XY,context)
-        self.crs_xy = self.parameterAsCrs(parameters,self.CRS_XY,context)
+        self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
+        self.latlon_dd = self.parameterAsBoolean(parameters, self.LATLON_DD, context)
+        self.latlon_ddm = self.parameterAsBoolean(parameters, self.LATLON_DDM, context)
+        self.xy = self.parameterAsBoolean(parameters, self.XY, context)
+        self.crs_xy = self.parameterAsCrs(parameters, self.CRS_XY, context)
         
         # set new default values in config
         feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
-        self.config.set(self.module,'latlon_dd',self.latlon_dd)
-        self.config.set(self.module,'latlon_ddm',self.latlon_ddm)
-        self.config.set(self.module,'xy',self.xy)
+        self.config.set(self.module, 'latlon_dd', self.latlon_dd)
+        self.config.set(self.module, 'latlon_ddm', self.latlon_ddm)
+        self.config.set(self.module, 'xy', self.xy)
         
         result = {}
         
@@ -99,16 +99,16 @@ class WritePointCoordinates(QgsProcessingAlgorithm,Vector):
 
     def postProcessAlgorithm(self, context, feedback):
         # layer in-place editing is not working very well in the processAlgortihm
-        # therefor it was moved here to post processing
+        # therefore it was moved here to post processing
         
         # get project transformContext for ellipsoidal measurements
         transform_context = context.transformContext()
         
         # run the function from Vector base class
         feedback.pushConsoleInfo(self.tr(f'Adding coordinate attributes...\n'))
-        error, result = self.write_point_coordinates(self.vector_layer,transform_context,self.latlon_dd,self.latlon_ddm,self.xy,self.crs_xy)
+        error, result = self.write_point_coordinates(self.vector_layer, transform_context, self.latlon_dd, self.latlon_ddm, self.xy, self.crs_xy)
         if error:
-            feedback.reportError(self.tr(result),fatalError=True)
+            feedback.reportError(self.tr(result), fatalError=True)
             return {}
         
         # 100% done
@@ -136,7 +136,7 @@ class WritePointCoordinates(QgsProcessingAlgorithm,Vector):
         return 'vector'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/write_point_coordinates.help'

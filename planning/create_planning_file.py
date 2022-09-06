@@ -21,8 +21,8 @@ from .planning import Planning
 from .. import config
 from .. import utils
 
-class CreatePlanningFile(QgsProcessingAlgorithm,Planning):
-    '''Create Planning File'''
+class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
+    """Create Planning File"""
     #processing parameters
     # inputs:
     FILE_TYPE = 'FILE_TYPE'
@@ -32,7 +32,7 @@ class CreatePlanningFile(QgsProcessingAlgorithm,Planning):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        '''Initialize CreatePlanningFile'''
+        """Initialize CreatePlanningFile"""
         super(CreatePlanningFile, self).__init__()
         
         # style files for planning layer
@@ -43,12 +43,12 @@ class CreatePlanningFile(QgsProcessingAlgorithm,Planning):
         self.initConfig()
 
     def initConfig(self):
-        '''Get default values from CruiseToolsConfig'''
-        self.file_type = self.config.getint(self.module,'file_type')
-        self.default_crs = self.config.get(self.module,'default_crs')
+        """Get default values from CruiseToolsConfig"""
+        self.file_type = self.config.getint(self.module, 'file_type')
+        self.default_crs = self.config.get(self.module, 'default_crs')
         self.crs = QgsCoordinateReferenceSystem()
         self.crs.createFromString(self.default_crs)
-        self.mbes = self.config.getboolean(self.module,'mbes')
+        self.mbes = self.config.getboolean(self.module, 'mbes')
 
     def initAlgorithm(self, config=None):
         self.file_types = [self.tr('Point Planning'),
@@ -88,9 +88,9 @@ class CreatePlanningFile(QgsProcessingAlgorithm,Planning):
 
     def processAlgorithm(self, parameters, context, feedback):
         # get input variables as self.* for use in post processing
-        file_type = self.parameterAsEnum(parameters,self.FILE_TYPE,context)
-        crs = self.parameterAsCrs(parameters,self.CRS,context)
-        mbes = self.parameterAsBoolean(parameters,self.MBES,context)
+        file_type = self.parameterAsEnum(parameters, self.FILE_TYPE, context)
+        crs = self.parameterAsCrs(parameters, self.CRS, context)
+        mbes = self.parameterAsBoolean(parameters, self.MBES, context)
         
         # if CRS is None, use project CRS
         if not crs.isValid():
@@ -98,9 +98,9 @@ class CreatePlanningFile(QgsProcessingAlgorithm,Planning):
         
         # set new default values in config
         feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
-        self.config.set(self.module,'file_type',file_type)
-        self.config.set(self.module,'default_crs',crs.authid())
-        self.config.set(self.module,'mbes',mbes)
+        self.config.set(self.module, 'file_type', file_type)
+        self.config.set(self.module, 'default_crs', crs.authid())
+        self.config.set(self.module, 'mbes', mbes)
         
         # fields to be created
         fields = QgsFields()
@@ -182,7 +182,7 @@ class CreatePlanningFile(QgsProcessingAlgorithm,Planning):
         return 'planning'
 
     def tr(self, string):
-        return QCoreApplication.translate('Processing',string)
+        return QCoreApplication.translate('Processing', string)
 
     def shortHelpString(self):
         doc = f'{self.plugin_dir}/doc/create_planning_file.help'
