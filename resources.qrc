@@ -11,17 +11,20 @@
         <file>icons/write_point_coordinates.png</file>
         <file>icons/write_line_length.png</file>
         <file>icons/write_polygon_area.png</file>
+        <file>icons/create_coordinate_grid.png</file>
         <file>icons/swap_vectors.png</file>
         <file>icons/planning_menu.png</file>
         <file>icons/create_planning_file.png</file>
         <file>icons/planning_lines_to_vertices.png</file>
         <file>icons/estimate_mbes_coverage.png</file>
         <file>icons/export_to_bridge.png</file>
+        <file>icons/log_position.png</file>
         <file>styles/style_hillshade_prj.qml</file>
         <file>styles/style_hillshade_geo.qml</file>
         <file>styles/style_hillshade_pos_down_prj.qml</file>
         <file>styles/style_hillshade_pos_down_geo.qml</file>
         <file>styles/style_contours.qml</file>
+        <file>styles/style_coordinate_grid.qml</file>
         <file>styles/style_mbes_coverage.qml</file>
         <file>styles/style_planning_lines.qml</file>
         <file>styles/style_planning_points.qml</file>

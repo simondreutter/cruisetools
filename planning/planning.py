@@ -1,27 +1,28 @@
-# -*- coding: utf-8 -*-
 import os
 from math import floor
 
 from qgis.core import (
     QgsGeometry,
     QgsFeature,
-    QgsCoordinateReferenceSystem)
+    QgsCoordinateReferenceSystem,
+)
 
-from qgis.PyQt.QtCore import QVariant
+# from qgis.PyQt.QtCore import QVariant
 
+from ..vector import Vector
 from .. import config
 
-class Planning(object):
-    """Base class for planning modules"""
+class Planning(Vector):
+    """Base class for planning modules."""
 
     def __init__(self):
-        """Initialize Planning"""
+        """Initialize Planning."""
         self.module = 'PLANNING'
         self.config = config.CruiseToolsConfig()
         self.plugin_dir = f'{os.path.dirname(__file__)}/..'
 
     def lines_to_vertices(self, features, fields):
-        """Create Vertex features from Line features
+        """Create Vertex features from Line features.
 
         Parameters
         ----------
@@ -51,7 +52,7 @@ class Planning(object):
             geom = feature.geometry().asPolyline()
             
             # loop over vertices
-            for g in geom:
+            for idx, g in enumerate(geom):
                 # create vertex feature
                 vertex = QgsFeature(fields)
                 
@@ -63,7 +64,10 @@ class Planning(object):
                     # if field exists in input fields
                     if field.name() in fields.names():
                         # set attribute from line to vertex
-                        vertex.setAttribute(field.name(), feature.attribute(field.name()))
+                        if self.add_vertex_suffix and (field.name() == 'name'):  # add order numbering (for default field "name")
+                            vertex.setAttribute(field.name(), feature.attribute(field.name()) + f'_{idx + 1:03d}')
+                        else:
+                            vertex.setAttribute(field.name(), feature.attribute(field.name()))
                 
                 # set fid
                 vertex.setAttribute('fid', i)
@@ -75,7 +79,7 @@ class Planning(object):
         return vertices
 
     def get_UTM_zone(self, lat, lon):
-        """Get appropriated UTM zone EPSG ID for line feature
+        """Get appropriated UTM zone EPSG ID for line feature.
 
         Parameters
         ----------
@@ -91,7 +95,7 @@ class Planning(object):
 
         """
         # get UTM band from longitude
-        utm_band = int((floor((lon + 180) / 6 ) % 60) + 1)
+        utm_band = int((floor((lon + 180) / 6) % 60) + 1)
         
         # get EPSG code from UTM band and latitude (S/N)
         if lat >= 0:
@@ -103,3 +107,4 @@ class Planning(object):
         crs_utm = QgsCoordinateReferenceSystem(f'EPSG:{epsg_code}')
         
         return crs_utm
+    

@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 import os
-import processing
+# import processing
 
 from qgis.core import (
     QgsProcessing,
@@ -12,12 +11,13 @@ from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
-from .. import config
+# from .. import config
 from .. import utils
 
 class WriteLineLength(QgsProcessingAlgorithm, Vector):
-    """Write Line Length"""
-    #processing parameters
+    """Write Line Length."""
+    
+    # Processing parameters
     # inputs:
     INPUT = 'INPUT'
     M = 'M'
@@ -27,19 +27,19 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        """Initialize WriteLineLength"""
+        """Initialize WriteLineLength."""
         super(WriteLineLength, self).__init__()
         
         # initialize default configuration
         self.initConfig()
 
     def initConfig(self):
-        """Get default values from CruiseToolsConfig"""
+        """Get default values from CruiseToolsConfig."""
         self.m = self.config.getboolean(self.module, 'm')
         self.km = self.config.getboolean(self.module, 'km')
         self.nm = self.config.getboolean(self.module, 'nm')
 
-    def initAlgorithm(self, config=None):
+    def initAlgorithm(self, config=None):  # noqa
         self.addParameter(
             QgsProcessingParameterVectorLayer(
                 name=self.INPUT,
@@ -70,7 +70,7 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
                 defaultValue=self.nm)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):
+    def processAlgorithm(self, parameters, context, feedback):  # noqa
         # get input variables as self.* for use in post processing
         self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         self.m = self.parameterAsBoolean(parameters, self.M, context)
@@ -78,7 +78,7 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
         self.nm = self.parameterAsBoolean(parameters, self.NM, context)
         
         # set new default values in config
-        feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
+        feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         self.config.set(self.module, 'm', self.m)
         self.config.set(self.module, 'km', self.km)
         self.config.set(self.module, 'nm', self.nm)
@@ -87,7 +87,7 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
         
         return result
 
-    def postProcessAlgorithm(self, context, feedback):
+    def postProcessAlgorithm(self, context, feedback):  # noqa
         # layer in-place editing is not working very well in the processAlgortihm
         # therefore it was moved here to post processing
         
@@ -96,7 +96,7 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
         transform_context = context.transformContext()
         
         # run the function from Vector base class
-        feedback.pushConsoleInfo(self.tr(f'Adding length attributes...\n'))
+        feedback.pushConsoleInfo(self.tr('Adding length attributes...\n'))
         error, result = self.write_line_length(self.vector_layer, ellipsoid, transform_context, m=self.m, km=self.km, nm=self.nm)
         if error:
             feedback.reportError(self.tr(result), fatalError=True)
@@ -110,26 +110,26 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
         
         return result
 
-    def name(self):
+    def name(self):  # noqa
         return 'writelinelength'
 
-    def icon(self):
+    def icon(self):  # noqa
         icon = QIcon(f'{self.plugin_dir}/icons/write_line_length.png')
         return icon
 
-    def displayName(self):
+    def displayName(self):  # noqa
         return self.tr('Write Line Length')
 
-    def group(self):
+    def group(self):  # noqa
         return self.tr('Vector')
 
-    def groupId(self):
+    def groupId(self):  # noqa
         return 'vector'
 
-    def tr(self, string):
+    def tr(self, string):  # noqa
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):
+    def shortHelpString(self):  # noqa
         doc = f'{self.plugin_dir}/doc/write_line_length.help'
         if not os.path.exists(doc):
             return ''
@@ -137,5 +137,5 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
             help = helpf.read()
         return help
 
-    def createInstance(self):
+    def createInstance(self):  # noqa
         return WriteLineLength()

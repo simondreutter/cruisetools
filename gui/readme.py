@@ -1,13 +1,19 @@
-import sys
-from PyQt5.QtCore import *
-from PyQt5.QtWidgets import (QApplication, QWidget, QGridLayout, QVBoxLayout, QLabel, QToolBox, QPushButton, QTextEdit, QLineEdit)
-from PyQt5.QtGui import QColor, QFont, QIcon
+from PyQt5.QtCore import *  # noqa
+from PyQt5.QtWidgets import (
+    QWidget,
+    QGridLayout,
+    QLabel,
+    QToolBox,
+    QTextEdit,
+)
+from PyQt5.QtGui import QFont, QIcon
 
 
 class ReadmeWindow(QWidget):
+    """README GUI."""
 
     def __init__(self, readme_text):
-        """Initialize ReadmeWindow"""
+        """Initialize ReadmeWindow."""
         super().__init__()
         # icon path
         self.icon_path = ':/plugins/cruisetools/icons'
@@ -63,7 +69,7 @@ class ReadmeWindow(QWidget):
         # add toolbox to layout
         layout.addWidget(toolbox, 2, 0)
         
-        # splot readme text in text blocks
+        # plot readme text in text blocks
         blocks = readme_text.split('\n## ')
         
         # handle title and version block
@@ -79,8 +85,8 @@ class ReadmeWindow(QWidget):
         version.setText(version_text)
         
         # create toolbox content from text blocks
-        idx = 0
-        for block in blocks[1:]:
+        #idx = 0
+        for idx, block in enumerate(blocks[1:]):
             # get block title and content
             block_title, md = block.split('\n', 1)
             
@@ -90,7 +96,7 @@ class ReadmeWindow(QWidget):
             # create text field
             text = QTextEdit()
             
-            # mak text field read only
+            # make text field read only
             text.setReadOnly(True)
             
             # add content
@@ -105,13 +111,13 @@ class ReadmeWindow(QWidget):
             # set block icon
             toolbox.setItemIcon(idx, icon)
             
-            idx = idx + 1
+            #idx = idx + 1
         
         # set window layout
         self.setLayout(layout)
 
     def markdown(self, md):
-        """Convert Markdown Readme to HTML (cheap solution)
+        """Convert Markdown Readme to HTML (cheap solution).
 
         Parameters
         ----------
@@ -153,7 +159,7 @@ class ReadmeWindow(QWidget):
         return html
 
     def get_icon(self, title):
-        """Get Icon for Readme Dialog
+        """Get Icon for Readme Dialog.
 
         Parameters
         ----------
@@ -175,6 +181,8 @@ class ReadmeWindow(QWidget):
             icon = QIcon(f'{self.icon_path}/vector_menu.png')
         elif title == 'planning':
             icon = QIcon(f'{self.icon_path}/planning_menu.png')
+        elif title == 'logging':
+            icon = QIcon(f'{self.icon_path}/log_position.png')
         else:
             icon = QIcon(f'{self.icon_path}/icon_grey.png')
         

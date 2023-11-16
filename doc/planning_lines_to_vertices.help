@@ -1,1 +1,2 @@
 Convenience function to extract vertices from line planning layer.
+Optionally, add geographic coordinates of vertices to attribute table.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import processing
 
@@ -23,8 +22,9 @@ from .bathymetry import Bathymetry
 from .. import utils
 
 class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
-    """Export Shaded Bathymetry"""
-    #processing parameters
+    """Export Shaded Bathymetry."""
+    
+    # Processing parameters
     # inputs:
     INPUT = 'INPUT'
     OPTIONS = 'OPTIONS'
@@ -34,7 +34,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        """Initialize ExportShadedBathymetry"""
+        """Initialize ExportShadedBathymetry."""
         super(ExportShadedBathymetry, self).__init__()
         
         # available shading methods
@@ -57,10 +57,10 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         self.initConfig()
 
     def initConfig(self):
-        """Get default values from CruiseToolsConfig"""
+        """Get default values from CruiseToolsConfig."""
         self.shader = self.config.get(self.module, 'shader')
 
-    def initAlgorithm(self, config=None):
+    def initAlgorithm(self, config=None):  # noqa
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 name=self.INPUT,
@@ -104,7 +104,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
                 createByDefault=True)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):
+    def processAlgorithm(self, parameters, context, feedback):  # noqa
         # get input variables
         raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT, context)
         shader = self.parameterAsEnum(parameters, self.SHADER, context)
@@ -115,7 +115,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         feedback.pushConsoleInfo(self.tr(f'Shader: {self.shaders[shader]}\n'))
         
         # set new default values in config
-        feedback.pushConsoleInfo(self.tr(f'Storing new default settings in config...'))
+        feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         self.config.set(self.module, 'shader', shader)
         
         # create empty temp file variables
@@ -138,7 +138,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         tmp_folder = QgsProcessingUtils.tempFolder()
         
         # render selected layer with defined symbology as rgb raster
-        feedback.pushConsoleInfo(self.tr(f'Rendering layer to RGB...'))
+        feedback.pushConsoleInfo(self.tr('Rendering layer to RGB...'))
         rgb_file = os.path.join(tmp_folder, f'rgb.{self.ext}')
         error, result = self.create_rgb(raster_layer, rgb_file)
         if error:
@@ -162,7 +162,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         # create shading file
         if hillshade or combo or multi:
             # create hillshade
-            feedback.pushConsoleInfo(self.tr(f'Creating shading grid...'))
+            feedback.pushConsoleInfo(self.tr('Creating shading grid...'))
             # if raster is z positive down flip illumination direction
             if z_pos_down:
                 self.azimuth = (self.azimuth - 180.) % 360.
@@ -170,7 +170,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         
         elif slope:
             # create slope
-            feedback.pushConsoleInfo(self.tr(f'Creating shading grid...'))
+            feedback.pushConsoleInfo(self.tr('Creating shading grid...'))
             shading_file = self.slopeshade(raster_layer, self.slope_z_factor, scale, shading_file, options)
         
         # 70% done
@@ -179,7 +179,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         feedback.setProgress(70)
         
         # shading computation
-        feedback.pushConsoleInfo(self.tr(f'Calculating output raster...'))
+        feedback.pushConsoleInfo(self.tr('Calculating output raster...'))
         syntax = 'uint8(((A/255.)*(((B*0.5)+(255.*0.5))/255.))*255)'
         output = self.shade(rgb_file, shading_file, syntax, crs_raster, output, options)
         
@@ -189,7 +189,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         feedback.setProgress(99)
         
         # remove temp files
-        feedback.pushConsoleInfo(self.tr(f'Deleting temporary files...\n'))
+        feedback.pushConsoleInfo(self.tr('Deleting temporary files...\n'))
         for file in [rgb_file, shading_file]:
             if os.path.isfile(str(file)):
                 os.remove(file)
@@ -205,7 +205,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         return result
 
     def create_rgb(self, raster_layer, output):
-        """Render and write RGB file
+        """Render and write RGB file.
 
         Parameters
         ----------
@@ -243,7 +243,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         return 0, output
 
     def get_scale(self, crs):
-        """Get scale for vertical units in grid
+        """Get scale for vertical units in grid.
 
         Parameters
         ----------
@@ -259,7 +259,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         # if the grid is geographic, vertical will be interpreted as degree
         # hence the scale needs to be 0.000009.
         if crs.isGeographic():
-            scale = 10**7 / 90 # 111111.111...
+            scale = 10**7 / 90  # 111111.111...
         # otherwise it's considered in meters and the scale is 1.
         else:
             scale = 1.0
@@ -267,7 +267,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         return scale
 
     def hillshade(self, input, z_factor, scale, azimuth, altitude, combined, multidirectional, output, options):
-        """Create hillshade grid from raster input
+        """Create hillshade grid from raster input.
 
         Parameters
         ----------
@@ -315,7 +315,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         return output
 
     def slopeshade(self, input, z_factor, scale, output, options):
-        """Create slope shading grid from raster input
+        """Create slope shading grid from raster input.
 
         Parameters
         ----------
@@ -344,7 +344,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         # slope parameters
         params = {'INPUT': input,
                   'BAND': 1,
-                  'SCALE': scale/z_factor,
+                  'SCALE': scale / z_factor,
                   'COMPUTE_EDGES': True,
                   'OPTIONS': options,
                   'OUTPUT': tmp_slope}
@@ -403,7 +403,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         return output
 
     def shade(self, rgb, shading_file, syntax, crs, output, options):
-        """Create shaded RGB grid from plain color grid and up to two additional shading grids
+        """Create shaded RGB grid from plain color grid and up to two additional shading grids.
 
         Parameters
         ----------
@@ -463,26 +463,26 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         
         return output
 
-    def name(self):
+    def name(self):  # noqa
         return 'exportshadedbathymetry'
 
-    def icon(self):
+    def icon(self):  # noqa
         icon = QIcon(f'{self.plugin_dir}/icons/export_shaded_bathymetry.png')
         return icon
 
-    def displayName(self):
+    def displayName(self):  # noqa
         return self.tr('Export Shaded Bathymetry')
 
-    def group(self):
+    def group(self):  # noqa
         return self.tr('Bathymetry')
 
-    def groupId(self):
+    def groupId(self):  # noqa
         return 'bathymetry'
 
-    def tr(self, string):
+    def tr(self, string):  # noqa
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):
+    def shortHelpString(self):  # noqa
         doc = f'{self.plugin_dir}/doc/export_shaded_bathymetry.help'
         if not os.path.exists(doc):
             return ''
@@ -490,5 +490,5 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
             help = helpf.read()
         return help
 
-    def createInstance(self):
+    def createInstance(self):  # noqa
         return ExportShadedBathymetry()

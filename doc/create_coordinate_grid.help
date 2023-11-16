@@ -1,0 +1,7 @@
+Create a vector line layer with geographic coordinate grids lines (EPSG:4326).
+The grid can be created with different intervals in both Longitude and Latidude. If you consider creating a grid with less than 1 degree spacing, you can type fractions (like "1/2" or "1/30") in the fields.
+Regarding the non-metric coversion from degree to minutes, the following intervals can make sense:
+[1/60, 1/30, 1/20, 1/15, 1/10, 1/6, 1/5, 1/4, 1/2, 1/3, 1/2, 1, 2, 3, 5, 6, 9, 10, 15, 18, 20, 30]
+The "Pole Gap" parameter specifies, how far the grid will be created towards the North and South Pole. A coordinate grid up to -90°/90° can look strange in some projections. The minimum and maximum Latitude lines (90° - "pole gap") will always be generated.
+The "Density Factor" specifies the number of vertices within one interval. For projections with curved grid lines, this avoids angular artifacts and ensures smooth curved lines.
+A convenient style will be loaded with labels and a scale dependent filter. The -180° (180°W) grid line will not be labeled to avoid double labels in polar stereographic projections.

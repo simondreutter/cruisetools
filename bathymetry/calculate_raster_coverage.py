@@ -1,16 +1,15 @@
-# -*- coding: utf-8 -*-
 import os
 import processing
 
 from qgis.core import (
     QgsGeometry,
     QgsDistanceArea,
-    QgsProcessing,
     QgsProcessingAlgorithm,
     QgsProcessingParameterRasterLayer,
     QgsProcessingParameterBand,
     QgsProcessingParameterFileDestination,
-    QgsUnitTypes)
+    QgsUnitTypes
+)
 
 from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
@@ -19,8 +18,9 @@ from .bathymetry import Bathymetry
 from .. import utils
 
 class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
-    """Calculate Raster Coverage"""
-    #processing parameters
+    """Calculate Raster Coverage."""
+    
+    # Processing parameters
     # inputs:
     INPUT = 'INPUT'
     BAND = 'BAND'
@@ -32,13 +32,13 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
-        """Initialize CalculateRasterCoverage"""
+        """Initialize CalculateRasterCoverage."""
         super(CalculateRasterCoverage, self).__init__()
         
         # area of Bremen in km^2
         self.bremen_area = 419.4
 
-    def initAlgorithm(self, config=None):
+    def initAlgorithm(self, config=None):  # noqa
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 name=self.INPUT,
@@ -63,9 +63,9 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
                 defaultValue=None,
                 optional=True,
                 createByDefault=False)
-        )    
+        )
 
-    def processAlgorithm(self, parameters, context, feedback):
+    def processAlgorithm(self, parameters, context, feedback):  # noqa
         # get input variables
         raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT, context)
         band_number = self.parameterAsInt(parameters, self.BAND, context)
@@ -102,10 +102,10 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         feedback.setProgress(20)
         
         # get area of extent
-        feedback.pushConsoleInfo(self.tr(f'Measuring area of raster rectangle...'))
+        feedback.pushConsoleInfo(self.tr('Measuring area of raster rectangle...'))
         area = da.measureArea(extent)
         
-        # convert area from 
+        # convert area
         area_m2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaSquareMeters)
         
         # 30% done
@@ -113,7 +113,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         
         # check if NoData value is set
         if provider.sourceHasNoDataValue(band_number):
-            feedback.pushConsoleInfo(self.tr(f'Calculating NoData percentage...'))
+            feedback.pushConsoleInfo(self.tr('Calculating NoData percentage...'))
             # unique values parameters
             rastervalue_params = {'INPUT': raster_layer,
                                   'BAND': band_number}
@@ -129,7 +129,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
             nodata_percentage = nodata_cells / cells
             
             # calclate data coverage
-            feedback.pushConsoleInfo(self.tr(f'Calculating data coverage...\n'))
+            feedback.pushConsoleInfo(self.tr('Calculating data coverage...\n'))
             coverage_m2 = area_m2 * (1 - nodata_percentage)
             coverage_percentage = (1 - nodata_percentage)
         else:
@@ -144,7 +144,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         area_km2 = area_m2 / (1000 * 1000)
         coverage_km2 = coverage_m2 / (1000 * 1000)
         
-        feedback.pushConsoleInfo(self.tr(f'------------------------------------------\n'))
+        feedback.pushConsoleInfo(self.tr('------------------------------------------\n'))
         
         feedback.pushConsoleInfo(self.tr(f'Raster Coverage of Layer [ {name} ]:\n'))
         
@@ -155,7 +155,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         
         feedback.pushConsoleInfo(self.tr(f'This is {round(coverage_km2 / self.bremen_area, 2)} times the area of Bremen\n'))
         
-        feedback.pushConsoleInfo(self.tr(f'------------------------------------------\n'))
+        feedback.pushConsoleInfo(self.tr('------------------------------------------\n'))
         
         # 100% done
         feedback.setProgress(100)
@@ -173,7 +173,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         return result
 
     def write_output(self, name, result, output):
-        """Write output to TXT file
+        """Write output to TXT file.
 
         Parameters
         ----------
@@ -202,26 +202,26 @@ This is {round(coverage_km2 / self.bremen_area, 2)} times the area of Bremen
         with open(output, 'w') as f:
             f.write(content)
 
-    def name(self):
+    def name(self):  # noqa
         return 'calculaterastercoverage'
 
-    def icon(self):
+    def icon(self):  # noqa
         icon = QIcon(f'{self.plugin_dir}/icons/calculate_raster_coverage.png')
         return icon
 
-    def displayName(self):
+    def displayName(self):  # noqa
         return self.tr('Calculate Raster Coverage')
 
-    def group(self):
+    def group(self):  # noqa
         return self.tr('Bathymetry')
 
-    def groupId(self):
+    def groupId(self):  # noqa
         return 'bathymetry'
 
-    def tr(self, string):
+    def tr(self, string):  # noqa
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):
+    def shortHelpString(self):  # noqa
         doc = f'{self.plugin_dir}/doc/calculate_raster_coverage.help'
         if not os.path.exists(doc):
             return ''
@@ -229,5 +229,5 @@ This is {round(coverage_km2 / self.bremen_area, 2)} times the area of Bremen
             help = helpf.read()
         return help
 
-    def createInstance(self):
+    def createInstance(self):  # noqa
         return CalculateRasterCoverage()

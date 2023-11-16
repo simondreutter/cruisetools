@@ -1,5 +1,5 @@
 # Cruise Tools
-*v2.0.1 [Barents Sea]*
+*v2.1 [Atlantic]*
 
 ## Info
 **The toolbox you need for marine research cruises (planning and stuff)!**  
@@ -24,7 +24,7 @@ ___
 
 ### Export Shaded Bathymetry
 While it's nice to view your (floating point) bathymetry in color and with an ad-hoc hillshade in QGIS, once in a while you need to have a colored and shaded RGB version of the grid for external applications of different sorts. To create this, the necessary procedure was usually very time consuming and awkward, so we built in a set of raster calculations that do the job for you. All you need to do is select a grid which has all colors set to your liking, and select the shading method.
-Cruise Tools offers three multiplication based shading modes:  
+Cruise Tools offers four multiplication based shading modes:  
   - **Hillshade** is shaded with a synthetic light source, 315° Azimuth, 45° Altitude
   - **Slope** is shaded with the stretched slope inclination
   - **Combined** is shaded with a combination of Hillshade and Slope, bringing together the best aspects of both methods. Also widely known as *Simon's magical relief visualization*
@@ -62,6 +62,10 @@ You just selected an area of interest (or multiple) for your cruise and now you 
 **\*** All measurements are ellipsoidal based on the project's CRS ellipsoid. Latitude/Longitude coordinates refer to `WGS84 (EPSG:4326)`.
 ___
 
+### Create Coordinate Grid
+You need a geographic coordinate grid (EPSG:4326) for orientation or smooth lines for your maps with curved coordinate grids. Cruise Tools can create that for you in specified intervals plus you get it delivered with a handy scale-dependent style.
+___
+
 ### Swap Vectors
 This is a helper tool for contour lines since bathymetry/topography grids sometimes come positive up and sometimes positive down. Depending on this the contour line vectors might have the wrong direction and need to be swapped in order to set the labels right. Use Cruise Tools to flip those vector directions around like it’s nothing.
 
@@ -87,6 +91,10 @@ ___
 
 ### Export to Bridge
 Export a planning layer to your vessel specific exchange format. The export tool works with both point and line layers. Line layers will be converted to vertices temporarily. If a selection in the planning layer exists, only selected features will be exported.
+
+## Logging
+### Log Position
+The Logging tool is meant to create a position and time based event log within a point feature layer in combination with the `PosiView` plugin. To use it you first need to create a point feature layer (eg. via Create Planning File). Then, Log Position needs to be configured via the Log Position Settings dialog (select point feature layer, select PosiView vehicle, create event presets, etc.). Use the hotkey (`F10`) or click the Log Position button to log events along your track or dive.
 
 ## Issues
 If you have any issues with the plugin, we are on GitHub:  

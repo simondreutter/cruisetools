@@ -122,6 +122,7 @@ def return_success():
                         'Boom',
                         'Cool',
                         'Çüş',
+                        'Cute',
                         'Habibi',
                         'Heureka',
                         'Hooray',

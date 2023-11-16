@@ -2,9 +2,9 @@
 name=Cruise Tools
 qgisMinimumVersion=3.22
 description=The toolbox you need for marine research cruises (planning and stuff)!
-version=2.0.1
+version=2.1
 author=Simon Dreutter & Fynn Warnke
-email=simon.dreutter@awi.de;fynn.warnke@awi.de
+email=simon.dreutter@awi.de / fynn.warnke@awi.de
 
 about=
   On marine research cruises, one has to perform reoccuring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer two click (or three click) solutions for some of these tasks.
@@ -17,9 +17,11 @@ about=
     - generating DD, DDM, and XY coordinate attributes for point features
     - generating length (m, km, and nm) attributes for line features
     - generating area (m2 and km2) attributes for polygon features
-    - as well as some cruise planning mechanisms like estimate MBES coverage
+    - generating geographic coordinate grid feature layers
+    - cruise planning mechanisms like estimate MBES coverage
+    - event logging in combination with PosiView
   
-  Cruise Tools is developed for Windows 10, but we intend to check OS compatibility in the future.
+  Cruise Tools is developed for Windows, but we intend to check OS compatibility in the future.
 
 tracker=https://github.com/simondreutter/cruisetools/issues
 repository=https://github.com/simondreutter/cruisetools
@@ -32,10 +34,14 @@ experimental=False
 deprecated=False
 
 changelog=
+  2.1 (2023-11-14) [Atlantic]
+    - added "Log Position"
+    - added load style from reference raster layer to "Load Bathymetry"
+    - added "Create Coordinate Grid"
   2.0.1 (2022-07-27) [Barents Sea]
     - fixed "Load Bathymetry" layer tree issue
     - fixed "Swap Vectors"
-    - added Multidrectional shading to "Export Shaded Bathymetry"
+    - added Multidirectional shading to "Export Shaded Bathymetry"
     - some code harmonization
   2.0 (2020-10-04) [Barents Sea]
     - Version 2.0 was due with some major rewrites

@@ -1,6 +1,4 @@
-# -*- coding: utf-8 -*-
 import os
-import math
 
 from qgis.core import (
     edit,
@@ -12,7 +10,8 @@ from qgis.core import (
     QgsGeometry,
     QgsMultiLineString,
     QgsUnitTypes,
-    QgsWkbTypes)
+    QgsWkbTypes
+)
 
 from qgis.PyQt.QtCore import QVariant
 
@@ -20,16 +19,16 @@ from .. import config
 from .. import utils
 
 class Vector(object):
-    """Base class for vector modules"""
+    """Base class for vector modules."""
 
     def __init__(self):
-        """Initialize Vector"""
+        """Initialize Vector."""
         self.module = 'VECTOR'
         self.config = config.CruiseToolsConfig()
         self.plugin_dir = f'{os.path.dirname(__file__)}/..'
 
     def get_features(self, layer, selected=True):
-        """Get features from vector layer
+        """Get features from vector layer.
 
         Parameters
         ----------
@@ -45,7 +44,7 @@ class Vector(object):
 
         """
         # check if any features are selected and only use those in that case
-        if selected == False:
+        if selected is False:
             features = layer.getFeatures()
         elif layer.selectedFeatureCount() == 0:
             features = layer.getFeatures()
@@ -55,7 +54,7 @@ class Vector(object):
         return features
     
     def select_features(self, layer, filter=''):
-        """Select features from layer by filter expression
+        """Select features from layer by filter expression.
 
         Parameters
         ----------
@@ -75,7 +74,7 @@ class Vector(object):
         return selection
 
     def delete_features(self, layer, features):
-        """Delete features from layer
+        """Delete features from layer.
 
         Parameters
         ----------
@@ -91,7 +90,7 @@ class Vector(object):
         return
 
     def delete_fields_by_prefix(self, layer, prefix):
-        """Delete fields from layer attributes with matching prefix
+        """Delete fields from layer attributes with matching prefix.
 
         Parameters
         ----------
@@ -117,7 +116,7 @@ class Vector(object):
         return
 
     def write_point_coordinates(self, layer, transform_context, latlon_DD=False, latlon_DDM=False, xy=False, crs_xy=None):
-        """Write the point coordinates (LAT/LONG) of the SHP file into the attribute table
+        """Write the point coordinates (LAT/LONG) of the SHP file into the attribute table.
 
         Parameters
         ----------
@@ -150,10 +149,10 @@ class Vector(object):
         geom_type = QgsWkbTypes.geometryType(layer.wkbType())
         multi_type = QgsWkbTypes.isMultiType(layer.wkbType())
         if (geom_type != 0) or multi_type:
-            return 1, 'This didn\'t work. Is your layer a MULTIPOINT layer? If so, convert it to POINT, because only POINT layers are supported.\n' 
+            return 1, 'This didn\'t work. Is your layer a MULTIPOINT layer? If so, convert it to POINT, because only POINT layers are supported.\n'
         
         # if output CRS for XY is not valid, set to layer CRS
-        if not crs_xy.isValid():
+        if (crs_xy is None) or (crs_xy is not None and not crs_xy.isValid()):
             crs_xy = layer.crs()
         
         # set some field names
@@ -172,71 +171,77 @@ class Vector(object):
         trans4326 = QgsCoordinateTransform(crs_layer, QgsCoordinateReferenceSystem('EPSG:4326'), transform_context)
         transXY = QgsCoordinateTransform(crs_layer, crs_xy, transform_context)
         
-        with edit(layer):
-            # delete fields previously created by Cruise Tools
-            prefix_list = ['lat_D', 'lon_D', 'x_epsg', 'y_epsg']
-            self.delete_fields_by_prefix(layer, prefix_list)
+        # with edit(layer):
+            
+        if not layer.isEditable():
+            layer.startEditing()
+            
+        # delete fields previously created by Cruise Tools
+        prefix_list = ['lat_D', 'lon_D', 'x_epsg', 'y_epsg']
+        self.delete_fields_by_prefix(layer, prefix_list)
+        
+        if latlon_DD:
+            # create fields for lat_DD and lon_DD coordinates in attribute table
+            layer.addAttribute(QgsField(lat_DD_field, QVariant.Double, len=10, prec=6))
+            layer.addAttribute(QgsField(lon_DD_field, QVariant.Double, len=10, prec=6))
+        
+        if latlon_DDM:
+            # create fields for lat_DDM and lon_DDM coordinates in attribute table
+            layer.addAttribute(QgsField(lat_DDM_field, QVariant.String, len=11))
+            layer.addAttribute(QgsField(lon_DDM_field, QVariant.String, len=12))
+        
+        if xy:
+            # set field precision depending on if CRS is geographic or not
+            if crs_xy.isGeographic():
+                prec = 6
+            else:
+                prec = 2
+            # create fields for lat_DDM and lon_DDM coordinates in attribute table
+            layer.addAttribute(QgsField(x_field, QVariant.Double, len=10, prec=prec))
+            layer.addAttribute(QgsField(y_field, QVariant.Double, len=10, prec=prec))
+        
+        # update attribute table fields
+        layer.updateFields()
+        
+        # get all features
+        features = self.get_features(layer, selected=False)
+        
+        for feature in features:
+            # get geometry of feature
+            geom = feature.geometry().asPoint()
+            
+            # transform geometry to EPSG:4326 CRS
+            geom4326 = trans4326.transform(geom)
+            
+            # transform geometry to EPSG:4326 CRS
+            geomXY = transXY.transform(geom)
             
             if latlon_DD:
-                # create fields for lat_DD and lon_DD coordinates in attribute table
-                layer.addAttribute(QgsField(lat_DD_field, QVariant.Double, len=10, prec=6))
-                layer.addAttribute(QgsField(lon_DD_field, QVariant.Double, len=10, prec=6))
+                # set geometry of each feature in the vector layer into seperate fields
+                feature.setAttribute(feature.fieldNameIndex(lat_DD_field), geom4326.y())
+                feature.setAttribute(feature.fieldNameIndex(lon_DD_field), geom4326.x())
             
             if latlon_DDM:
-                # create fields for lat_DDM and lon_DDM coordinates in attribute table
-                layer.addAttribute(QgsField(lat_DDM_field, QVariant.String, len=11))
-                layer.addAttribute(QgsField(lon_DDM_field, QVariant.String, len=12))
+                # convert DD to DDM
+                lat_ddm, lon_ddm = utils.dd2ddm(geom4326.y(), geom4326.x())
+                # set DDM geometry of each feature
+                feature.setAttribute(feature.fieldNameIndex(lat_DDM_field), lat_ddm)
+                feature.setAttribute(feature.fieldNameIndex(lon_DDM_field), lon_ddm)
             
             if xy:
-                # set field precision depending on if CRS is geographic or not
-                if crs_xy.isGeographic():
-                    prec = 6
-                else:
-                    prec = 2
-                # create fields for lat_DDM and lon_DDM coordinates in attribute table
-                layer.addAttribute(QgsField(x_field, QVariant.Double, len=10, prec=prec))
-                layer.addAttribute(QgsField(y_field, QVariant.Double, len=10, prec=prec))
+                # set geometry of each feature in the vector layer into seperate fields
+                feature.setAttribute(feature.fieldNameIndex(x_field), geomXY.x())
+                feature.setAttribute(feature.fieldNameIndex(y_field), geomXY.y())
             
-            # update attribute table fields
-            layer.updateFields()
+            # update attribute table
+            layer.updateFeature(feature)
             
-            # get all features
-            features = self.get_features(layer, selected=False)
-            
-            for feature in features:
-                # get geometry of feature
-                geom = feature.geometry().asPoint()
-                
-                # transform geometry to EPSG:4326 CRS
-                geom4326 = trans4326.transform(geom)
-                
-                # transform geometry to EPSG:4326 CRS
-                geomXY = transXY.transform(geom)
-                
-                if latlon_DD:
-                    # set geometry of each feature in the vector layer into seperate fields
-                    feature.setAttribute(feature.fieldNameIndex(lat_DD_field), geom4326.y())
-                    feature.setAttribute(feature.fieldNameIndex(lon_DD_field), geom4326.x())
-                
-                if latlon_DDM:
-                    # convert DD to DDM
-                    lat_ddm, lon_ddm = utils.dd2ddm(geom4326.y(), geom4326.x())
-                    # set DDM geometry of each feature
-                    feature.setAttribute(feature.fieldNameIndex(lat_DDM_field), lat_ddm)
-                    feature.setAttribute(feature.fieldNameIndex(lon_DDM_field), lon_ddm)
-                
-                if xy:
-                    # set geometry of each feature in the vector layer into seperate fields
-                    feature.setAttribute(feature.fieldNameIndex(x_field), geomXY.x())
-                    feature.setAttribute(feature.fieldNameIndex(y_field), geomXY.y())
-                
-                # update attribute table
-                layer.updateFeature(feature)
+        layer.commitChanges()
         
         return 0, None
 
     def write_line_length(self, layer, ellipsoid, transform_context, m=False, km=False, nm=False):
-        """Write length attribute [m/km/nm] to layer
+        """Write length attribute [m/km/nm] to layer.
 
         Parameters
         ----------
@@ -279,64 +284,69 @@ class Vector(object):
         da.setSourceCrs(crs_layer, transform_context)
         da.setEllipsoid(ellipsoid)
         
-        with edit(layer):
-            # delete fields previously created by Cruise Tools
-            self.delete_fields_by_prefix(layer, prefix)
+        # with edit(layer):
+        if not layer.isEditable():
+            layer.startEditing()
             
-            # create fields for length_m and/or length_nm
+        # delete fields previously created by Cruise Tools
+        self.delete_fields_by_prefix(layer, prefix)
+        
+        # create fields for length_m and/or length_nm
+        if m:
+            layer.addAttribute(QgsField(m_field, QVariant.Double, len=15, prec=2))
+        if km:
+            layer.addAttribute(QgsField(km_field, QVariant.Double, len=15, prec=3))
+        if nm:
+            layer.addAttribute(QgsField(nm_field, QVariant.Double, len=15, prec=3))
+        
+        # update attribute table fields
+        layer.updateFields()
+        
+        # get all features
+        features = self.get_features(layer, selected=False)
+        
+        for feature in features:
+            # get geometry of feature
+            geom = feature.geometry()
+            
+            # measure feature length in meters
+            len = da.measureLength(geom)
+            
+            # set field values according to the calculated length
             if m:
-                layer.addAttribute(QgsField(m_field, QVariant.Double, len=15, prec=2))
+                len_m = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceMeters)
+                len_m = round(len_m, 2)
+                feature.setAttribute(layer.fields().indexFromName(m_field), len_m)
             if km:
-                layer.addAttribute(QgsField(km_field, QVariant.Double, len=15, prec=3))
+                len_km = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceKilometers)
+                len_km = round(len_km, 5)
+                feature.setAttribute(layer.fields().indexFromName(km_field), len_km)
             if nm:
-                layer.addAttribute(QgsField(nm_field, QVariant.Double, len=15, prec=3))
+                len_nm = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceNauticalMiles)
+                len_nm = round(len_nm, 5)
+                feature.setAttribute(layer.fields().indexFromName(nm_field), len_nm)
             
-            # update attribute table fields
-            layer.updateFields()
-            
-            # get all features
-            features = self.get_features(layer, selected=False)
-            
-            for feature in features:
-                # get geometry of feature
-                geom = feature.geometry()
-                
-                # measure feature length in meters
-                len  = da.measureLength(geom)
-                
-                # set field values according to the calculated length
-                if m:
-                    len_m = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceMeters)
-                    len_m = round(len_m, 2)
-                    feature.setAttribute(layer.fields().indexFromName(m_field), len_m)
-                if km:
-                    len_km = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceKilometers)
-                    len_km = round(len_km, 5)
-                    feature.setAttribute(layer.fields().indexFromName(km_field), len_km)
-                if nm:
+            # check if speed_kn exists
+            f_idx_speed = layer.fields().indexFromName('speed_kn')
+            f_idx_time = layer.fields().indexFromName('time_h')
+            if (f_idx_speed != -1) and (f_idx_time != -1):
+                # if yes, get value
+                speed_kn = feature.attributes()[f_idx_speed]
+                if speed_kn is not None:
+                    # if value not NULL, calculate time and write it to time_h field
                     len_nm = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceNauticalMiles)
-                    len_nm = round(len_nm, 5)
-                    feature.setAttribute(layer.fields().indexFromName(nm_field), len_nm)
+                    time_h = round(len_nm / speed_kn, 2)
+                    feature.setAttribute(f_idx_time, time_h)
+            
+            # update attribute table
+            layer.updateFeature(feature)
                 
-                # check if speed_kn exists
-                f_idx_speed = layer.fields().indexFromName('speed_kn')
-                f_idx_time = layer.fields().indexFromName('time_h')
-                if (f_idx_speed != -1) and (f_idx_time != -1):
-                    # if yes, get value
-                    speed_kn = feature.attributes()[f_idx_speed]
-                    if speed_kn != None:
-                        # if value not NULL, calculate time and write it to time_h field
-                        len_nm = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceNauticalMiles)
-                        time_h = round(len_nm / speed_kn, 2)
-                        feature.setAttribute(f_idx_time, time_h)
-                
-                # update attribute table
-                layer.updateFeature(feature)
+        layer.commitChanges()
         
         return 0, None
 
     def write_polygon_area(self, layer, ellipsoid, transform_context, m2=False, km2=False):
-        """Write area of all polygon features into attribute table
+        """Write area of all polygon features into attribute table.
 
         Parameters
         ----------
@@ -376,43 +386,48 @@ class Vector(object):
         da.setSourceCrs(crs_layer, transform_context)
         da.setEllipsoid(ellipsoid)
         
-        with edit(layer):
-            # delete fields previously created by Cruise Tools
-            self.delete_fields_by_prefix(layer, prefix)
+        # with edit(layer):
+        if not layer.isEditable():
+            layer.startEditing()
             
-            # create attribute table fields for specified units
+        # delete fields previously created by Cruise Tools
+        self.delete_fields_by_prefix(layer, prefix)
+        
+        # create attribute table fields for specified units
+        if m2:
+            layer.addAttribute(QgsField(m2_field, QVariant.Double, len=15, prec=2))
+        if km2:
+            layer.addAttribute(QgsField(km2_field, QVariant.Double, len=15, prec=3))
+            
+        layer.updateFields()
+        
+        # get all features
+        features = self.get_features(layer, selected=False)
+        
+        for feature in features:
+            # get geometry
+            geom = feature.geometry()
+            
+            # area in SQUARE METERS
+            area = da.measureArea(geom)
+            
+            # set field values according to calculated AREA
             if m2:
-                layer.addAttribute(QgsField(m2_field, QVariant.Double, len=15, prec=2))
+                area_m2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaSquareMeters)
+                feature.setAttribute(layer.fields().indexFromName(m2_field), area_m2)
             if km2:
-                layer.addAttribute(QgsField(km2_field, QVariant.Double, len=15, prec=3))
-                
-            layer.updateFields()
+                area_km2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaSquareKilometers)
+                feature.setAttribute(layer.fields().indexFromName(km2_field), area_km2)
             
-            # get all features
-            features = self.get_features(layer, selected=False)
+            # update attribute table
+            layer.updateFeature(feature)
             
-            for feature in features:
-                # get geometry
-                geom = feature.geometry()
-                
-                # area in SQUARE METERS
-                area = da.measureArea(geom)
-                
-                # set field values according to calculated AREA
-                if m2:
-                    area_m2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaSquareMeters)
-                    feature.setAttribute(layer.fields().indexFromName(m2_field), area_m2)
-                if km2:
-                    area_km2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaSquareKilometers)
-                    feature.setAttribute(layer.fields().indexFromName(km2_field), area_km2)
-                
-                # update attribute table
-                layer.updateFeature(feature)
+        layer.commitChanges()
         
         return 0, None
 
     def swap_vectors(self, layer, selected=True):
-        """Swap / reverse vector direction for line layers
+        """Swap / reverse vector direction for line layers.
 
         Parameters
         ----------
@@ -429,21 +444,26 @@ class Vector(object):
             output or error msg if error == 1
 
         """
-        with edit(layer):
-            # get features
-            features = self.get_features(layer, selected=selected)
+        # with edit(layer):
+        if not layer.isEditable():
+            layer.startEditing()
             
-            # reverse line direction for each (selected) feature
-            for feature in features:
-                geom = feature.geometry()
-                if geom.isMultipart():
-                    mls = QgsMultiLineString()
-                    for line in geom.asGeometryCollection():
-                        mls.addGeometry(line.constGet().reversed())
-                    newgeom = QgsGeometry(mls)
-                    layer.changeGeometry(feature.id(), newgeom)
-                else:
-                    newgeom = QgsGeometry(geom.constGet().reversed())
-                    layer.changeGeometry(feature.id(), newgeom)
+        # get features
+        features = self.get_features(layer, selected=selected)
         
-        return 0,  None
+        # reverse line direction for each (selected) feature
+        for feature in features:
+            geom = feature.geometry()
+            if geom.isMultipart():
+                mls = QgsMultiLineString()
+                for line in geom.asGeometryCollection():
+                    mls.addGeometry(line.constGet().reversed())
+                newgeom = QgsGeometry(mls)
+                layer.changeGeometry(feature.id(), newgeom)
+            else:
+                newgeom = QgsGeometry(geom.constGet().reversed())
+                layer.changeGeometry(feature.id(), newgeom)
+            
+        layer.commitChanges()
+        
+        return 0, None

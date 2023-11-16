@@ -1,4 +1,4 @@
 Create a vector layer with some preset fields and a useful style for station (Point) and survey/route (LineString) planning.
 The planning files are compatible with the other planning functions like [Export to Bridge] and other Cruise Tools will add some extras, like [Write Line Length] populating the "time_h" field if "speed_kn" is filled in the planning line file.
-Check "MBES Planning Layer" if additional Swath Angle field shall be added for MBES coverage estimation.
+Check "MBES Planning Layer" if additional "Swath Angle" field(s) shall be added for MBES coverage estimation.
 
