@@ -1,0 +1,5 @@
+Create parallel lines for an input line planning layer.
+Parallel line features will be added inplace to the original layer. Changes will not be commited, so the layer will be in edit mode and changes can be discarded.
+Set the offset in meters. Your line features will be transformed to UTM for the offset calculation to minimize distortion, and then back to the original layer CRS.
+Parallel lines can be created starboard (right) or port (left) side of the initial line.
+Set the number of parallel lines to be created.

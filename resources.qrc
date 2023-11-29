@@ -16,6 +16,7 @@
         <file>icons/planning_menu.png</file>
         <file>icons/create_planning_file.png</file>
         <file>icons/planning_lines_to_vertices.png</file>
+        <file>icons/parallel_line_planning.png</file>
         <file>icons/estimate_mbes_coverage.png</file>
         <file>icons/export_to_bridge.png</file>
         <file>icons/log_position.png</file>

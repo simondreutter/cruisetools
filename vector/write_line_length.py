@@ -1,5 +1,4 @@
 import os
-# import processing
 
 from qgis.core import (
     QgsProcessing,
@@ -11,12 +10,11 @@ from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
-# from .. import config
 from .. import utils
 
 class WriteLineLength(QgsProcessingAlgorithm, Vector):
     """Write Line Length."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -43,7 +41,7 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterVectorLayer(
                 name=self.INPUT,
-                description=self.tr('Input Vector Layer'),
+                description=self.tr('Input vector layer'),
                 types=[QgsProcessing.TypeVectorLine],
                 defaultValue=None,
                 optional=False)
@@ -65,7 +63,7 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 name=self.NM,
-                description=self.tr('Nautical Miles'),
+                description=self.tr('Nautical miles'),
                 optional=False,
                 defaultValue=self.nm)
         )

@@ -21,7 +21,7 @@ class CruiseToolsConfig:
           colorramp         : default shading type (0: haxby, 1: blues, 2: rainbow)
           max               : depth range maximum (positive up)
           min               : depth range minimum (positive up)
-          shader            : default shading type (0: hillshade, 1: slope, 2: combo)
+          shader            : default shading type (0: hillshade, 1: slope, 2: combined, 4: multidirectional)
           raster_layer      : raster styling reference layer
         
         [CONTOUR]
@@ -54,6 +54,9 @@ class CruiseToolsConfig:
           raster_layer      : default raster layer for MBES coverage calculation (if available in project)
           latlon_dd         : default setting for writing Lat Lon DD coordinates (Planning Line to Vertices)
           latlon_ddm        : default setting for writing Lat Lon DDM coordinates (Planning Line to Vertices)
+          offset            : default offset for parallel line planning
+          side              : default setting for parallel line planning (0: starboard, 1: port)
+          number_of_lines   : default number of lines for parallel line planning
           
         [LOGGING]
           layer_logging     : default Point layer for survey logging
@@ -110,6 +113,9 @@ class CruiseToolsConfig:
                 'raster_layer'     : '',
                 'latlon_dd'        : True,
                 'latlon_ddm'       : True,
+                'offset'           : 100,
+                'side'             : 0,
+                'number_of_lines'  : 1,
             }
             self.config['LOGGING'] = {
                 'layer_logging'    : '',

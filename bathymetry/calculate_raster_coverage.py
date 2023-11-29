@@ -42,14 +42,14 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 name=self.INPUT,
-                description=self.tr('Input Raster Layer'),
+                description=self.tr('Input raster layer'),
                 defaultValue=None,
                 optional=False)
         )
         self.addParameter(
             QgsProcessingParameterBand(
                 name=self.BAND,
-                description=self.tr('Band Number'),
+                description=self.tr('Band number'),
                 defaultValue=1,
                 parentLayerParameterName=self.INPUT,
                 optional=False,

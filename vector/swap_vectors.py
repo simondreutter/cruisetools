@@ -1,5 +1,4 @@
 import os
-# import processing
 
 from qgis.core import (
     QgsProcessing,
@@ -11,12 +10,11 @@ from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
-# from .. import config
 from .. import utils
 
 class SwapVectors(QgsProcessingAlgorithm, Vector):
     """Swap Vectors."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -32,7 +30,7 @@ class SwapVectors(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterVectorLayer(
                 name=self.INPUT,
-                description=self.tr('Input Vector Layer'),
+                description=self.tr('Input vector layer'),
                 types=[QgsProcessing.TypeVectorLine],
                 defaultValue=None,
                 optional=False)
@@ -40,7 +38,7 @@ class SwapVectors(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 name=self.SELECTED,
-                description=self.tr('Swap Only Selected Features'),
+                description=self.tr('Swap only selected features'),
                 optional=False,
                 defaultValue=False)
         )
@@ -50,15 +48,6 @@ class SwapVectors(QgsProcessingAlgorithm, Vector):
         self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         self.selected = self.parameterAsBoolean(parameters, self.SELECTED, context)
         
-        result = {}
-        
-        return result
-
-    def postProcessAlgorithm(self, context, feedback):  # noqa
-        # layer in-place editing is not working very well in the processAlgortihm
-        # therefore it was moved here to post processing
-        
-        # run the function from Vector base class
         feedback.pushConsoleInfo(self.tr('Swapping vectors...\n'))
         error, result = self.swap_vectors(self.vector_layer, selected=self.selected)
         if error:
@@ -74,6 +63,8 @@ class SwapVectors(QgsProcessingAlgorithm, Vector):
         result = {self.OUTPUT : self.vector_layer}
         
         return result
+
+
 
     def name(self):  # noqa
         return 'swapvectors'

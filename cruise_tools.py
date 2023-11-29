@@ -306,12 +306,16 @@ class CruiseTools:  # noqa
             f'measurement ellispoid ({QgsProject.instance().crs().ellipsoidAcronym()}).'
         )
         
+        vector_menu.addSeparator()
+        
         # create coordinate grid button
         icon = QIcon(f'{icon_path}/create_coordinate_grid.png')  # noqa
         create_coordinate_grid = vector_menu.addAction(icon, self.tr('Create Coordinate Grid'), self.run_create_coordinate_grid)
         create_coordinate_grid.setToolTip(
             f'Create a geographic coordinate grid feature layer.'
         )
+        
+        vector_menu.addSeparator()
         
         # swap vectors button
         icon = QIcon(f'{icon_path}/swap_vectors.png')  # noqa
@@ -346,12 +350,17 @@ class CruiseTools:  # noqa
         planning_lines_to_vertices = planning_menu.addAction(icon, self.tr('Planning Lines to Vertices'), self.run_planning_lines_to_vertices)
         planning_lines_to_vertices.setToolTip('Extract vertices from planning line layer.')
         
+        # parallel line planning
+        icon = QIcon(f'{icon_path}/parallel_line_planning.png')  # noqa
+        parallel_line_planning = planning_menu.addAction(icon, self.tr('Parallel Line Planning'), self.run_parallel_line_planning)
+        parallel_line_planning.setToolTip('Plan parallel survey lines.')
+        
         planning_menu.addSeparator()
         
         # estimate mbes coverage
         icon = QIcon(f'{icon_path}/estimate_mbes_coverage.png')  # noqa
-        planning_lines_to_vertices = planning_menu.addAction(icon, self.tr('Estimate MBES Coverage'), self.run_estimate_mbes_coverage)
-        planning_lines_to_vertices.setToolTip(
+        estimate_mbes_coverage = planning_menu.addAction(icon, self.tr('Estimate MBES Coverage'), self.run_estimate_mbes_coverage)
+        estimate_mbes_coverage.setToolTip(
             'Estimate MBES coverage for a survey planning line.\n\n'
             'Survey settings can be set in the dialog.'
         )
@@ -393,7 +402,7 @@ class CruiseTools:  # noqa
         self.logPosition.hovered.connect(self.check_posiview_plugin)
         self.logPosition.triggered.connect(self.run_log_position)
         self.logPosition.setMenu(logging_menu)
-        self.check_posiview_plugin(showMessage=False)
+        self.check_posiview_plugin(show_message=False)
         
         self.actions.append(self.logPosition)  # required for proper unloading
         self.iface.addPluginToMenu(self.menu, self.logPosition)  # add `planning_menu` to menu (Plugins > Cruise Tools)
@@ -526,14 +535,21 @@ class CruiseTools:  # noqa
         """Run CreatePlanningFile module."""
         result = processing.execAlgorithmDialog('cruisetools:createplanningfile', {})
         if not result == {}:
-            iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Point Planning file: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
+            iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Point planning file: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
         return
 
     def run_planning_lines_to_vertices(self):
         """Run PlanningLinesToVertices module."""
         result = processing.execAlgorithmDialog('cruisetools:planninglinestovertices', {})
         if not result == {}:
-            iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Line Vertices file: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
+            iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Line vertices file: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
+        return
+
+    def run_parallel_line_planning(self):
+        """Run ParallelLinePlanning module."""
+        result = processing.execAlgorithmDialog('cruisetools:parallellineplanning', {})
+        if not result == {}:
+            iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Parallel lines have been planned!', level=Qgis.Success)
         return
 
     def run_estimate_mbes_coverage(self):
@@ -554,7 +570,7 @@ class CruiseTools:  # noqa
     #================================   LOGGING   ==================================
     #===============================================================================
 
-    def check_posiview_plugin(self, showMessage: bool = True):
+    def check_posiview_plugin(self, show_message: bool = True):
         """Check availability of PosiView plugin."""
         self.posiview_enabled = False
         
@@ -569,7 +585,7 @@ class CruiseTools:  # noqa
             if self.posiview_project.dataProviders != {}:
                 self.posiview_enabled = True
         
-        if not self.posiview_enabled and showMessage:
+        if not self.posiview_enabled and show_message:
             self.iface.messageBar().pushMessage(
                 'Log Position',
                 'PosiView Plugin is not enabled! Please enable and start tracking in order to use "Log Position".',

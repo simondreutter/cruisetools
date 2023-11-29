@@ -1,5 +1,5 @@
 # Cruise Tools
-*v2.1 [Atlantic]*
+*v2.2 [Atlantic Ocean]*
 
 ## Info
 **The toolbox you need for marine research cruises (planning and stuff)!**  
@@ -83,7 +83,11 @@ ___
 Convert a line layer to a point feature layer with vertices. If a selection in the line layer exists, only selected features will be converted.
 ___
 
-### Calculate MBES Coverage
+### Parallel Line Planning
+Plan survey lines parallel to your existing line features. One line or two or seventeen, to starboard or port side, all is possible with this tool.
+___
+
+### Estimate MBES Coverage
 Planned your survey over a coarse resolution bathymetry grid like `GEBCO` and need to check if the coverage of your lawn mower pattern create sufficient overlap? This tool lets you combine line planning and a bathymetry base to get an approximated MBES coverage at specific swath angle settings (depth dependet buffer) to visualize your potential survey coverage results.  
 Your segments (from vertex to vertex) will be projected in `Mercator (EPSG:3395)` cartesian lines and the buffer distance is calculated in an appropriate `UTM projection`.  
 All independent of your layer and project CRS.

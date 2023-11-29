@@ -2,9 +2,9 @@
 name=Cruise Tools
 qgisMinimumVersion=3.22
 description=The toolbox you need for marine research cruises (planning and stuff)!
-version=2.1
+version=2.2
 author=Simon Dreutter & Fynn Warnke
-email=simon.dreutter@awi.de / fynn.warnke@awi.de
+email=simon.dreutter@awi.de;fynn.warnke@awi.de
 
 about=
   On marine research cruises, one has to perform reoccuring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer two click (or three click) solutions for some of these tasks.
@@ -34,7 +34,11 @@ experimental=False
 deprecated=False
 
 changelog=
-  2.1 (2023-11-14) [Atlantic]
+  2.2 (2023-11-29) [Atlantic Ocean]
+    - added "Parallel Line Planning"
+    - bugfix in "Estimate MBES Coverage"
+    - some more code harmonization
+  2.1 (2023-11-14) [Atlantic Ocean]
     - added "Log Position"
     - added load style from reference raster layer to "Load Bathymetry"
     - added "Create Coordinate Grid"

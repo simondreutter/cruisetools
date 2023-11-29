@@ -14,6 +14,7 @@ from .vector import CreateCoordinateGrid
 from .vector import SwapVectors
 from .planning import CreatePlanningFile
 from .planning import PlanningLinesToVertices
+from .planning import ParallelLinePlanning
 from .planning import EstimateMBESCoverage
 from .planning import ExportToBridge
 
@@ -33,6 +34,7 @@ class CruiseToolsProvider(QgsProcessingProvider):
         self.addAlgorithm(SwapVectors())
         self.addAlgorithm(CreatePlanningFile())
         self.addAlgorithm(PlanningLinesToVertices())
+        self.addAlgorithm(ParallelLinePlanning())
         self.addAlgorithm(EstimateMBESCoverage())
         self.addAlgorithm(ExportToBridge())
 

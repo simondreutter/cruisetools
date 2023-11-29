@@ -426,6 +426,18 @@ class Vector(object):
         
         return 0, None
 
+    def swap_geometry(self, geom):
+        """Swap / reverse geometry direction."""
+        if geom.isMultipart():
+            mls = QgsMultiLineString()
+            for line in geom.asGeometryCollection():
+                mls.addGeometry(line.constGet().reversed())
+            newgeom = QgsGeometry(mls)
+        else:
+            newgeom = QgsGeometry(geom.constGet().reversed())
+        
+        return newgeom
+
     def swap_vectors(self, layer, selected=True):
         """Swap / reverse vector direction for line layers.
 
@@ -454,15 +466,8 @@ class Vector(object):
         # reverse line direction for each (selected) feature
         for feature in features:
             geom = feature.geometry()
-            if geom.isMultipart():
-                mls = QgsMultiLineString()
-                for line in geom.asGeometryCollection():
-                    mls.addGeometry(line.constGet().reversed())
-                newgeom = QgsGeometry(mls)
-                layer.changeGeometry(feature.id(), newgeom)
-            else:
-                newgeom = QgsGeometry(geom.constGet().reversed())
-                layer.changeGeometry(feature.id(), newgeom)
+            newgeom = self.swap_geometry(geom)
+            layer.changeGeometry(feature.id(), newgeom)
             
         layer.commitChanges()
         

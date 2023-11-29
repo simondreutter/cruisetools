@@ -18,18 +18,18 @@ from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
-from .. import config
 from .. import utils
 
 class ExportToBridge(QgsProcessingAlgorithm, Planning):
     """Export To Bridge"""
+
     #processing parameters
     # inputs:
     INPUT = 'INPUT'
     # outputs:
     EXPORT_FORMAT = 'EXPORT_FORMAT'
     OUTPUT = 'OUTPUT'
-    
+
     def __init__(self):
         """Initialize ExportToBridge"""
         super(ExportToBridge, self).__init__()
@@ -45,7 +45,7 @@ class ExportToBridge(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 name=self.INPUT,
-                description=self.tr('Input Planning Layer'),
+                description=self.tr('Input planning layer'),
                 types=[QgsProcessing.TypeVectorPoint,QgsProcessing.TypeVectorLine],
                 defaultValue=None,
                 optional=False)
@@ -55,7 +55,7 @@ class ExportToBridge(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterEnum(
                 name=self.EXPORT_FORMAT,
-                description=self.tr('Export Format'),
+                description=self.tr('Export format'),
                 options=self.export_types,
                 defaultValue=self.export_format,
                 optional=False,
@@ -64,7 +64,7 @@ class ExportToBridge(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterFileDestination(
                 name=self.OUTPUT,
-                description=self.tr('Bridge Export'),
+                description=self.tr('Bridge export'),
                 fileFilter='CSV (*.csv)',
                 defaultValue=None,
                 optional=False,

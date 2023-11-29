@@ -88,10 +88,7 @@ class ReadmeWindow(QWidget):
         #idx = 0
         for idx, block in enumerate(blocks[1:]):
             # get block title and content
-            block_title, md = block.split('\n', 1)
-            
-            # convert markdown to html (cheap way) << setMarkdown in PyQt 5.15
-            html = self.markdown(md)
+            block_title, markdown = block.split('\n', 1)
             
             # create text field
             text = QTextEdit()
@@ -100,7 +97,9 @@ class ReadmeWindow(QWidget):
             text.setReadOnly(True)
             
             # add content
-            text.setHtml(html)
+            #html = self.markdown(markdown) # DEPRECATED
+            #text.setHtml(html) # DEPRECATED
+            text.setMarkdown(markdown)
             
             # add text to toolbox
             toolbox.addItem(text, block_title)
@@ -116,12 +115,12 @@ class ReadmeWindow(QWidget):
         # set window layout
         self.setLayout(layout)
 
-    def markdown(self, md):
+    def markdown(self, markdown): # DEPRECATED
         """Convert Markdown Readme to HTML (cheap solution).
 
         Parameters
         ----------
-        md : str
+        markdown : str
             markdown text
 
         Returns
@@ -133,7 +132,7 @@ class ReadmeWindow(QWidget):
         # empty list for html lines
         html_list = []
         # loop over lines in block text
-        for line in md.splitlines():
+        for line in markdown.splitlines():
             line = line.strip()
             # if line is heading 3 make it bold
             if line.startswith('### '):

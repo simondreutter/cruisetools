@@ -2,19 +2,21 @@ import os
 import numpy as np
 
 from qgis.core import (
+    QgsCoordinateTransform,
     QgsFeature,
     QgsFeatureSink,
     QgsField,
     QgsFields,
-    QgsPointXY,
     QgsGeometry,
+    QgsPointXY,
     QgsProcessing,
     QgsProcessingAlgorithm,
-    QgsProcessingParameterNumber,
-    QgsProcessingParameterFeatureSink,
-    QgsProcessingParameterVectorDestination,
-    QgsCoordinateReferenceSystem,
     QgsProcessingException,
+    QgsProcessingParameterExtent,
+    QgsProcessingParameterFeatureSink,
+    QgsProcessingParameterNumber,
+    QgsCoordinateReferenceSystem,
+    QgsProcessingParameterVectorDestination,
     QgsProcessingUtils,
     QgsWkbTypes
 )
@@ -23,12 +25,10 @@ from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
-# from .. import config
 from .. import utils
 
 def opt_label(label, interval):
-    """
-    Optimize label
+    """Optimize label.
 
     Parameters
     ----------
@@ -84,7 +84,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
     
     # Processing parameters
     # inputs:
-    #EXTENT = 'EXTENT'
+    EXTENT = 'EXTENT'
     INTERVAL_LON = 'INTERVAL_LON'
     INTERVAL_LAT = 'INTERVAL_LAT'
     POLE_GAP = 'POLE_GAP'
@@ -110,16 +110,16 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         self.densify_factor = self.config.getint(self.module, 'densify_factor')
 
     def initAlgorithm(self, config=None):
-        #self.addParameter(
-        #    QgsProcessingParameterExtent(
-        #        name=self.EXTENT,
-        #        description=self.tr('Grid Extent'),
-        #        defaultValue='-180.0,180.0,-90.0,90.0 [EPSG:4326]')
-        #)
+        self.addParameter(
+            QgsProcessingParameterExtent(
+                name=self.EXTENT,
+                description=self.tr('Grid extent'),
+                defaultValue='-180.0,180.0,-90.0,90.0 [EPSG:4326]')
+        )
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.INTERVAL_LON,
-                description=self.tr('Longitude Interval'),
+                description=self.tr('Longitude interval [degrees]'),
                 type=QgsProcessingParameterNumber.Double,
                 optional=False,
                 defaultValue=self.interval_lon,
@@ -129,7 +129,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.INTERVAL_LAT,
-                description=self.tr('Latitude Interval'),
+                description=self.tr('Latitude interval [degrees]'),
                 type=QgsProcessingParameterNumber.Double,
                 optional=False,
                 defaultValue=self.interval_lat,
@@ -139,7 +139,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.POLE_GAP,
-                description=self.tr('Pole Gap'),
+                description=self.tr('Pole gap [degree]'),
                 type=QgsProcessingParameterNumber.Double,
                 optional=False,
                 defaultValue=self.pole_gap,
@@ -149,7 +149,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.DENSITY_FACTOR,
-                description=self.tr('Density Factor'),
+                description=self.tr('Density factor'),
                 type=QgsProcessingParameterNumber.Integer,
                 optional=False,
                 defaultValue=self.densify_factor,
@@ -159,14 +159,18 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterVectorDestination(
                 name=self.OUTPUT,
-                description=self.tr('Coordinate Grid File'),
+                description=self.tr('Coordinate grid'),
                 defaultValue=None,
                 optional=False,
                 createByDefault=False)
         )
 
     def processAlgorithm(self, parameters, context, feedback):  # noqa
-        # get input variables as self.* for use in post processing
+        # CRS geo
+        crs = QgsCoordinateReferenceSystem('EPSG:4326')
+        
+        # get input variables
+        extent = self.parameterAsExtent(parameters, self.EXTENT, context, crs)
         self.interval_lon = self.parameterAsDouble(parameters, self.INTERVAL_LON, context)
         self.interval_lat = self.parameterAsDouble(parameters, self.INTERVAL_LAT, context)
         self.pole_gap = self.parameterAsDouble(parameters, self.POLE_GAP, context)
@@ -179,9 +183,6 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         self.config.set(self.module, 'interval_lat', self.interval_lat)
         self.config.set(self.module, 'pole_gap', self.pole_gap)
         self.config.set(self.module, 'densify_factor', self.densify_factor)
-        
-        # CRS
-        crs = QgsCoordinateReferenceSystem('EPSG:4326')
         
         # list for line features
         features = []
@@ -205,10 +206,10 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         feedback.pushConsoleInfo(self.tr('Creating grid...'))
         
         # some parameters
-        xmin = -180.
-        xmax =  180.
-        ymin = -90 + self.pole_gap
-        ymax =  90 - self.pole_gap
+        xmin = max((-180., extent.xMinimum()))
+        xmax = min((180., extent.xMaximum()))
+        ymin = max((-90 + self.pole_gap, extent.yMinimum()))
+        ymax = min((90 - self.pole_gap, extent.yMaximum()))
         stepsize_lon = self.interval_lon / self.densify_factor
         stepsize_lat = self.interval_lat / self.densify_factor
         

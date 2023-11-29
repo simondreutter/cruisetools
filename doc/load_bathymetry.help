@@ -1,2 +1,3 @@
 Load raster DEM with preset color ramp and min max values.
 Additionally, an on-the-fly hillshade layer will be created and both rasters will be grouped at the end of the layer tree.
+Either select a color ramp from the preset list and adjust the min max values, or select a reference raster DEM to copy its style.

@@ -19,12 +19,11 @@ from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
-# from .. import config
 from .. import utils
 
 class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
     """Create Planning File."""
-    
+
     # Processing parameters
     # inputs:
     FILE_TYPE = 'FILE_TYPE'

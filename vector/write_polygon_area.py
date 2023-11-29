@@ -1,5 +1,4 @@
 import os
-# import processing
 
 from qgis.core import (
     QgsProcessing,
@@ -11,12 +10,11 @@ from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
-# from .. import config
 from .. import utils
 
 class WritePolygonArea(QgsProcessingAlgorithm, Vector):
     """Write Polygon Area."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -41,7 +39,7 @@ class WritePolygonArea(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterVectorLayer(
                 name=self.INPUT,
-                description=self.tr('Input Vector Layer'),
+                description=self.tr('Input vector layer'),
                 types=[QgsProcessing.TypeVectorPolygon],
                 defaultValue=None,
                 optional=False)
@@ -49,14 +47,14 @@ class WritePolygonArea(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 name=self.M2,
-                description=self.tr('Square Meters'),
+                description=self.tr('Square meters'),
                 optional=False,
                 defaultValue=self.m2)
         )
         self.addParameter(
             QgsProcessingParameterBoolean(
                 name=self.KM2,
-                description=self.tr('Square Kilometers'),
+                description=self.tr('Square kilometers'),
                 optional=False,
                 defaultValue=self.km2)
         )

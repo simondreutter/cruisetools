@@ -1,5 +1,4 @@
 import os
-# import processing
 
 from qgis.core import (
     QgsProcessing,
@@ -17,7 +16,7 @@ from .. import utils
 
 class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
     """Write Point Coordinates."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -45,7 +44,7 @@ class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterVectorLayer(
                 name=self.INPUT,
-                description=self.tr('Input Vector Layer'),
+                description=self.tr('Input vector layer'),
                 types=[QgsProcessing.TypeVectorPoint],
                 defaultValue=None,
                 optional=False)
@@ -67,14 +66,14 @@ class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 name=self.XY,
-                description=self.tr('XY Coordinates'),
+                description=self.tr('XY coordinates'),
                 optional=False,
                 defaultValue=self.xy)
         )
         self.addParameter(
             QgsProcessingParameterCrs(
                 name=self.CRS_XY,
-                description=self.tr('XY in CRS (Default: Layer CRS)'),
+                description=self.tr('XY in CRS (default: layer CRS)'),
                 optional=True,
                 defaultValue=None)
         )

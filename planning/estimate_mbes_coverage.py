@@ -33,7 +33,6 @@ from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
-# from .. import config
 from .. import utils
 
 
@@ -45,7 +44,7 @@ def get_swath_angle(feature, swath_angle_field, swath_angle_fallback):
         # get value from field
         swath_angle_field_value = feature.attribute(swath_angle_field)
         # check if value is set (not NULL)
-        if swath_angle_field_value is None:
+        if not swath_angle_field_value:
             # if NULL, set fallback
             swath_angle = swath_angle_fallback
         else:
@@ -117,7 +116,6 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
     SWATH_ANGLE_PORT = 'SWATH_ANGLE_PORT'
     SWATH_ANGLE_FIELD_STARBOARD = 'SWATH_ANGLE_FIELD_STARBOARD'
     SWATH_ANGLE_STARBOARD = 'SWATH_ANGLE_STARBOARD'
-
     # outputs:
     OUTPUT = 'OUTPUT'
 
@@ -158,7 +156,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 name=self.INPUT_LINE,
-                description=self.tr('Input MBES Line Planning Layer'),
+                description=self.tr('Input MBES line planning layer'),
                 types=[QgsProcessing.TypeVectorLine],
                 defaultValue=None,
                 # (
@@ -179,7 +177,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterEnum(
                 name=self.SWATH_ANGLE_MODE,
-                description=self.tr('Swath Opening Angle Mode'),
+                description=self.tr('Swath opening angle mode'),
                 options=list(self.swath_angle_modi.values()),
                 defaultValue=0,  # TODO: self.swath_angle_mode,
                 optional=False,
@@ -198,7 +196,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterField(
                 name=self.SWATH_ANGLE_FIELD,
-                description=self.tr('Swath Angle Field'),
+                description=self.tr('Swath angle field'),
                 defaultValue='mbes_swath_angle',
                 parentLayerParameterName=self.INPUT_LINE,
                 type=QgsProcessingParameterField.Numeric,
@@ -208,7 +206,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE,
-                description=self.tr('Swath Angle (fallback)'),
+                description=self.tr('Swath angle (fallback)'),
                 type=QgsProcessingParameterNumber.Integer,
                 optional=True,
                 defaultValue=self.swath_angle,
@@ -219,7 +217,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             # PORT
             QgsProcessingParameterField(
                 name=self.SWATH_ANGLE_FIELD_PORT,
-                description=self.tr('Port Angle Field'),
+                description=self.tr('Port angle field'),
                 defaultValue='mbes_swath_angle_port',
                 parentLayerParameterName=self.INPUT_LINE,
                 type=QgsProcessingParameterField.Numeric,
@@ -228,7 +226,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             ),
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE_PORT,
-                description=self.tr('Port Angle (fallback)'),
+                description=self.tr('Port angle (fallback)'),
                 type=QgsProcessingParameterNumber.Integer,
                 optional=True,
                 defaultValue=self.swath_angle_port,
@@ -238,7 +236,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             # STARBOARD
             QgsProcessingParameterField(
                 name=self.SWATH_ANGLE_FIELD_STARBOARD,
-                description=self.tr('Starboard Angle Field'),
+                description=self.tr('Starboard angle field'),
                 defaultValue='mbes_swath_angle_stb',
                 parentLayerParameterName=self.INPUT_LINE,
                 type=QgsProcessingParameterField.Numeric,
@@ -247,7 +245,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             ),
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE_STARBOARD,
-                description=self.tr('Starboard Angle (fallback)'),
+                description=self.tr('Starboard angle (fallback)'),
                 type=QgsProcessingParameterNumber.Integer,
                 optional=True,
                 defaultValue=self.swath_angle_stb,
@@ -264,7 +262,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 name=self.INPUT_RASTER,
-                description=self.tr('Input Bathymetry Raster Layer'),
+                description=self.tr('Input bathymetry raster layer'),
                 defaultValue=(
                     self.raster_layer_name
                     if self.raster_layer_name in raster_layer_names
@@ -275,7 +273,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterBand(
                 name=self.BAND,
-                description=self.tr('Band Number'),
+                description=self.tr('Band number'),
                 defaultValue=1,
                 parentLayerParameterName=self.INPUT_RASTER,
                 optional=False,
@@ -284,7 +282,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterFeatureSink(
                 name=self.OUTPUT,
-                description=self.tr('MBES Coverage'),
+                description=self.tr('MBES coverage'),
                 type=QgsProcessing.TypeVectorPolygon,
                 defaultValue=None,
                 optional=False,
@@ -311,7 +309,6 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         
         raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT_RASTER, context)
         band_number = self.parameterAsInt(parameters, self.BAND, context)
-        feedback.pushConsoleInfo(self.tr(f'[DEBUG] swath_angle_mode: {swath_angle_mode}'))
         
         # copy of the field name for later
         swath_angle_field_name = swath_angle_field
@@ -579,7 +576,6 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                             if (get_inner_angle(buffer_vertices, i) > inner_angle)
                             and (line_part_buffer.contains(QgsPointXY(buffer_vertices[i])))
                         ]
-                        # feedback.pushConsoleInfo(self.tr(f'[DEBUG] indices_to_remove: {indices_to_remove}'))
                         
                         # create MBES converage polygon WITHOUT vertices to remove
                         buffer_part = QgsGeometry.fromPolygonXY([[

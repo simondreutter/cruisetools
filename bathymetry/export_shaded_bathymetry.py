@@ -64,7 +64,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 name=self.INPUT,
-                description=self.tr('Input Raster Layer'),
+                description=self.tr('Input raster layer'),
                 defaultValue=None,
                 optional=False)
         )
@@ -98,7 +98,7 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
         self.addParameter(
             QgsProcessingParameterRasterDestination(
                 name=self.OUTPUT,
-                description=self.tr('Shaded Raster'),
+                description=self.tr('Shaded raster'),
                 defaultValue=None,
                 optional=False,
                 createByDefault=True)

@@ -15,7 +15,6 @@ from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .contour import Contour
-# from .. import config
 from .. import utils
 from .. import vector
 
@@ -47,14 +46,14 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 name=self.INPUT,
-                description=self.tr('Input Raster Layer'),
+                description=self.tr('Input raster layer'),
                 defaultValue=None,
                 optional=False)
         )
         self.addParameter(
             QgsProcessingParameterBand(
                 name=self.BAND,
-                description=self.tr('Band Number'),
+                description=self.tr('Band number'),
                 defaultValue=1,
                 parentLayerParameterName=self.INPUT,
                 optional=False,
@@ -70,7 +69,7 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.INTERVAL,
-                description=self.tr('Contour Interval'),
+                description=self.tr('Contour interval'),
                 type=QgsProcessingParameterNumber.Integer,
                 optional=False,
                 defaultValue=self.interval,
@@ -80,7 +79,7 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
         self.addParameter(
             QgsProcessingParameterVectorDestination(
                 name=self.OUTPUT,
-                description=self.tr('Contour File'),
+                description=self.tr('Contours'),
                 defaultValue=None,
                 optional=False,
                 createByDefault=False)
