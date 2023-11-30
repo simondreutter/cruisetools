@@ -43,7 +43,6 @@ from .logging import LogPosition
 from .gui.readme import ReadmeWindow
 from .gui.log_position_settings import LogPositionSettings
 
-
 class CruiseTools:  # noqa
     """QGIS Plugin - Cruise Tools"""
     

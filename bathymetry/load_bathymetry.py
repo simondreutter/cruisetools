@@ -4,6 +4,7 @@ from qgis.core import (
     QgsBilinearRasterResampler,
     QgsBrightnessContrastFilter,
     QgsColorRampShader,
+    QgsMapLayer,
     QgsProcessingAlgorithm,
     QgsProcessingException,
     QgsProcessingParameterBoolean,
@@ -12,7 +13,6 @@ from qgis.core import (
     QgsProcessingParameterNumber,
     QgsProcessingParameterRasterLayer,
     QgsProject,
-    QgsMapLayer,
     QgsRasterLayer,
     QgsRasterShader,
     QgsSingleBandPseudoColorRenderer
@@ -26,7 +26,7 @@ from .. import utils
 
 class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
     """Load Bathymetry."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'

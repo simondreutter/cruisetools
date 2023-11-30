@@ -6,9 +6,9 @@ from qgis.core import (
     QgsFields,
     QgsProcessing,
     QgsProcessingAlgorithm,
+    QgsProcessingParameterBoolean,
     QgsProcessingParameterFeatureSink,
     QgsProcessingParameterFeatureSource,
-    QgsProcessingParameterBoolean,
     QgsProcessingUtils,
     QgsWkbTypes)
 
@@ -20,7 +20,7 @@ from .. import utils
 
 class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
     """Planning Lines To Vertices."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'

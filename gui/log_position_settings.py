@@ -29,7 +29,7 @@ from qgis.core import (
 
 class NotEmptyValidator(QValidator):
     """https://stackoverflow.com/a/63862815."""
-    
+
     def validate(self, text: str, pos):  # noqa
         if bool(text.strip()):
             state = QValidator.Acceptable
@@ -39,7 +39,7 @@ class NotEmptyValidator(QValidator):
 
 class QHLine(QFrame):
     """Horizontal separater line."""
-    
+
     def __init__(self):
         super(QHLine, self).__init__()
         self.setFrameShape(QFrame.HLine)
@@ -52,9 +52,9 @@ class LogPositionSettings(QDialog):
     def __init__(self, first_start: bool):
         """Initialize GUI."""
         super(LogPositionSettings, self).__init__()
-                
+        
         self.first_start = first_start
-                
+        
         # icon path
         self.icon_path = ':/plugins/cruisetools/icons'
         
@@ -67,7 +67,7 @@ class LogPositionSettings(QDialog):
         
         # set windows title
         self.setWindowTitle('Settings - Log Position')
-                
+        
         # init settings
         self.load_settings()
         
@@ -84,7 +84,7 @@ class LogPositionSettings(QDialog):
             'wait_time': 1000,
             'event' : 'Event 1\nEvent 2\n...',
         }
-        
+
     def init_layout(self):
         """Initialize dialog layout."""
         # create layout
@@ -214,19 +214,19 @@ class LogPositionSettings(QDialog):
         
         # set window layout
         self.setLayout(self.layout)
-        
+
     def connect_buttons(self):
         """Connect dialog buttons."""
         self.buttonBox.button(QDialogButtonBox.Apply).clicked.connect(self.apply_and_accept)
         # self.buttonBox.rejected.connect(self.reject)
         self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
         self.buttonBox.button(QDialogButtonBox.RestoreDefaults).clicked.connect(self.restoreDefaultSettings)
-        
+
     def apply_and_accept(self):
         """Apply settings and accept Dialog."""
         self.apply_settings()
         self.accept()
-        
+
     def cancel(self):
         """Cancel settings dialog and perform sanity checks."""
         # sanity check
@@ -234,7 +234,7 @@ class LogPositionSettings(QDialog):
         
         # reject changes
         self.reject()
-        
+
     def update_raster_band(self, vector_layer=None):
         """Update raster band comboBox."""
         self.comboBox_raster_band.clear()
@@ -251,7 +251,7 @@ class LogPositionSettings(QDialog):
             
             # add band options for currently selected raster
             self.comboBox_raster_band.addItems(self.band_names)
-        
+
     def apply_settings(self):
         """Apply and save save settings."""
         self.layer_logging = self.comboBox_lyr_pt.currentLayer()
@@ -310,7 +310,7 @@ class LogPositionSettings(QDialog):
         self.events = []
         self.textEdit_events.clear()
         self.textEdit_events.setPlaceholderText(self.defaults.get('event', ''))
-        
+
     def load_settings(self):
         """Load Cruise Tools settings."""
         self.layer_logging = self.config.get(self.module, 'layer_logging', fallback='')

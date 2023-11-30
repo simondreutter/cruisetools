@@ -1,13 +1,10 @@
 import os
-from math import floor
 
 from qgis.core import (
     QgsGeometry,
     QgsFeature,
     QgsCoordinateReferenceSystem,
 )
-
-# from qgis.PyQt.QtCore import QVariant
 
 from ..vector import Vector
 from .. import config
@@ -107,4 +104,3 @@ class Planning(Vector):
         crs_utm = QgsCoordinateReferenceSystem(f'EPSG:{epsg_code}')
         
         return crs_utm
-    

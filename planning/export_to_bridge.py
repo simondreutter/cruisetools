@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 import os
 import csv
 
@@ -23,7 +22,7 @@ from .. import utils
 class ExportToBridge(QgsProcessingAlgorithm, Planning):
     """Export To Bridge"""
 
-    #processing parameters
+    # Processing parameters
     # inputs:
     INPUT = 'INPUT'
     # outputs:

@@ -1,5 +1,4 @@
 import os
-import numpy as np
 
 from qgis.core import (
     QgsCoordinateTransform,
@@ -81,7 +80,7 @@ def opt_label(label, interval):
 
 class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
     """Coordinate Grid Generator."""
-    
+
     # Processing parameters
     # inputs:
     EXTENT = 'EXTENT'

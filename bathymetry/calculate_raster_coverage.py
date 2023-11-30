@@ -19,7 +19,7 @@ from .. import utils
 
 class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
     """Calculate Raster Coverage."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'

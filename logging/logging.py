@@ -1,5 +1,4 @@
 import os
-from pprint import pprint
 
 from qgis.core import QgsProject
 from qgis.utils import iface, plugins
@@ -26,7 +25,7 @@ class Logging(object):
         
         # get devices
         self.get_devices()
-        
+
     def access_posiview(self, reload_settings: bool = False):
         """Access PosiView plugin instance."""
         # should be save since button is disabled if PosiView is not enabled
@@ -34,7 +33,7 @@ class Logging(object):
         
         # get PosiView Project
         self.posiview_project = self.posiview.project
-        
+
     def get_devices(self):
         """Get PosiView devices (mobiles)."""
         # get PosiViewProject properties
@@ -48,4 +47,3 @@ class Logging(object):
         # print(self.devices_names)
         
         self.device_properties = {d: self.devices[d].get('provider') for d in self.devices_names}
-        # pprint(self.device_properties)

@@ -3,7 +3,7 @@ import configparser
 
 class CruiseToolsConfig:
     """Configuration class for Cruise Tools plugin."""
-    
+
     def __init__(self):
         """Initialize CruiseToolsConfig."""
         self.config_file = os.path.join(os.path.dirname(__file__), 'cruise_tools_config.ini')
@@ -57,7 +57,7 @@ class CruiseToolsConfig:
           offset            : default offset for parallel line planning
           side              : default setting for parallel line planning (0: starboard, 1: port)
           number_of_lines   : default number of lines for parallel line planning
-          
+        
         [LOGGING]
           layer_logging     : default Point layer for survey logging
           device            : PosiView mobile item
@@ -68,7 +68,7 @@ class CruiseToolsConfig:
           raster_band       : default raster band
           wait_time         : default wait time for GPS stream listening (to fetch coordinates)
           events            : event presets list (semicolon separated)
-          
+        
         """
         # if config file exists, read it
         if os.path.isfile(self.config_file):

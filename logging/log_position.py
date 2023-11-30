@@ -18,14 +18,13 @@ from PyQt5.QtCore import Qt, QDateTime, QVariant
 from .logging import Logging
 from ..gui.log_position_settings import LogPositionSettings
 
-#class LogPosition(LogPositionSettings):
 class LogPosition(LogPositionSettings, Logging):
     """Base class for logging survey position."""
 
     def __init__(self, first_start: bool = False):
         """Initialize Log Position."""
         super(LogPosition, self).__init__(first_start)
-                
+        
         # set default CRS for GPS coordinates
         self.crs_gps = QgsCoordinateReferenceSystem.fromEpsgId(4326)
         
@@ -43,7 +42,7 @@ class LogPosition(LogPositionSettings, Logging):
             'field_format': 'Qt ISO Date',
             'field_iso_format': True
         }
-        
+
     @pyqtSlot(dict)
     def process_datastream(self, data):
         """Process incoming GPS data stream."""
@@ -68,7 +67,7 @@ class LogPosition(LogPositionSettings, Logging):
             self.valid_position = True
         else:
             self.valid_position = False
-                
+
     def get_current_position(self, wait: int = 1000):
         """Get current position from incoming GPS data stream."""
         # connect to GPS data stream
@@ -79,7 +78,7 @@ class LogPosition(LogPositionSettings, Logging):
         
         # disconnect from GPS data stream
         self.device_provider.newDataReceived.disconnect(self.process_datastream)
-        
+
     def access_posiview_data_provider(self):
         """Access PosiView data provider for selected device."""
         # get PosiView provider name and (optional) filter(s) for device
@@ -116,7 +115,7 @@ class LogPosition(LogPositionSettings, Logging):
             self.info = self.stream
         else:
             self.info = {}
-                                    
+
     def add_logged_position(self):
         """Add logged position as new feature to selected Point layer."""
         self.layer_logging_provider = self.layer_logging.dataProvider()
@@ -310,7 +309,7 @@ class LogPosition(LogPositionSettings, Logging):
         if self.valid_position:
             # insert logged position as Point to selected map layer
             self.add_logged_position()
-            
+
     def update_devices(self):
         """Update PosiView devices (mobiles)."""
         # get current PosiView devices

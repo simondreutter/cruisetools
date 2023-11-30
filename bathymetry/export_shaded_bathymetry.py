@@ -23,7 +23,7 @@ from .. import utils
 
 class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
     """Export Shaded Bathymetry."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'

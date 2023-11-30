@@ -1,31 +1,29 @@
 import os
-from math import tan, radians, degrees
 
 from qgis.core import (
     Qgis,
-    QgsCoordinateTransform,
     QgsCoordinateReferenceSystem,
+    QgsCoordinateTransform,
     QgsFeature,
     QgsGeometry,
     QgsProcessing,
     QgsProcessingAlgorithm,
+    QgsProcessingParameterBoolean,
+    QgsProcessingParameterEnum,
     QgsProcessingParameterFeatureSource,
     QgsProcessingParameterNumber,
-    QgsProcessingParameterEnum,
-    QgsProcessingParameterBoolean,
     QgsProcessingParameterVectorLayer,
 )
 
-from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
 
-
 class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
     """Parallel Line Planning."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'
@@ -45,7 +43,13 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
                       self.tr('Port / Left')]
         
         # offset settings
-        self.join_style = Qgis.JoinStyle.JoinStyleMiter
+        # self.join_style = Qgis.JoinStyle.JoinStyleMiter
+        # try except since earlier versions don't support the new
+        # JoinStyleMiter, even though the documentation says it...
+        try:
+            self.join_style = Qgis.JoinStyle.JoinStyleMiter
+        except AttributeError:
+            self.join_style = Qgis.JoinStyle.Miter
         
         # initialize default configuration
         self.initConfig()

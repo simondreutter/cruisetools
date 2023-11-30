@@ -35,9 +35,24 @@ from PyQt5.QtGui import QIcon
 from .planning import Planning
 from .. import utils
 
-
 def get_swath_angle(feature, swath_angle_field, swath_angle_fallback):
-    """Get swath angle for feature."""
+    """Get swath angle for feature.
+
+    Parameters
+    ----------
+    feature : QgsFeature
+        QgsFeature with attributes
+    swath_angle_field : str
+        Name of swath angle field
+    swath_angle_fallback : int or float
+        Swath angle fallback value
+
+    Returns
+    -------
+    swath_angle : int or float
+        Swath angle from field or fallback
+
+    """
     # create depth-dependant buffer:
     # check if swath_angle field is selected
     if swath_angle_field != '':
@@ -99,10 +114,9 @@ def get_inner_angle(vertices: list, idx: int):
     
     return a
 
-
 class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
     """Estimate MBES Coverage."""
-    
+
     # Processing parameters
     # inputs:
     INPUT_LINE = 'INPUT_LINE'

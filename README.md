@@ -1,5 +1,5 @@
 # Cruise Tools
-*v2.2 [Atlantic Ocean]*
+*v2.2.1 [Atlantic Ocean]*
 
 ## Info
 **The toolbox you need for marine research cruises (planning and stuff)!**  

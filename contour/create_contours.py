@@ -20,7 +20,7 @@ from .. import vector
 
 class CreateContours(QgsProcessingAlgorithm, Contour):
     """Create Contours."""
-    
+
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'

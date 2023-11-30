@@ -52,7 +52,7 @@ class Vector(object):
             features = layer.getSelectedFeatures()
         
         return features
-    
+
     def select_features(self, layer, filter=''):
         """Select features from layer by filter expression.
 
