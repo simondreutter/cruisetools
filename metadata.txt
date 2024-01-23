@@ -2,7 +2,7 @@
 name=Cruise Tools
 qgisMinimumVersion=3.22
 description=The toolbox you need for marine research cruises (planning and stuff)!
-version=2.2.1
+version=2.2.2
 author=Simon Dreutter & Fynn Warnke
 email=simon.dreutter@awi.de;fynn.warnke@awi.de
 
@@ -34,6 +34,10 @@ experimental=False
 deprecated=False
 
 changelog=
+  2.2.2 (2024-01-23) [Atlantic Ocean]
+    - bugfix in "Parallel Line Planning"
+    - bugfix in "Estimate MBES Coverage"
+    - bugfix in "Planning Lines to Vertices"
   2.2.1 (2023-11-30) [Atlantic Ocean]
     - bugfix in "Parallel Line Planning" (JoinStyleMiter)
     - some more code harmonization

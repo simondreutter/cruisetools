@@ -1,3 +1,4 @@
+from math import floor
 import os
 
 from qgis.core import (
@@ -45,33 +46,46 @@ class Planning(Vector):
             # get attributes from input feature
             attributes = feature.attributes()
             
-            # get vertex geometry from line geometry
-            geom = feature.geometry().asPolyline()
+            # get geometry from input feature
+            geom_f = feature.geometry()
             
-            # loop over vertices
-            for idx, g in enumerate(geom):
-                # create vertex feature
-                vertex = QgsFeature(fields)
-                
-                # set vertex geometry
-                vertex.setGeometry(QgsGeometry.fromPointXY(g))
-                
-                # loop over feature fields
-                for field in feature.fields():
-                    # if field exists in input fields
-                    if field.name() in fields.names():
-                        # set attribute from line to vertex
-                        if self.add_vertex_suffix and (field.name() == 'name'):  # add order numbering (for default field "name")
-                            vertex.setAttribute(field.name(), feature.attribute(field.name()) + f'_{idx + 1:03d}')
-                        else:
-                            vertex.setAttribute(field.name(), feature.attribute(field.name()))
-                
-                # set fid
-                vertex.setAttribute('fid', i)
-                i += 1
-                
-                # append vertex to vertices list
-                vertices.append(vertex)
+            # empty list for geometry parts
+            geoms = []
+            
+            # check if geometry is multipart
+            # and convert from line to vertex geometry
+            if geom_f.isMultipart():
+                for part in geom_f.asMultiPolyline():
+                    geoms.append(part)
+            else:
+                geoms = [geom_f.asPolyline()]
+            
+            # iterate through geometry parts
+            for geom in geoms:
+                # loop over vertices
+                for idx, pnt in enumerate(geom):
+                    # create vertex feature
+                    vertex = QgsFeature(fields)
+                    
+                    # set vertex geometry
+                    vertex.setGeometry(QgsGeometry.fromPointXY(pnt))
+                    
+                    # loop over feature fields
+                    for field in feature.fields():
+                        # if field exists in input fields
+                        if field.name() in fields.names():
+                            # set attribute from line to vertex
+                            if self.add_vertex_suffix and (field.name() == 'name'):  # add order numbering (for default field "name")
+                                vertex.setAttribute(field.name(), feature.attribute(field.name()) + f'_{idx + 1:03d}')
+                            else:
+                                vertex.setAttribute(field.name(), feature.attribute(field.name()))
+                    
+                    # set fid
+                    vertex.setAttribute('fid', i)
+                    i += 1
+                    
+                    # append vertex to vertices list
+                    vertices.append(vertex)
         
         return vertices
 

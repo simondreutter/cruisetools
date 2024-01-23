@@ -1,5 +1,5 @@
-import os
 from math import tan, radians, degrees
+import os
 
 from qgis.core import (
     QgsProject,
@@ -157,6 +157,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
 
     def initConfig(self):
         """Get default values from CruiseToolsConfig."""
+        self.dissolve_buffer = self.config.getint(self.module, 'dissolve_buffer')
         self.swath_angle_mode = self.config.getint(self.module, 'swath_angle_mode')
         self.swath_angle = self.config.getint(self.module, 'swath_angle')
         self.swath_angle_port = self.config.getint(self.module, 'swath_angle_port')
@@ -185,15 +186,14 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                 name=self.DISSOLVE_BUFFER,
                 description=self.tr('Dissolve line segment buffers (per feature)'),
                 optional=False,
-                defaultValue=True
-            )
+                defaultValue=self.dissolve_buffer)
         )
         self.addParameter(
             QgsProcessingParameterEnum(
                 name=self.SWATH_ANGLE_MODE,
                 description=self.tr('Swath opening angle mode'),
                 options=list(self.swath_angle_modi.values()),
-                defaultValue=0,  # TODO: self.swath_angle_mode,
+                defaultValue=self.swath_angle_mode,
                 optional=False,
                 allowMultiple=False)
         )
@@ -264,8 +264,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                 optional=True,
                 defaultValue=self.swath_angle_stb,
                 minValue=5,
-                maxValue=80
-            )
+                maxValue=80)
         ]
         for param in params:
             param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
@@ -281,7 +280,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                     self.raster_layer_name
                     if self.raster_layer_name in raster_layer_names
                     else None
-                ),  # None
+                ),
                 optional=False)
         )
         self.addParameter(
@@ -307,7 +306,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         # get input variables
         source = self.parameterAsSource(parameters, self.INPUT_LINE, context)
         
-        dissolve_buffer = self.parameterAsBoolean(parameters, self.DISSOLVE_BUFFER, context)  # TODO
+        dissolve_buffer = self.parameterAsBoolean(parameters, self.DISSOLVE_BUFFER, context)
         
         swath_angle_mode = self.parameterAsInt(parameters, self.SWATH_ANGLE_MODE, context)
         
@@ -332,6 +331,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         # set new default values in config
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         # self.config.set(self.module, 'line_layer', source.sourceName())
+        self.config.set(self.module, 'dissolve_buffer', dissolve_buffer)
         self.config.set(self.module, 'swath_angle_mode', swath_angle_mode)
         self.config.set(self.module, 'swath_angle', swath_angle_fallback)
         self.config.set(self.module, 'swath_angle_port', swath_angle_port_fallback)

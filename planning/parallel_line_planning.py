@@ -62,7 +62,7 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
 
     def initAlgorithm(self, config=None):  # noqa
         self.addParameter(
-            QgsProcessingParameterFeatureSource(
+            QgsProcessingParameterVectorLayer(
                 name=self.INPUT,
                 description=self.tr('Input line planning layer'),
                 types=[QgsProcessing.TypeVectorLine],
@@ -101,7 +101,6 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
 
     def processAlgorithm(self, parameters, context, feedback):  # noqa
         # get input variables
-        source = self.parameterAsSource(parameters, self.INPUT, context)
         layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         offset = self.parameterAsInt(parameters, self.OFFSET, context)
         side = self.parameterAsInt(parameters, self.SIDE, context)
@@ -120,13 +119,13 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
             offset = -offset
         
         # get source CRS
-        crs_layer = source.sourceCrs()
+        crs_layer = layer.sourceCrs()
         
         # get project transform_context
         transform_context = context.transformContext()
         
         # get (selected) features
-        features = source.getFeatures()
+        features = layer.getFeatures()
         
         feedback.pushConsoleInfo(self.tr('Creating parallel features...'))
         
