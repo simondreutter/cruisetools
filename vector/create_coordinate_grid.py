@@ -1,3 +1,4 @@
+import numpy as np
 import os
 
 from qgis.core import (
