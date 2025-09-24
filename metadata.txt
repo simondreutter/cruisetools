@@ -1,13 +1,13 @@
 [general]
 name=Cruise Tools
-qgisMinimumVersion=3.22
+qgisMinimumVersion=3.40
 description=The toolbox you need for marine research cruises (planning and stuff)!
-version=2.2.3
+version=2.3
 author=Simon Dreutter & Fynn Warnke
-email=simon.dreutter@awi.de;fynn.warnke@awi.de
+email=simon.dreutter@awi.de;fw.dev@mailbox.org
 
 about=
-  On marine research cruises, one has to perform reoccuring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer two click (or three click) solutions for some of these tasks.
+  On marine research cruises, one has to perform reoccurring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer two click (or three click) solutions for some of these tasks.
   
   This includes:
     - loading, coloring and shading bathymetry grids
@@ -17,6 +17,7 @@ about=
     - generating DD, DDM, and XY coordinate attributes for point features
     - generating length (m, km, and nm) attributes for line features
     - generating area (m2 and km2) attributes for polygon features
+    - sampling raster values into point feature attributes
     - generating geographic coordinate grid feature layers
     - cruise planning mechanisms like estimate MBES coverage
     - event logging in combination with PosiView
@@ -34,6 +35,14 @@ experimental=False
 deprecated=False
 
 changelog=
+  2.3 (2025-09-24) [Wandel Sea]
+    - added "Sample Raster Points"
+    - added "Sample Raster Profile"
+    - added "Line Planning Tooltip"
+    - improved "Estimate MBES Coverage"
+    - improved "Log Position"
+    - some changes in the icon styles
+    - some more code harmonization
   2.2.3 (2024-01-25) [Atlantic Ocean]
     - bugfix in "Create Coordinate Grid"
   2.2.2 (2024-01-23) [Atlantic Ocean]

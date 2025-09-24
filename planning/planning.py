@@ -1,14 +1,11 @@
-from math import floor
 import os
 
-from qgis.core import (
-    QgsGeometry,
-    QgsFeature,
-    QgsCoordinateReferenceSystem,
-)
+from qgis.core import QgsGeometry
+from qgis.core import QgsFeature
 
 from ..vector import Vector
 from .. import config
+
 
 class Planning(Vector):
     """Base class for planning modules."""
@@ -37,21 +34,21 @@ class Planning(Vector):
         """
         # create empty list for vertices
         vertices = []
-        
+
         # fid increment
         i = 1
-        
+
         # loop over input features
         for feature in features:
             # get attributes from input feature
             attributes = feature.attributes()
-            
+
             # get geometry from input feature
             geom_f = feature.geometry()
-            
+
             # empty list for geometry parts
             geoms = []
-            
+
             # check if geometry is multipart
             # and convert from line to vertex geometry
             if geom_f.isMultipart():
@@ -59,62 +56,33 @@ class Planning(Vector):
                     geoms.append(part)
             else:
                 geoms = [geom_f.asPolyline()]
-            
+
             # iterate through geometry parts
             for geom in geoms:
                 # loop over vertices
                 for idx, pnt in enumerate(geom):
                     # create vertex feature
                     vertex = QgsFeature(fields)
-                    
+
                     # set vertex geometry
                     vertex.setGeometry(QgsGeometry.fromPointXY(pnt))
-                    
+
                     # loop over feature fields
                     for field in feature.fields():
                         # if field exists in input fields
                         if field.name() in fields.names():
                             # set attribute from line to vertex
-                            if self.add_vertex_suffix and (field.name() == 'name'):  # add order numbering (for default field "name")
+                            if self.add_vertex_suffix and (
+                                    field.name() == 'name'):  # add order numbering (for default field "name")
                                 vertex.setAttribute(field.name(), feature.attribute(field.name()) + f'_{idx + 1:03d}')
                             else:
                                 vertex.setAttribute(field.name(), feature.attribute(field.name()))
-                    
+
                     # set fid
                     vertex.setAttribute('fid', i)
                     i += 1
-                    
+
                     # append vertex to vertices list
                     vertices.append(vertex)
-        
+
         return vertices
-
-    def get_UTM_zone(self, lat, lon):
-        """Get appropriated UTM zone EPSG ID for line feature.
-
-        Parameters
-        ----------
-        lat : float
-            latitude
-        lon : float
-            longitude
-
-        Returns
-        -------
-        crs_utm : QgsCoordinateReferenceSystem
-            CRS of UTM zone
-
-        """
-        # get UTM band from longitude
-        utm_band = int((floor((lon + 180) / 6) % 60) + 1)
-        
-        # get EPSG code from UTM band and latitude (S/N)
-        if lat >= 0:
-            epsg_code = f'326{utm_band:02d}'
-        else:
-            epsg_code = f'327{utm_band:02d}'
-        
-        # create CRS
-        crs_utm = QgsCoordinateReferenceSystem(f'EPSG:{epsg_code}')
-        
-        return crs_utm

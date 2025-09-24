@@ -36,7 +36,7 @@ class CruiseToolsDialogTest(unittest.TestCase):
         self.assertFalse(icon.isNull())
 
 if __name__ == "__main__":
-    suite = unittest.makeSuite(CruiseToolsResourcesTest)
+    suite = unittest.TestLoader.loadTestsFromTestCase(CruiseToolsResourcesTest)
     runner = unittest.TextTestRunner(verbosity=2)
     runner.run(suite)
 

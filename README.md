@@ -1,5 +1,5 @@
 # Cruise Tools
-*v2.2.3 [Atlantic Ocean]*
+*v2.3 [Wandel Sea]*
 
 ## Info
 **The toolbox you need for marine research cruises (planning and stuff)!**  
@@ -8,26 +8,26 @@
     License :   Gnu GPL v3
     Email   :   simon.dreutter@awi.de / fynn.warnke@awi.de
 
-Cruise Tools is a python plugin for QGIS (>3.22) that is supposed to fill a niche for cruise planning purposes. There are a handful of steps that we go through each time we extract coordinates for the bridge (DDM, not DD) or load a bathymetry grid (set color scale, hillshade, etc.) or similar. This is annoying and time consuming, hence, there needs to be a quicker way. This is what Cruise Tools was created for. It's supposed to create one (or two or three) click solutions to substitute 10 (or twenty or thirty) clicks.  
+Cruise Tools is a python plugin for QGIS (>3.22) that is supposed to fill a niche for cruise planning purposes. There are a handful of steps that we go through each time we extract coordinates for the bridge (DDM, not DD) or load a bathymetry grid (set color scale, hillshade, etc.) or similar. This is annoying and time-consuming, hence, there needs to be a quicker way. This is what Cruise Tools was created for. It's supposed to create one (or two or three) click solutions to substitute 10 (or twenty or thirty) clicks.  
 The toolbox is a work in progress, however, it’s functional and should be used along the way of development.
 
 ### Installation
 Cruise Tools is now available via the QGIS plugin repository.
-Open QGIS and go to `Plugins > Manage and Install Plugins` and activate `Cruise Tools` (tick it). If the Cruise Tools toolbar is not visible, right click on an open area on the toolbar and check Cruise Tools there as well.  
-Sad side note: So far, Cruise Tools is developed on and for Windows only. It might work to some extend on a UNIX OS, but we never tested it. :/
+Open QGIS and go to `Plugins > Manage and Install Plugins` and activate `Cruise Tools` (tick it). If the Cruise Tools toolbar is not visible, right-click on an open area on the toolbar and check Cruise Tools there as well.  
+Sad side note: So far, Cruise Tools is developed on and for Windows only. It might work to some extent on a UNIX OS, but we never tested it. :/
 
 ## Bathymetry
 ### Load Bathymetry
-You want to load a bathymetry (or topography) grid with hillshade and a nice color scale. Doing this manually takes about 1000 clicks (depending on how crazy your render settings are). Cruise Tools simply lets you select a grid file (`GeoTIFF` or `netCDF`), sets some color settings and overlays it with a hillshade that’s not just half transparently chucked on there like ArghGIS users tend to do, and adds everything into a handy sub group.  
+You want to load a bathymetry (or topography) grid with hillshade and a nice color scale. Doing this manually takes about 1000 clicks (depending on how crazy your render settings are). Cruise Tools simply lets you select a grid file (`GeoTIFF` or `netCDF`), sets some color settings and overlays it with a hillshade that’s not just half transparently chucked on there like ArghGIS users tend to do, and adds everything into a handy subgroup.  
 You can adjust the color bar and min/max values in the dialog or later in the layer symbology.
 ___
 
 ### Export Shaded Bathymetry
-While it's nice to view your (floating point) bathymetry in color and with an ad-hoc hillshade in QGIS, once in a while you need to have a colored and shaded RGB version of the grid for external applications of different sorts. To create this, the necessary procedure was usually very time consuming and awkward, so we built in a set of raster calculations that do the job for you. All you need to do is select a grid which has all colors set to your liking, and select the shading method.
+While it's nice to view your (floating point) bathymetry in color and with an ad-hoc hillshade in QGIS, once in a while you need to have a colored and shaded RGB version of the grid for external applications of different sorts. To create this, the necessary procedure was usually very time-consuming and awkward, so we built in a set of raster calculations that do the job for you. All you need to do is select a grid which has all colors set to your liking, and select the shading method.
 Cruise Tools offers four multiplication based shading modes:  
   - **Hillshade** is shaded with a synthetic light source, 315° Azimuth, 45° Altitude
   - **Slope** is shaded with the stretched slope inclination
-  - **Combined** is shaded with a combination of Hillshade and Slope, bringing together the best aspects of both methods. Also widely known as *Simon's magical relief visualization*
+  - **Combined** is shaded with a combination of Hillshade and Slope, bringing together the best aspects of both methods. Also, widely known as *Simon's magical relief visualization*
   - **Multidirectional** is shaded with a combination of synthetic light sources from 225°, 270°, 315°, and 360° Azimuth
 
 Note: The created raster will be loaded into the canvas. Please don't freak out
@@ -44,22 +44,32 @@ Coverages are calculated based on the project's CRS ellipsoid.
 ### Create Contours
 You just used the Load Bathymetry function to show your beautiful seafloor topography. But now you want contour lines to make it a bit more readable.  
 Creating contours in QGIS is usually a quicky, however, that’s where the work begins. You might want to have smoothed contours, you might want to filter the short bits out, and you might want to add some contour labels that are pointing in the cartographically correct direction (up hill). Simply select the bathymetry raster layer and click the button, select your interval and Cruise Tools will create the smoothed contours and apply the style you might have been looking for.  
-Contours are filtered by length by a SQL subset filter that is easily adjusted (only when using the toolbar icon, not the toolbox algortihm).
+Contours are filtered by length by a SQL subset filter that is easily adjusted (only when using the toolbar icon, not the toolbox algorithm).
 
 ## Vector
 ### Write Point Coordinates
-You just created your point feature layer with all your selected stations but now you need the coordinates, not only in decimal degrees (DD) but also in degrees decimal minutes (DDM) and maybe even the XY coordinates of an entirely separate projection. Use Cruise Tools to fill the layer’s attribute table with all the coordinates you need. **\***
+You just created your point feature layer with all your selected stations, but now you need the coordinates, not only in decimal degrees (DD) but also in degrees decimal minutes (DDM) and maybe even the XY coordinates of an entirely separate projection. Use Cruise Tools to fill the layer’s attribute table with all the coordinates you need. **\***
 ___
 
 ### Write Line Length
-You just planned your survey lines with a line feature layer and now you need to figure out how long those are in nautical miles or kilometers or meters to get a time estimate for the survey. Yet, using a measurement tool for that is tedious. Use Cruise Tools to fill the layer’s attribute table with all the distance measurements you need. **\***  
+You just planned your survey lines with a line feature layer, and now you need to figure out how long those are in nautical miles or kilometers or meters to get a time estimate for the survey. Yet, using a measurement tool for that is tedious. Use Cruise Tools to fill the layer’s attribute table with all the distance measurements you need. **\***  
 If a `speed_kn` field exists and is filled, the steaming time in hours will be written to the `time_h` field, if that exists as well.
 ___
 
 ### Write Polygon Area
-You just selected an area of interest (or multiple) for your cruise and now you need an idea of the area size in square meters or square kilometers. Use Cruise Tools to do those measurements and fill the attribute table of your layer. **\***  
+You just selected an area of interest (or multiple) for your cruise, and now you need an idea of the area size in square meters or square kilometers. Use Cruise Tools to do those measurements and fill the attribute table of your layer. **\***  
 
 **\*** All measurements are ellipsoidal based on the project's CRS ellipsoid. Latitude/Longitude coordinates refer to `WGS84 (EPSG:4326)`.
+___
+
+### Sample Raster Points
+If your colleague needs urgent depth values for their station planning and hands you coordinates, forget the Identify tool, pen and paper. Simply sample the data directly from the raster into your point feature layer with this little tool.
+This can nicely be combined with the `Write Point Coordinates` tool to get `XYZ` values.
+___
+
+### Sample Raster Profile
+Instead of sampling individual point features, this tool will create evenly spaced points along your selected line features and add raster values for each created point.
+This can nicely be combined with the `Write Point Coordinates` tool to get `XYZ` values.
 ___
 
 ### Create Coordinate Grid
@@ -88,7 +98,7 @@ Plan survey lines parallel to your existing line features. One line or two or se
 ___
 
 ### Estimate MBES Coverage
-Planned your survey over a coarse resolution bathymetry grid like `GEBCO` and need to check if the coverage of your lawn mower pattern create sufficient overlap? This tool lets you combine line planning and a bathymetry base to get an approximated MBES coverage at specific swath angle settings (depth dependet buffer) to visualize your potential survey coverage results.  
+Planned your survey over a coarse resolution bathymetry grid like `GEBCO` and need to check if the coverage of your lawn mower pattern create sufficient overlap? This tool lets you combine line planning and a bathymetry base to get an approximated MBES coverage at specific swath angle settings (depth dependent buffer) to visualize your potential survey coverage results.  
 Your segments (from vertex to vertex) will be projected in `Mercator (EPSG:3395)` cartesian lines and the buffer distance is calculated in an appropriate `UTM projection`.  
 All independent of your layer and project CRS.
 ___
@@ -98,7 +108,7 @@ Export a planning layer to your vessel specific exchange format. The export tool
 
 ## Logging
 ### Log Position
-The Logging tool is meant to create a position and time based event log within a point feature layer in combination with the `PosiView` plugin. To use it you first need to create a point feature layer (eg. via Create Planning File). Then, Log Position needs to be configured via the Log Position Settings dialog (select point feature layer, select PosiView vehicle, create event presets, etc.). Use the hotkey (`F10`) or click the Log Position button to log events along your track or dive.
+The Logging tool is meant to create a position and time based event log within a point feature layer in combination with the `PosiView` plugin. To use it you first need to create a point feature layer (e.g. via Create Planning File). Then, Log Position needs to be configured via the Log Position Settings dialog (select point feature layer, select PosiView vehicle, create event presets, etc.). Use the hotkey (`F10`) or click the Log Position button to log events along your track or dive.
 
 ## Issues
 If you have any issues with the plugin, we are on GitHub:  

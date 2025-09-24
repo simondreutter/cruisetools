@@ -38,10 +38,11 @@ import processing
 from .provider import CruiseToolsProvider
 from . import utils
 from .logging import LogPosition
+from .planning import LinePlanningToolTip
 
 # Import GUI
 from .gui.readme import ReadmeWindow
-from .gui.log_position_settings import LogPositionSettings
+#from .gui.log_position_settings import LogPositionSettings
 
 class CruiseTools:  # noqa
     """QGIS Plugin - Cruise Tools"""
@@ -101,6 +102,8 @@ class CruiseTools:  # noqa
         self.shortcutsManager = None
         
         #self.config = config.CruiseToolsConfig()           # FIXME: DO WE NEED THIS?
+        
+        self.connect_listener()
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
@@ -292,7 +295,7 @@ class CruiseTools:  # noqa
             f'Add attributes to the selected line layer containing\n'
             f'length in meters and nautical miles\n\n'
             f'Measurements are ellipsoidal, based on Project\n'
-            f'measurement ellispoid ({QgsProject.instance().crs().ellipsoidAcronym()}).'
+            f'measurement ellipsoid ({QgsProject.instance().crs().ellipsoidAcronym()}).'
         )
         
         # write polygon area button
@@ -302,9 +305,26 @@ class CruiseTools:  # noqa
             f'Add attributes to the selected polygon layer containing\n' # noqa
             f'area in square meters and square kilometers.\n\n'
             f'Measurements are ellipsoidal, based on Project\n'
-            f'measurement ellispoid ({QgsProject.instance().crs().ellipsoidAcronym()}).'
+            f'measurement ellipsoid ({QgsProject.instance().crs().ellipsoidAcronym()}).'
         )
         
+        vector_menu.addSeparator()
+
+        # sample raster points button
+        icon = QIcon(f'{icon_path}/sample_raster_points.png')  # noqa
+        sample_raster_points = vector_menu.addAction(icon, self.tr('Sample Raster Points'), self.run_sample_raster_points)
+        sample_raster_points.setToolTip(
+            f'Sample raster layer at locations of the selected point layer.' # noqa
+        )
+
+        # sample raster profile button
+        icon = QIcon(f'{icon_path}/sample_raster_profile.png')  # noqa
+        sample_raster_profile = vector_menu.addAction(icon, self.tr('Sample Raster Profile'), self.run_sample_raster_profile)
+        sample_raster_profile.setToolTip(
+            f'Sample raster layer along the selected line layer\n' # noqa
+            f'with an even spacing of sample points.'
+        )
+
         vector_menu.addSeparator()
         
         # create coordinate grid button
@@ -413,8 +433,8 @@ class CruiseTools:  # noqa
         
         # register keyboard shortcuts
         self.shortcutsManager = QgsGui.shortcutsManager()
-        check_logPosition = self.shortcutsManager.registerAction(self.logPosition, 'F10')
-        check_logPositionSettings = self.shortcutsManager.registerAction(self.logPositionSettings, 'Ctrl+F10')
+        check_log_position = self.shortcutsManager.registerAction(self.logPosition, 'F10')
+        check_log_position_settings = self.shortcutsManager.registerAction(self.logPositionSettings, 'Ctrl+F10')
         
     #===============================================================================
 
@@ -433,8 +453,11 @@ class CruiseTools:  # noqa
         QgsApplication.processingRegistry().removeProvider(self.provider)
         
         # remove shortcut
-        check_logPosition = self.shortcutsManager.unregisterAction(self.logPosition)
-        check_logPositionSettings = self.shortcutsManager.unregisterAction(self.logPositionSettings)
+        check_log_position = self.shortcutsManager.unregisterAction(self.logPosition)
+        check_log_position_settings = self.shortcutsManager.unregisterAction(self.logPositionSettings)
+        
+        # remove listener
+        self.disconnect_listener()
 
     #===============================================================================
     #=================================   README   ==================================
@@ -512,6 +535,20 @@ class CruiseTools:  # noqa
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Areas are in!', level=Qgis.Success)
         return
 
+    def run_sample_raster_points(self):
+        """Run SampleRasterPoints module."""
+        result = processing.execAlgorithmDialog('cruisetools:samplerasterpoints', {})
+        if not result == {}:
+            iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Raster values are in!', level=Qgis.Success)
+        return
+
+    def run_sample_raster_profile(self):
+        """Run SampleRasterProfile module."""
+        result = processing.execAlgorithmDialog('cruisetools:samplerasterprofile', {})
+        if not result == {}:
+            iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Profile sampled!', level=Qgis.Success)
+        return
+
     def run_create_coordinate_grid(self):
         """Run CreateCoordinateGrid module."""
         result = processing.execAlgorithmDialog('cruisetools:createcoordinategrid', {})
@@ -564,6 +601,36 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Exported file: {utils.return_file_link(result["OUTPUT"])}', level=Qgis.Success)
         return
+        
+    def init_event_listener(self):
+        """Initialize canvas event listener for CruiseTools planning lines."""        
+        canvas = self.iface.mapCanvas()
+        layer = self.iface.activeLayer()
+        
+        if layer and QgsWkbTypes.LineGeometry and 'speed_kn' in layer.fields().names():
+            is_planning_layer = True
+        else:
+            is_planning_layer = False
+        
+        if is_planning_layer:
+            # Start listener 
+            if layer.isEditable():
+                # print('[DEBUG] Start listener for planning line layer')
+                self.listener = LinePlanningToolTip(canvas)
+            # Stop listener
+            elif not layer.isEditable():
+                # print('[DEBUG] Stop listener')
+                canvas.viewport().removeEventFilter(self.listener)
+                
+    def connect_listener(self):
+        """Connect custom EventListener to `Toggle Editing` event."""
+        actionToggleEditing = self.iface.actionToggleEditing()
+        actionToggleEditing.triggered.connect(self.init_event_listener)
+    
+    def disconnect_listener(self):
+        """Disconnect custom EventListener to `Toggle Editing` event."""
+        actionToggleEditing = self.iface.actionToggleEditing()
+        actionToggleEditing.triggered.disconnect(self.init_event_listener)
 
     #===============================================================================
     #================================   LOGGING   ==================================
@@ -585,11 +652,8 @@ class CruiseTools:  # noqa
                 self.posiview_enabled = True
         
         if not self.posiview_enabled and show_message:
-            self.iface.messageBar().pushMessage(
-                'Log Position',
-                'PosiView Plugin is not enabled! Please enable and start tracking in order to use "Log Position".',
-                level=Qgis.Info,
-                duration=3
+            self.logPosition.setToolTip(
+                '<b>PosiView Plugin not enabled!</b><br>Please enable and start tracking of a device in order to use "Log Position"'
             )
         
         self.logPosition.setEnabled(self.posiview_enabled)
@@ -598,13 +662,13 @@ class CruiseTools:  # noqa
     def run_log_position_settings(self):
         """Run LogPositionSettings module."""
         if self.first_start is True:
-            # print('[SETTINGS]    self.first_start:', self.first_start)  # TODO
+            # print('[SETTINGS]    self.first_start:', self.first_start)  # FIXME
             # init LogPosition class (only ONCE!)
             self.log_position_class = LogPosition(self.first_start)
             self.first_start = False
-        
-        # update PosiView devices
-        self.log_position_class.update_devices()
+        else:
+            # update PosiView devices
+            self.log_position_class.update_devices()
         
         # display Settings dialog
         self.log_position_class.show()
@@ -615,7 +679,7 @@ class CruiseTools:  # noqa
         self.check_posiview_plugin()
         
         if self.posiview_project.trackingStarted:
-            if self.first_start:  # FIXME
+            if self.first_start:
                 # print('[LOGGING]    self.first_start:', self.first_start)
                 widget = self.iface.messageBar().createMessage(
                     'Setup Log Position', 'Set settings before starting to log positions.',
@@ -627,20 +691,16 @@ class CruiseTools:  # noqa
                 
                 # show message
                 iface.messageBar().pushWidget(widget, Qgis.Warning, duration=5)
-                
-                # [DEBUGGING]
-                # self.log_position_class = LogPosition(self.first_start)
-                # self.first_start = False
             else:
                 # log position
                 self.log_position_class.log_position()
                 
-                self.iface.messageBar().pushMessage(
-                    'Log Position',
-                    f'Logged current position and saved to selected layer <{self.log_position_class.layer_logging.name()}>',
-                    level=Qgis.Info,
-                    duration=2
-                )
+                # self.iface.messageBar().pushMessage(
+                    # 'Log Position',
+                    # f'Logged current position and saved to selected layer <{self.log_position_class.layer_logging.name()}>',
+                    # level=Qgis.Info,
+                    # duration=2
+                # )
         else:
             self.iface.messageBar().pushMessage(
                 'Log Position',

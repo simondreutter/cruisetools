@@ -11,6 +11,8 @@
         <file>icons/write_point_coordinates.png</file>
         <file>icons/write_line_length.png</file>
         <file>icons/write_polygon_area.png</file>
+        <file>icons/sample_raster_points.png</file>
+        <file>icons/sample_raster_profile.png</file>
         <file>icons/create_coordinate_grid.png</file>
         <file>icons/swap_vectors.png</file>
         <file>icons/planning_menu.png</file>

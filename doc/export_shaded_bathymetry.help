@@ -1,4 +1,4 @@
-Create shaded RGB version of your raster DEM. Colors will be taken from the current symbology and shading will be done according to selected shading mode.
+Create shaded RGB or RGBA version of your raster DEM. Colors will be taken from the current symbology and shading will be done according to selected shading mode.
 Cruise Tools offers three multiplication based shading modes:
 [ Hillshade ]
 Shading by synthetic light source, 315° Azimuth, 45° Altitude.

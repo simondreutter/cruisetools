@@ -10,6 +10,8 @@ from .contour import CreateContours
 from .vector import WritePointCoordinates
 from .vector import WriteLineLength
 from .vector import WritePolygonArea
+from .vector import SampleRasterPoints
+from .vector import SampleRasterProfile
 from .vector import CreateCoordinateGrid
 from .vector import SwapVectors
 from .planning import CreatePlanningFile
@@ -17,6 +19,7 @@ from .planning import PlanningLinesToVertices
 from .planning import ParallelLinePlanning
 from .planning import EstimateMBESCoverage
 from .planning import ExportToBridge
+
 
 class CruiseToolsProvider(QgsProcessingProvider):
     def unload(self):
@@ -30,6 +33,8 @@ class CruiseToolsProvider(QgsProcessingProvider):
         self.addAlgorithm(WritePointCoordinates())
         self.addAlgorithm(WriteLineLength())
         self.addAlgorithm(WritePolygonArea())
+        self.addAlgorithm(SampleRasterPoints())
+        self.addAlgorithm(SampleRasterProfile())
         self.addAlgorithm(CreateCoordinateGrid())
         self.addAlgorithm(SwapVectors())
         self.addAlgorithm(CreatePlanningFile())

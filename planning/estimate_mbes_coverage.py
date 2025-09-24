@@ -1,39 +1,39 @@
-from math import tan, radians, degrees
 import os
+from math import tan, radians, degrees
+import numpy as np
 
-from qgis.core import (
-    QgsProject,
-    QgsCoordinateTransform,
-    QgsCoordinateReferenceSystem,
-    QgsDistanceArea,
-    QgsFeature,
-    QgsFeatureSink,
-    QgsField,
-    QgsFields,
-    QgsPointXY,
-    QgsGeometry,
-    QgsGeometryUtils,
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingParameterFeatureSink,
-    QgsProcessingParameterFeatureSource,
-    QgsProcessingParameterField,
-    QgsProcessingParameterNumber,
-    QgsProcessingParameterRasterLayer,
-    QgsProcessingParameterBand,
-    QgsProcessingParameterEnum,
-    QgsProcessingParameterBoolean,
-    QgsProcessingParameterDefinition,
-    QgsProcessingUtils,
-    QgsProcessingException,
-    QgsWkbTypes
-)
+from qgis.core import QgsCoordinateTransform
+from qgis.core import QgsCoordinateReferenceSystem
+from qgis.core import QgsDistanceArea
+from qgis.core import QgsFeature
+from qgis.core import QgsFeatureSink
+from qgis.core import QgsField
+from qgis.core import QgsFields
+from qgis.core import QgsPointXY
+from qgis.core import QgsGeometry
+from qgis.core import QgsGeometryUtils
+from qgis.core import QgsProcessing
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingException
+from qgis.core import QgsProcessingParameterBand
+from qgis.core import QgsProcessingParameterBoolean
+from qgis.core import QgsProcessingParameterDefinition
+from qgis.core import QgsProcessingParameterEnum
+from qgis.core import QgsProcessingParameterFeatureSink
+from qgis.core import QgsProcessingParameterFeatureSource
+from qgis.core import QgsProcessingParameterField
+from qgis.core import QgsProcessingParameterNumber
+from qgis.core import QgsProcessingParameterRasterLayer
+from qgis.core import QgsProcessingUtils
+from qgis.core import QgsProject
+from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
+
 
 def get_swath_angle(feature, swath_angle_field, swath_angle_fallback):
     """Get swath angle for feature.
@@ -63,11 +63,11 @@ def get_swath_angle(feature, swath_angle_field, swath_angle_fallback):
             # if NULL, set fallback
             swath_angle = swath_angle_fallback
         else:
-            # othervise take value from field
+            # otherwise take value from field
             swath_angle = swath_angle_field_value
     else:
         swath_angle = swath_angle_fallback
-    
+
     return swath_angle
 
 
@@ -99,7 +99,7 @@ def get_inner_angle(vertices: list, idx: int):
             vertices[idx + 1].x(), vertices[idx + 1].y(),
         )
     )
-    
+
     if (a1 > a2) and (a1 > (a2 + 180)):
         a = 540 - a1 + a2
     elif (a1 > a2):
@@ -108,11 +108,12 @@ def get_inner_angle(vertices: list, idx: int):
         a = 180 + a2 - a1
     elif (a1 < a2):
         a = a2 - a1 - 180
-    
+
     a = 360 - a
     a = (a + 360) % 360
-    
+
     return a
+
 
 class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
     """Estimate MBES Coverage."""
@@ -130,24 +131,29 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
     SWATH_ANGLE_PORT = 'SWATH_ANGLE_PORT'
     SWATH_ANGLE_FIELD_STARBOARD = 'SWATH_ANGLE_FIELD_STARBOARD'
     SWATH_ANGLE_STARBOARD = 'SWATH_ANGLE_STARBOARD'
+    DENSIFY_MODE = 'DENSIFY_MODE'
+    DENSIFY_VALUE = 'DENSIFY_VALUE'
     # outputs:
     OUTPUT = 'OUTPUT'
 
     def __init__(self):
         """Initialize CreatePlanningFile."""
         super(EstimateMBESCoverage, self).__init__()
-        
+
         self.swath_angle_modi = {
             0: 'Total angle',
             1: 'Port/Starboard angles'
         }
         
+        self.densify_modes = ['Number of points', 'Distance']
+
         # style files for mbes coverage layers
         self.style_mbes_coverage = ':/plugins/cruisetools/styles/style_mbes_coverage.qml'
         self.style_mbes_coverage_vertices = ':/plugins/cruisetools/styles/style_mbes_coverage_vertices.qml'
-        
+
         # distance for line densifier
         self.vertex_distance = 50  # m
+        
         # buffer settings
         self.buffer_segments = 10
         self.buffer_join_style = QgsGeometry.JoinStyleRound
@@ -166,8 +172,6 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.raster_layer_name = self.config.getint(self.module, 'raster_layer')
 
     def initAlgorithm(self, config=None):  # noqa
-        # line_layers = [lyr for lyr in QgsProject.instance().mapLayers().values() if lyr.type() == 0]
-        # line_layer_names = [line.name() for line in line_layers]
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 name=self.INPUT_LINE,
@@ -206,7 +210,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.parameterDefinition(self.SWATH_ANGLE_MODE).setFlags(
             QgsProcessingParameterDefinition.FlagAdvanced
         )
-        
+
         self.addParameter(
             QgsProcessingParameterField(
                 name=self.SWATH_ANGLE_FIELD,
@@ -270,6 +274,39 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
             self.addParameter(param)
         
+        # DENSIFY OPTIONS
+        self.addParameter(
+            QgsProcessingParameterEnum(
+                name=self.DENSIFY_MODE,
+                description=self.tr('Densify mode (defines output coverage resolution)'),
+                options=self.densify_modes,
+                defaultValue=self.densify_modes[0],
+                optional=False,
+                allowMultiple=False)
+        )
+        self.parameterDefinition(self.DENSIFY_MODE).setMetadata({
+            'widget_wrapper': {
+                'useCheckBoxes': True,
+                'columns': 2,
+            }
+        })
+        self.parameterDefinition(self.DENSIFY_MODE).setFlags(
+            QgsProcessingParameterDefinition.FlagAdvanced
+        )
+        self.addParameter(
+            QgsProcessingParameterNumber(
+                    name=self.DENSIFY_VALUE,
+                    description=self.tr('Number of points [#] OR Distance [m]'),
+                    type=QgsProcessingParameterNumber.Integer,
+                    defaultValue=100,
+                    optional=True,
+                    minValue=0)
+        )
+        self.parameterDefinition(self.DENSIFY_VALUE).setFlags(
+            QgsProcessingParameterDefinition.FlagAdvanced
+        )
+        
+        # RASTER
         raster_layers = [lyr for lyr in QgsProject.instance().mapLayers().values() if lyr.type() == 1]
         raster_layer_names = [r.name() for r in raster_layers]
         self.addParameter(
@@ -301,33 +338,37 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                 optional=False,
                 createByDefault=True)
         )
-
+    
     def processAlgorithm(self, parameters, context, feedback):  # noqa
         # get input variables
         source = self.parameterAsSource(parameters, self.INPUT_LINE, context)
-        
+
         dissolve_buffer = self.parameterAsBoolean(parameters, self.DISSOLVE_BUFFER, context)
-        
+
         swath_angle_mode = self.parameterAsInt(parameters, self.SWATH_ANGLE_MODE, context)
-        
+
         # total opening angle
         swath_angle_field = self.parameterAsString(parameters, self.SWATH_ANGLE_FIELD, context)
         swath_angle_fallback = self.parameterAsInt(parameters, self.SWATH_ANGLE, context)
-        
+
         # port/starboard angles
         swath_angle_field_port = self.parameterAsString(parameters, self.SWATH_ANGLE_FIELD_PORT, context)
         swath_angle_port_fallback = self.parameterAsInt(parameters, self.SWATH_ANGLE_PORT, context)
         swath_angle_field_stb = self.parameterAsString(parameters, self.SWATH_ANGLE_FIELD_STARBOARD, context)
         swath_angle_stb_fallback = self.parameterAsInt(parameters, self.SWATH_ANGLE_STARBOARD, context)
         
+        # densify mode
+        densify_mode = self.densify_modes[self.parameterAsInt(parameters, self.DENSIFY_MODE, context)]
+        densify_value = self.parameterAsInt(parameters, self.DENSIFY_VALUE, context)
+        
         raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT_RASTER, context)
         band_number = self.parameterAsInt(parameters, self.BAND, context)
-        
+
         # copy of the field name for later
         swath_angle_field_name = swath_angle_field
         swath_angle_field_port_name = swath_angle_field_port
         swath_angle_field_stb_name = swath_angle_field_stb
-        
+
         # set new default values in config
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         # self.config.set(self.module, 'line_layer', source.sourceName())
@@ -337,220 +378,280 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.config.set(self.module, 'swath_angle_port', swath_angle_port_fallback)
         self.config.set(self.module, 'swath_angle_stb', swath_angle_stb_fallback)
         self.config.set(self.module, 'raster_layer', raster_layer.name())
-        
-        # get crs's
+
+        # get CRS
         crs_line = source.sourceCrs()
         crs_raster = raster_layer.crs()
-        
+
         # get project transform_context
         transform_context = context.transformContext()
-        
+
         # CRS transformation to "WGS84/World Mercator" for MBES coverage operations
         crs_mercator = QgsCoordinateReferenceSystem('EPSG:3395')
         trans_line2merc = QgsCoordinateTransform(crs_line, crs_mercator, transform_context)
-        
-        # CRS transformation to raster layer CRS for depth sampling
-        trans_merc2raster = QgsCoordinateTransform(crs_mercator, crs_raster, transform_context)
+
+        # CRS transformation to geographic projection (for UTM zone estimate)
+        # trans_merc2raster = QgsCoordinateTransform(crs_mercator, crs_raster, transform_context)
         # trans_line2raster = QgsCoordinateTransform(crs_line, crs_raster, transform_context)
         crs_geo = QgsCoordinateReferenceSystem('EPSG:4326')
         trans_line2geo = QgsCoordinateTransform(crs_line, crs_geo, transform_context)
-        
+
         # initialize distance tool
         da = QgsDistanceArea()
         da.setSourceCrs(crs_mercator, transform_context)
         da.setEllipsoid(crs_mercator.ellipsoidAcronym())
-        
+
         # list for polygons features (unioned buffer)
         buffer_union_features = []
-        
+
         # get (selected) features
         features = source.getFeatures()
-        
+
         # feedback
         total = 100.0 / source.featureCount() if source.featureCount() else 0
-        
+
         # loop through features
         feedback.pushConsoleInfo(self.tr('Densifying line features...'))
         feedback.pushConsoleInfo(self.tr('Extracting vertices...'))
         feedback.pushConsoleInfo(self.tr('Sampling values...'))
         feedback.pushConsoleInfo(self.tr('Computing depth dependent buffers...'))
         feedback.pushConsoleInfo(self.tr('Unionizing output features...'))
+        
         for feature_id, feature in enumerate(features):
             # get feature geometry
             feature_geom = feature.geometry()
-            
+
+            # transform from line CRS to "WGS 84 / World Mercator" (EPSG:3395)
+            # -> same projection as navigation software on most research vessel 
+            feature_geom_epsg3395 = QgsGeometry(feature_geom)  # deep copy
+            feature_geom_epsg3395.transform(trans_line2merc)
+
             # check for LineString geometry
             if QgsWkbTypes.isSingleType(feature_geom.wkbType()):
                 # get list of vertices
-                vertices_list = feature_geom.asPolyline()
-                vertices_list = [vertices_list]
-            
+                vertices_list = [feature_geom.asPolyline()]
+                vertices_list_epsg3395 = [feature_geom_epsg3395.asPolyline()]
+
             # check for MultiLineString geometry
             elif QgsWkbTypes.isMultiType(feature_geom.wkbType()):
-                # get list of list of vertices per multiline part
+                # get list of lists of vertices per multiline part
                 vertices_list = feature_geom.asMultiPolyline()
-            
-            for part_id, vertices in enumerate(vertices_list):
+                vertices_list_epsg3395 = feature_geom_epsg3395.asMultiPolyline()
+
+            for part_id, (vertices, vertices_t) in enumerate(zip(vertices_list, vertices_list_epsg3395)):
                 # list for unioned buffer
                 list_buffer_union_segments = []
-                
-                # transform vertices CRS to "WGS 84 / World Mercator"
-                vertices_t = []
-                for vertex in vertices:
-                    vertex_trans = trans_line2merc.transform(vertex)
-                    vertices_t.append(vertex_trans)
-                
+
                 # get centroid as point for UTM zone selection
                 centroid = feature_geom.centroid()
                 centroid_point = centroid.asPoint()
-                
+
                 # check if centroid needs to be transformed to get x/y in lon/lat
                 if not crs_line.isGeographic():
                     centroid_point = trans_line2geo.transform(centroid_point)
-                
+
                 # get UTM zone of feature for buffering
                 lat, lon = centroid_point.y(), centroid_point.x()
-                crs_utm = self.get_UTM_zone(lat, lon)
-                
+                crs_utm = self.get_utm_zone(lat, lon)
+
                 # create back and forth transformations for later
                 trans_merc2utm = QgsCoordinateTransform(crs_mercator, crs_utm, transform_context)
                 trans_utm2line = QgsCoordinateTransform(crs_utm, crs_line, transform_context)
-                
+                trans_utm2raster = QgsCoordinateTransform(crs_utm, crs_raster, transform_context)
+
                 # split line into segments
                 for segment_id in range(len(vertices_t) - 1):
                     # ===== (1) DENSIFY LINE VERTICES =====
                     # create new Polyline geometry for line segment
                     segment_geom = QgsGeometry.fromPolylineXY([vertices_t[segment_id], vertices_t[segment_id + 1]])
-                    
+
                     # measure ellipsoidal distance between start and end vertex
                     segment_length = da.measureLength(segment_geom)
-                    
+
                     # calculate number of extra vertices to insert
-                    extra_vertices = int(segment_length // self.vertex_distance)
-                    
-                    # create additional vertices along line segment
-                    segment_geom_dense = segment_geom.densifyByCount(extra_vertices - 1)
-                    segment_vertices = list(segment_geom_dense.vertices())
-                    segment_vertices_cnt = len(segment_vertices)
-                    
+                    if densify_mode == self.densify_modes[0]:  # number of points
+                        extra_vertices = densify_value
+                    elif densify_mode == self.densify_modes[1]:  # distance
+                        extra_vertices = int(segment_length // densify_value) - 2
+                        extra_vertices = 0 if extra_vertices <= 0 else extra_vertices
+
+                    # Densify input line segment
+                    segment_geom_dense = segment_geom.densifyByCount(extra_vertices)
+                    # Transform segment from World Mercator (EPSG:3395) to local UTM zone
+                    segment_geom_dense_utm = QgsGeometry(segment_geom_dense)  # deep copy
+                    check = segment_geom_dense_utm.transform(trans_merc2utm)
+                    if check != 0:
+                        raise Exception('CRS transformation failed')
+                    # Transform segment from local UTM zone to raster CRS
+                    segment_geom_dense_raster = QgsGeometry(segment_geom_dense_utm)  # deep copy
+                    check = segment_geom_dense_raster.transform(trans_utm2raster)
+                    if check != 0:
+                        raise Exception('CRS transformation failed')
+                        
+                    # Extract segment vertices
+                    segment_vertices_utm = segment_geom_dense_utm.asPolyline()
+                    segment_vertices_raster = segment_geom_dense_raster.asPolyline()
+
                     # initialize additional fields
                     feature_id_field = QgsField('feature_id', QVariant.Int, 'Integer', len=5, prec=0)
                     part_id_field = QgsField('part_id', QVariant.Int, 'Integer', len=5, prec=0)
                     segment_id_field = QgsField('segment_id', QVariant.Int, 'Integer', len=5, prec=0)
                     
-                    # list for segment buffers
-                    buffer_list = []
+                    # init list of outer beams
+                    beams_stbd = []
+                    beams_port = []
+                    
+                    bearing = 0
                     
                     # loop over all vertices of line segment
-                    for i in range(segment_vertices_cnt - 1):
+                    for i, pt in enumerate(segment_vertices_utm):
+                        # Calculate bearing (in degrees) using local UTM projection
+                        bearing = (
+                            degrees(da.bearing(pt, segment_vertices_utm[i + 1])) % 360
+                            if i < len(segment_vertices_utm) - 1 else bearing  # use previous bearing for last vertex
+                        )
                         
-                        pnt_start = QgsPointXY(segment_vertices[i])
-                        pnt_end = QgsPointXY(segment_vertices[i + 1])
-                        
-                        # [BUFFER] create geometry
-                        geom_line = QgsGeometry.fromPolylineXY([pnt_start, pnt_end])
-                        # geom_point = QgsGeometry.fromPointXY(pnt_end)
-                        
-                        # [BUFFER] transform geometry from World Mercator to local UTM zone
-                        geom_line.transform(trans_merc2utm)
-                        # geom_point.transform(trans_merc2utm)
-                        
-                        # [RASTER] transform point to raster CRS
-                        pnt_start_rasterCRS = trans_merc2raster.transform(pnt_start)
-                        pnt_end_rasterCRS = trans_merc2raster.transform(pnt_end)
-                        
-                        # [RASTER]  sample raster at point locations
-                        pnt_start_depth, error_check_start = raster_layer.dataProvider().sample(pnt_start_rasterCRS, band_number)
-                        pnt_end_depth, error_check_end = raster_layer.dataProvider().sample(pnt_end_rasterCRS, band_number)
-                        pointXY_depth = (pnt_start_depth + pnt_end_depth) / 2
-                        
-                        # check if valid depth was sampled, otherwise skip point
-                        if error_check_start is False or error_check_end is False:
+                        # Sample raster at densified point along line segement (in raster CRS)
+                        pt_depth, check = raster_layer.dataProvider().sample(segment_vertices_raster[i], band_number)
+                        if not check:
+                            # print(f'[WARN] No depth found. Skipping point < {i} >')
                             continue
                         
-                        # get swath angle
+                        # Get swath angle
                         if swath_angle_mode == 0:
                             swath_angle = get_swath_angle(feature, swath_angle_field, swath_angle_fallback)
-                            
-                            # calculate buffer radius (swath width from depth and swath angle)
-                            buffer_radius = round(tan(radians(swath_angle / 2)) * abs(pointXY_depth), 0)
-                            
-                            # create buffer
-                            buffer = geom_line.buffer(
-                                buffer_radius, self.buffer_segments,  # FIXME: endCapStyle=QgsGeometry.CapFlat
-                            )
-                        
+                            swath_angle_port = swath_angle_stb = swath_angle // 2
                         elif swath_angle_mode == 1:
-                            swath_angle_port = get_swath_angle(feature, swath_angle_field_port, swath_angle_port_fallback)  # swath_angle_port_fallback
+                            swath_angle_port = get_swath_angle(feature, swath_angle_field_port, swath_angle_port_fallback)
                             swath_angle_stb = get_swath_angle(feature, swath_angle_field_stb, swath_angle_stb_fallback)
                         
-                            # calculate buffer radius (swath width from depth and swath angle)
-                            buffer_dist_port = round(tan(radians(swath_angle_port)) * abs(pointXY_depth), 0)
-                            buffer_dist_stb = round(tan(radians(swath_angle_stb)) * abs(pointXY_depth), 0)
-                            
-                            # create unioned buffer from port/starboard buffers
-                            buffer_port = geom_line.singleSidedBuffer(
-                                buffer_dist_port, self.buffer_segments, side=QgsGeometry.SideLeft, joinStyle=self.buffer_join_style
-                            )
-                            buffer_stb = geom_line.singleSidedBuffer(
-                                buffer_dist_stb, self.buffer_segments, side=QgsGeometry.SideRight, joinStyle=self.buffer_join_style
-                            )
-                            # single buffer
-                            buffer = QgsGeometry.unaryUnion([buffer_port, buffer_stb])  # OPTIMIZE: .simplify(1)
-
-                        # transform buffer back to initial input CRS
-                        buffer.transform(trans_utm2line)
+                        # Calculate horizontal distance (flat surface)
+                        dist_stbd_flat = abs(tan(radians(swath_angle_stb)) * pt_depth)
+                        dist_port_flat = abs(tan(radians(swath_angle_port)) * pt_depth)
                         
-                        # store buffer in list
-                        buffer_list.append(buffer)
+                        # Project starboard/port outer beams
+                        pt_stbd_flat = pt.project(dist_stbd_flat, (bearing + 90) % 360)
+                        pt_port_flat = pt.project(dist_port_flat, (bearing - 90) % 360)
+                        
+                        # Create swath line geometry (flat)
+                        swath_flat = QgsGeometry.fromPolylineXY([pt_port_flat, pt_stbd_flat])
+                        
+                        # Sample bathymetry along perpendicular line (swath)
+                        FACTOR_EXTEND = 1.5  # 50% extension to account for seafloor dipping away from ship
+                        dist_stbd_extend = dist_stbd_flat * FACTOR_EXTEND
+                        dist_port_extend = dist_port_flat * FACTOR_EXTEND
+                        n_swath_densify = 100
+    
+                        # Extend swath (horizontal) by 50% to each side
+                        swath_flat_extend = swath_flat.extendLine(dist_port_extend, dist_stbd_extend)
+                        swath_flat_extend_raster = QgsGeometry(swath_flat_extend)  # deep copy
+                        swath_flat_extend_raster.transform(trans_utm2raster)
+                        vertices_swath_flat = swath_flat_extend_raster.densifyByCount(n_swath_densify).asPolyline()
+                        swath_flat_depths = np.array([
+                            raster_layer.dataProvider().sample(v, band_number)[0] for v in vertices_swath_flat
+                        ])
+                        if len(swath_flat_depths) == 0:
+                            raise Exception('No depths could be sampled from the input raster!')
+                        
+                        # Interpolate NaNs in sampled depths
+                        idx_nans = np.isnan(swath_flat_depths)
+                        x = np.arange(len(swath_flat_depths))
+                        # Note: np.interp replaces outer NaNs with the last valid value
+                        swath_flat_depths[idx_nans] = np.interp(x[idx_nans], x[~idx_nans], swath_flat_depths[~idx_nans])
+                        
+                        # Calculate intersection of outer beams with bathymetry (sampled depths)
+                        # using an arbitrary reference system (x: distance along swath, y: depth)
+                        # Init beams
+                        beam_stbd = QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(dist_stbd_flat, pt_depth)])
+                        beam_port = QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(-dist_port_flat, pt_depth)])
+                        
+                        # Extend beams
+                        beam_stbd = beam_stbd.extendLine(0, beam_stbd.length() * FACTOR_EXTEND)
+                        beam_port = beam_port.extendLine(0, beam_port.length() * FACTOR_EXTEND)
+                        
+                        # Init bathymetric profile (extended)
+                        xx = np.linspace(-(dist_port_flat + dist_port_extend), dist_stbd_flat + dist_stbd_extend, n_swath_densify, endpoint=True)
+                        swath_bathy = QgsGeometry.fromPolylineXY([QgsPointXY(x, y) for x, y in zip(xx, swath_flat_depths)])
+                        
+                        # Get outer beam positions
+                        # STARBOARD
+                        intersection_stbd = beam_stbd.intersection(swath_bathy)
+                        if not intersection_stbd.isEmpty():
+                            # Project expected outer beam position
+                            if intersection_stbd.isMultipart():
+                                # print(f'[WARN] Multiple stbd intersections found for point < {i} > (using nearest point)')
+                                dist_stbd = abs(list(intersection_stbd.vertices())[0].x())
+                            else:
+                                dist_stbd = abs(intersection_stbd.asPoint().x())
+                            pt_stbd = pt.project(dist_stbd, (bearing + 90) % 360)
+                            pt_stbd_src = trans_utm2line.transform(QgsPointXY(pt_stbd))
+                            beams_stbd.append(pt_stbd_src)
+                        # else:
+                            # print(f'[WARN] No starboard intersection found for point < {i} >')
+                        
+                        # PORT
+                        intersection_port = beam_port.intersection(swath_bathy)
+                        if not intersection_port.isEmpty():
+                            # Project expected outer beam position
+                            if intersection_port.isMultipart():
+                                # print(f'[WARN] Multiple port intersections found for point < {i} >! Using nearest point.')
+                                dist_port = abs(list(intersection_port.vertices())[0].x())
+                            else:
+                                dist_port = abs(intersection_port.asPoint().x())
+                            pt_port = pt.project(dist_port, (bearing - 90) % 360)
+                            pt_port_src = trans_utm2line.transform(QgsPointXY(pt_port))
+                            beams_port.append(pt_port_src)
+                        # else:
+                            # print(f'[WARN] No port intersection found for point < {i} >!')
                     
-                    # check if any points in this segment have been sampled
-                    if buffer_list == []:
+                    if len(beams_stbd) == 0 or len(beams_port) == 0:
+                        # print(f'[WARN]  Found no valid depths along segment < {segment_id} >!')
                         continue
-                    
-                    # dissolve point buffers of line segment:
-                    # dissolve all polygons based on line vertices into single feature
-                    buffer_union = QgsGeometry.unaryUnion(buffer_list).convexHull()
+
+                    # Create coverage polygon for line segement
+                    buffer_union = QgsGeometry.fromPolygonXY([beams_stbd + beams_port[::-1]])
                     list_buffer_union_segments.append(buffer_union)
-                    
+
                     # [MODE] Create QgsFeature ONLY if required for output
                     if not dissolve_buffer:
-                        # set fields and attributes:
-                        # empty fields
+                        # init fields
                         buffer_fields = QgsFields()
-                        
+
                         # loop through line feature fields
                         for field in feature.fields():
                             # and append all but the 'fid' field (if it exists)
                             if field.name() != 'fid':
                                 buffer_fields.append(field)
-                        
-                        # append extra buffer fields (intial feature id, part id and segment id
+
+                        # append extra buffer fields (initial feature id, part id and segment id
                         for buffer_field in [feature_id_field, part_id_field, segment_id_field]:
                             buffer_fields.append(buffer_field)
-                        
+
                         # if no input swath_angle field was selected on input, create one
                         if swath_angle_mode == 0 and swath_angle_field == '':
                             swath_angle_field_name = 'mbes_swath_angle'
-                            buffer_fields.append(QgsField(swath_angle_field_name, QVariant.Int, 'Integer', len=5, prec=0))
+                            buffer_fields.append(
+                                QgsField(swath_angle_field_name, QVariant.Int, 'Integer', len=5, prec=0))
                         elif swath_angle_mode == 1:
                             if swath_angle_field_port == '':
                                 swath_angle_field_port_name = 'mbes_swath_angle_port'
-                                buffer_fields.append(QgsField(swath_angle_field_port_name, QVariant.Int, 'Integer', len=5, prec=0))
+                                buffer_fields.append(
+                                    QgsField(swath_angle_field_port_name, QVariant.Int, 'Integer', len=5, prec=0))
                             if swath_angle_field_stb == '':
                                 swath_angle_field_stb_name = 'mbes_swath_angle_stb'
-                                buffer_fields.append(QgsField(swath_angle_field_stb_name, QVariant.Int, 'Integer', len=5, prec=0))
-                        
+                                buffer_fields.append(
+                                    QgsField(swath_angle_field_stb_name, QVariant.Int, 'Integer', len=5, prec=0))
+
                         # initialize polygon feature
                         fpoly = QgsFeature(buffer_fields)
-                        
+
                         # set attributes for polygon feature
                         for field in feature.fields():
                             # ignore 'fid' again
                             if field.name() != 'fid':
                                 # set attribute from feature to buffer
                                 fpoly.setAttribute(field.name(), feature.attribute(field.name()))
-                        
+
                         # set addtional buffer fields
                         fpoly.setAttribute('feature_id', feature_id)
                         fpoly.setAttribute('part_id', part_id)
@@ -560,56 +661,38 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                         elif swath_angle_mode == 1:
                             fpoly.setAttribute(swath_angle_field_port_name, swath_angle_port)
                             fpoly.setAttribute(swath_angle_field_stb_name, swath_angle_stb)
-                        
+
                         # set geometry
                         fpoly.setGeometry(buffer_union)
-                        
+
                         # store segment coverage polygon
                         if fpoly.hasGeometry() and fpoly.isValid():
                             buffer_union_features.append(fpoly)
-                            
+                
                 # [DISSOLVE]
-                if dissolve_buffer:
+                if dissolve_buffer and len(list_buffer_union_segments) > 0:
                     # create coverage poylgon for all segments of part (aka feature for non MultiLineString)
                     buffer_part = QgsGeometry.unaryUnion(list_buffer_union_segments)
                     
-                    # remove buffer polygon vertices with `inner_angle` > threshold --> "infill corners"
-                    if swath_angle_mode == 1:
-                        inner_angle = 270
-                        # extract vertices
-                        buffer_vertices = list(buffer_part.vertices())
-                        buffer_vertices_cnt = len(buffer_vertices)
-                        
-                        # create LineString in UTM coordinates (slightly buffered)
-                        vertices_UTM = [QgsPointXY(v) for v in vertices_t]
-                        line_part_buffer = QgsGeometry.fromPolylineXY(vertices_UTM).buffer(1, self.buffer_segments)
-                        
-                        # get vertex indices to remove
-                        indices_to_remove = [
-                            i for i in range(1, buffer_vertices_cnt - 1)
-                            if (get_inner_angle(buffer_vertices, i) > inner_angle)
-                            and (line_part_buffer.contains(QgsPointXY(buffer_vertices[i])))
-                        ]
-                        
-                        # create MBES converage polygon WITHOUT vertices to remove
-                        buffer_part = QgsGeometry.fromPolygonXY([[
-                            QgsPointXY(v) for idx, v in enumerate(buffer_vertices) if idx not in indices_to_remove
-                        ]])
+                    # remove input line vertices from coverage polygon --> "infill corners"
+                    v_buffer = buffer_part.asPolygon()[0]  # outer ring
+                    v_filt = [v for v in v_buffer if v not in vertices]
                     
-                    # set fields and attributes:
-                    # empty fields
+                    buffer_part = QgsGeometry.fromPolygonXY([v_filt])
+                    
+                    # init fields
                     buffer_fields = QgsFields()
-                    
+
                     # loop through line feature fields
                     for field in feature.fields():
                         # and append all but the 'fid' field (if it exists)
                         if field.name() != 'fid':
                             buffer_fields.append(field)
-                    
-                    # append extra buffer fields (intial feature id, part id and segment id
+
+                    # append extra buffer fields (initial feature id, part id and segment id
                     for buffer_field in [feature_id_field, part_id_field, segment_id_field]:
                         buffer_fields.append(buffer_field)
-                    
+
                     # if no input swath_angle field was selected on input, create one
                     if swath_angle_mode == 0 and swath_angle_field == '':
                         swath_angle_field_name = 'mbes_swath_angle'
@@ -617,22 +700,24 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                     elif swath_angle_mode == 1:
                         if swath_angle_field_port == '':
                             swath_angle_field_port_name = 'mbes_swath_angle_port'
-                            buffer_fields.append(QgsField(swath_angle_field_port_name, QVariant.Int, 'Integer', len=5, prec=0))
+                            buffer_fields.append(
+                                QgsField(swath_angle_field_port_name, QVariant.Int, 'Integer', len=5, prec=0))
                         if swath_angle_field_stb == '':
                             swath_angle_field_stb_name = 'mbes_swath_angle_stb'
-                            buffer_fields.append(QgsField(swath_angle_field_stb_name, QVariant.Int, 'Integer', len=5, prec=0))
-                    
+                            buffer_fields.append(
+                                QgsField(swath_angle_field_stb_name, QVariant.Int, 'Integer', len=5, prec=0))
+
                     # initialize polygon feature
                     fpoly = QgsFeature(buffer_fields)
-                    
+
                     # set attributes for polygon feature
                     for field in feature.fields():
                         # ignore 'fid' again
                         if field.name() != 'fid':
                             # set attribute from feature to buffer
                             fpoly.setAttribute(field.name(), feature.attribute(field.name()))
-                    
-                    # set addtional buffer fields
+
+                    # set additional buffer fields
                     fpoly.setAttribute('feature_id', feature_id)
                     fpoly.setAttribute('part_id', part_id)
                     fpoly.setAttribute('segment_id', 999)
@@ -641,21 +726,21 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                     elif swath_angle_mode == 1:
                         fpoly.setAttribute(swath_angle_field_port_name, swath_angle_port)
                         fpoly.setAttribute(swath_angle_field_stb_name, swath_angle_stb)
-                    
+
                     # set geometry
                     fpoly.setGeometry(buffer_part)
-                    
+
                     # store segment coverage polygon
                     if fpoly.hasGeometry() and fpoly.isValid():
                         buffer_union_features.append(fpoly)
-                
-            # set progess
+
+            # set progress
             feedback.setProgress(int(feature_id * total))
-        
+
         # if buffer_union_features is empty, no buffer features where created
         if buffer_union_features == []:
-            raise Exception('No depth values could be sampled from the input raster!')
-        
+            raise Exception('No depth values could be sampled from the input raster! Please check input line and raster.')
+
         # creating feature sink
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
         (sink, dest_id) = self.parameterAsSink(
@@ -663,43 +748,41 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         )
         if sink is None:
             raise QgsProcessingException(self.invalidSinkError(parameters, self.OUTPUT))
-        
+
         # write coverage features to sink
         feedback.pushConsoleInfo(self.tr('Writing features...'))
         sink.addFeatures(buffer_union_features, QgsFeatureSink.FastInsert)
-        
-        # make variables accessible for post processing
-        self.output = dest_id
-        
-        result = {self.OUTPUT : self.output}
-        
-        return result
 
+        # make variables accessible for post-processing
+        self.output = dest_id
+
+        result = {self.OUTPUT: self.output}
+
+        return result
+    
     def postProcessAlgorithm(self, context, feedback):  # noqa
-        # check for error in processing algorithm
-        #if self.output == None:
-        #    return {}
         
         # get layer from source and context
         mbes_coverage_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
-        
+
         # loading Cruise Tools Planning style from QML style file
         feedback.pushConsoleInfo(self.tr('Loading style...'))
         mbes_coverage_layer.loadNamedStyle(self.style_mbes_coverage)
-        
+
         # writing style to GPKG (or else)
         style_name = 'Cruise Tools MBES Coverage'
         style_desc = 'MBES Coverage style for QGIS Symbology from Cruise Tools plugin'
-        
+
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        mbes_coverage_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True, uiFileContent=None)
-        
+        mbes_coverage_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True,
+                                                uiFileContent=None)
+
         # 100% done
         feedback.setProgress(100)
         feedback.pushInfo(self.tr(f'{utils.return_success()}! MBES coverage has been estimated!\n'))
-        
-        result = {self.OUTPUT : self.output}
-        
+
+        result = {self.OUTPUT: self.output}
+
         return result
 
     def name(self):  # noqa
@@ -708,7 +791,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
     def icon(self):  # noqa
         icon = QIcon(f'{self.plugin_dir}/icons/estimate_mbes_coverage.png')
         return icon
-    
+
     def displayName(self):  # noqa
         return self.tr('Estimate MBES Coverage')
 

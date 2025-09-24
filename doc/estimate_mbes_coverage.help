@@ -4,5 +4,7 @@ Coverage polygons can be dissolved per feature for a better visual representatio
 If a field with the (total) swath angle is present in the input layer attributes, select that, if not set a swath angle fallback value.
 Select a bathymetry raster layer (e.g., GEBCO) and band and retrieve an estimate of your MBES coverage.
 The resulting polygon will be computed for each LineString segment and optionally dissolved for each feature (default).
-The prediction assumes a reasonably flat seafloor. In regions with high topographic variations, results might vary strongly from actual achievable MBES coverage.
-[Advanced Parameters] Alternatively, choose separate swath openening anlges for port and starbord.
+The estimated swath converage is calculated using depth profiles perpendicular to the line orientation. The along-track resolution is based on either (i) additionally added sampling points (default: 100) or (ii) distance along the LineString segment.
+[Advanced Parameters]
+Choose separate swath openening angles for port and starbord.
+Set sampling densify mode used to calculate perpendicular depth profiles. WARNING: Too small distances might crash QGIS!

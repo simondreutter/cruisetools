@@ -2,6 +2,7 @@ import os
 
 from .. import config
 
+
 class Contour(object):
     """Base class for contour modules."""
 

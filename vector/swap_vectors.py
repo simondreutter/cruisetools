@@ -1,16 +1,16 @@
 import os
 
-from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingParameterBoolean,
-    QgsProcessingParameterVectorLayer)
+from qgis.core import QgsProcessing
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingParameterBoolean
+from qgis.core import QgsProcessingParameterVectorLayer
 
 from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
 from .. import utils
+
 
 class SwapVectors(QgsProcessingAlgorithm, Vector):
     """Swap Vectors."""
@@ -44,27 +44,25 @@ class SwapVectors(QgsProcessingAlgorithm, Vector):
         )
 
     def processAlgorithm(self, parameters, context, feedback):  # noqa
-        # get input variables as self.* for use in post processing
+        # get input variables as self.* for use in post-processing
         self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         self.selected = self.parameterAsBoolean(parameters, self.SELECTED, context)
-        
+
         feedback.pushConsoleInfo(self.tr('Swapping vectors...\n'))
         error, result = self.swap_vectors(self.vector_layer, selected=self.selected)
         if error:
             feedback.reportError(self.tr(result), fatalError=True)
             return {}
-        
+
         self.vector_layer.triggerRepaint()
-        
+
         # 100% done
         feedback.setProgress(100)
         feedback.pushInfo(self.tr(f'{utils.return_success()}! Swapped all those vectors!\n'))
-        
-        result = {self.OUTPUT : self.vector_layer}
-        
+
+        result = {self.OUTPUT: self.vector_layer}
+
         return result
-
-
 
     def name(self):  # noqa
         return 'swapvectors'

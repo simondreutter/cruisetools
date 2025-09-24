@@ -8,7 +8,8 @@ import os
 import random
 import math
 
-def dd2ddm(latitude,longitude):
+
+def dd2ddm(latitude, longitude):
     """Convert decimal degree (DD) in degree and decimal minutes (DDM)
 
     Parameters
@@ -20,7 +21,7 @@ def dd2ddm(latitude,longitude):
 
     Returns
     -------
-    lat_DDM, lon_DDM : (str, str)
+    lat_ddm, lon_ddm : (str, str)
         latitude, longitude as DDM strings
 
     """
@@ -33,8 +34,8 @@ def dd2ddm(latitude,longitude):
         hemisphere = 'S'
     lat_d_, lat_degree = math.modf(abs(latitude))
     lat_dminute = lat_d_ * 60
-    lat_DDM = f'{int(lat_degree):02d}°{round(lat_dminute,3):06.3f}\'{hemisphere}'
-    
+    lat_ddm = f'{int(lat_degree):02d}°{round(lat_dminute, 3):06.3f}\'{hemisphere}'
+
     # longitude
     if longitude > 0.:
         hemisphere = 'E'
@@ -44,9 +45,10 @@ def dd2ddm(latitude,longitude):
         hemisphere = 'W'
     lon_d_, lon_degree = math.modf(abs(longitude))
     lon_dminute = lon_d_ * 60
-    lon_DDM = f'{int(lon_degree):03d}°{round(lon_dminute,3):06.3f}\'{hemisphere}'
-    
-    return lat_DDM, lon_DDM
+    lon_ddm = f'{int(lon_degree):03d}°{round(lon_dminute, 3):06.3f}\'{hemisphere}'
+
+    return lat_ddm, lon_ddm
+
 
 def get_driver_from_path(file_path):
     """Get GDAL driver from file path
@@ -72,8 +74,9 @@ def get_driver_from_path(file_path):
         driver = 'ESRI Shapefile'
     elif ext == '.XLSX':
         driver = 'xlsx'
-    
+
     return driver
+
 
 def get_info_from_path(file_path):
     """Get file info from file path
@@ -93,8 +96,9 @@ def get_info_from_path(file_path):
     base_path = file_info.absolutePath()
     base_name = file_info.baseName()
     ext = os.path.splitext(file_path)[1]
-    
+
     return base_path, base_name, ext
+
 
 def return_file_link(path):
     """Return HTML link to file from file path
@@ -111,8 +115,9 @@ def return_file_link(path):
 
     """
     link = f'<a href="{os.path.dirname(path)}">{path}</a>'
-    
+
     return link
+
 
 def return_success():
     """Return an awesome success message for Cruise Tools"""
@@ -143,5 +148,5 @@ def return_success():
                         'Yiihaa',
                         'Zweet']
     success_message = random.choice(success_messages)
-    
+
     return success_message

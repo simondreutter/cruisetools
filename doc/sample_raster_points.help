@@ -1,0 +1,6 @@
+Add raster value attributes to point features.
+The selected raster layer will be sampled for each point feature's position.
+A new column will be created with the name and the data type of the raster dataset.
+Raster values will be written to the attributes.
+
+Existing fields with the same name as the raster dataset name will be overwritten.

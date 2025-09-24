@@ -1,25 +1,24 @@
 import os
 
-from qgis.core import (
-    QgsField,
-    QgsFields,
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingParameterBoolean,
-    QgsProcessingParameterCrs,
-    QgsProcessingParameterEnum,
-    QgsProcessingParameterFeatureSink,
-    QgsCoordinateReferenceSystem,
-    QgsProcessingException,
-    QgsProcessingUtils,
-    QgsWkbTypes
-)
+from qgis.core import QgsField
+from qgis.core import QgsFields
+from qgis.core import QgsProcessing
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingParameterBoolean
+from qgis.core import QgsProcessingParameterCrs
+from qgis.core import QgsProcessingParameterEnum
+from qgis.core import QgsProcessingParameterFeatureSink
+from qgis.core import QgsCoordinateReferenceSystem
+from qgis.core import QgsProcessingException
+from qgis.core import QgsProcessingUtils
+from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
+
 
 class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
     """Create Planning File."""
@@ -35,11 +34,11 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
     def __init__(self):
         """Initialize CreatePlanningFile."""
         super(CreatePlanningFile, self).__init__()
-        
+
         # style files for planning layer
         self.style_planning_lines = ':/plugins/cruisetools/styles/style_planning_lines.qml'
         self.style_planning_points = ':/plugins/cruisetools/styles/style_planning_points.qml'
-        
+
         # initialize default configuration
         self.initConfig()
 
@@ -88,25 +87,25 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
         )
 
     def processAlgorithm(self, parameters, context, feedback):  # noqa
-        # get input variables as self.* for use in post processing
+        # get input variables as self.* for use in post-processing
         file_type = self.parameterAsEnum(parameters, self.FILE_TYPE, context)
         crs = self.parameterAsCrs(parameters, self.CRS, context)
         mbes = self.parameterAsBoolean(parameters, self.MBES, context)
-        
+
         # if CRS is None, use project CRS
         if not crs.isValid():
             crs = context.project().crs()
-        
+
         # set new default values in config
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         self.config.set(self.module, 'file_type', file_type)
         self.config.set(self.module, 'default_crs', crs.authid())
         self.config.set(self.module, 'mbes', mbes)
-        
+
         # fields to be created
         fields = QgsFields()
-        
-        # check for type (point or line) and set creat parameters
+
+        # check for type (point or line) and set create parameters
         feedback.pushConsoleInfo(self.tr('Creating output fields...'))
         if file_type == 0:
             geom_type = QgsWkbTypes.Point
@@ -123,25 +122,25 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
                 fields.append(QgsField('mbes_swath_angle_port', QVariant.Int, '', 3, 0))
                 fields.append(QgsField('mbes_swath_angle_stb', QVariant.Int, '', 3, 0))
             fields.append(QgsField('notes', QVariant.String, '', 0, 0))
-        
+
         # creating feature sink
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
         (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT, context, fields, geom_type, crs)
         if sink is None:
             raise QgsProcessingException(self.invalidSinkError(parameters, self.OUTPUT))
-        
-        # make variables accessible for post processing
+
+        # make variables accessible for post-processing
         self.file_type = file_type
         self.output = dest_id
-        
-        result = {self.OUTPUT : self.output}
-        
+
+        result = {self.OUTPUT: self.output}
+
         return result
 
     def postProcessAlgorithm(self, context, feedback):  # noqa
         # get layer from source and context
         planning_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
-        
+
         if self.file_type == 0:
             style = self.style_planning_points
             style_name = 'Cruise Tools Point Planning'
@@ -150,21 +149,22 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
             style = self.style_planning_lines
             style_name = 'Cruise Tools Line Planning'
             style_desc = 'Line Planning style for QGIS Symbology from Cruise Tools plugin'
-        
+
         # loading Cruise Tools Planning style from QML style file
         feedback.pushConsoleInfo(self.tr('Loading style...'))
         planning_layer.loadNamedStyle(style)
-        
+
         # writing style to GPKG (or else)
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        planning_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True, uiFileContent=None)
-        
+        planning_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True,
+                                           uiFileContent=None)
+
         # 100% done
         feedback.setProgress(100)
         feedback.pushInfo(self.tr(f'{utils.return_success()}! Planning file created!\n'))
-        
-        result = {self.OUTPUT : self.output}
-        
+
+        result = {self.OUTPUT: self.output}
+
         return result
 
     def name(self):  # noqa
@@ -173,7 +173,7 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
     def icon(self):  # noqa
         icon = QIcon(f'{self.plugin_dir}/icons/create_planning_file.png')
         return icon
-    
+
     def displayName(self):  # noqa
         return self.tr('Create Planning File')
 

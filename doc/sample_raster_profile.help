@@ -1,0 +1,4 @@
+Create a new point vector layer with evenly spaced (distance in meters) points along input line profiles.
+The selected raster layer will be sampled for each point feature's position.
+A column will be created with the name and the data type of the raster dataset.
+Raster values will be written to the attributes.

@@ -1,31 +1,27 @@
 import numpy as np
 import os
 
-from qgis.core import (
-    QgsCoordinateTransform,
-    QgsFeature,
-    QgsFeatureSink,
-    QgsField,
-    QgsFields,
-    QgsGeometry,
-    QgsPointXY,
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingException,
-    QgsProcessingParameterExtent,
-    QgsProcessingParameterFeatureSink,
-    QgsProcessingParameterNumber,
-    QgsCoordinateReferenceSystem,
-    QgsProcessingParameterVectorDestination,
-    QgsProcessingUtils,
-    QgsWkbTypes
-)
+from qgis.core import QgsFeature
+from qgis.core import QgsFeatureSink
+from qgis.core import QgsField
+from qgis.core import QgsFields
+from qgis.core import QgsGeometry
+from qgis.core import QgsPointXY
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingException
+from qgis.core import QgsProcessingParameterExtent
+from qgis.core import QgsProcessingParameterNumber
+from qgis.core import QgsCoordinateReferenceSystem
+from qgis.core import QgsProcessingParameterVectorDestination
+from qgis.core import QgsProcessingUtils
+from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QVariant
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
 from .. import utils
+
 
 def opt_label(label, interval):
     """Optimize label.
@@ -53,21 +49,21 @@ def opt_label(label, interval):
             dec_minutes = False
         else:
             dec_minutes = True
-    
+
     # optimize label
     # label from utils.dd2ddm(): 180°00.000'W
     if label == "180°00.000'W":
         label = ''
         return label
     if label == "180°00.000'E":
-        label = label.replace('E', '') 
-    
-    if minutes == False:
+        label = label.replace('E', '')
+
+    if not minutes:
         label = label.replace("00.000'", '')
-    
-    if dec_minutes == False:
+
+    if not dec_minutes:
         label = label.replace('.000', '')
-    
+
     # kill leading zeros
     if label.startswith('0'):
         label = label[1:]
@@ -76,8 +72,9 @@ def opt_label(label, interval):
     # save the 0° label
     if label.startswith('°'):
         label = f'0{label}'
-    
+
     return label
+
 
 class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
     """Coordinate Grid Generator."""
@@ -95,10 +92,10 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
     def __init__(self):
         """Initialize CreateCoordinateGrid."""
         super(CreateCoordinateGrid, self).__init__()
-        
+
         # style files for planning layer
         self.style_coordinate_grid = ':/plugins/cruisetools/styles/style_coordinate_grid.qml'
-        
+
         # initialize default configuration
         self.initConfig()
 
@@ -168,43 +165,43 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
     def processAlgorithm(self, parameters, context, feedback):  # noqa
         # CRS geo
         crs = QgsCoordinateReferenceSystem('EPSG:4326')
-        
+
         # get input variables
         extent = self.parameterAsExtent(parameters, self.EXTENT, context, crs)
         self.interval_lon = self.parameterAsDouble(parameters, self.INTERVAL_LON, context)
         self.interval_lat = self.parameterAsDouble(parameters, self.INTERVAL_LAT, context)
         self.pole_gap = self.parameterAsDouble(parameters, self.POLE_GAP, context)
         self.densify_factor = self.parameterAsDouble(parameters, self.DENSITY_FACTOR, context)
-        output = self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
-        
+        self.parameterAsOutputLayer(parameters, self.OUTPUT, context)
+
         # set new default values in config
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         self.config.set(self.module, 'interval_lon', self.interval_lon)
         self.config.set(self.module, 'interval_lat', self.interval_lat)
         self.config.set(self.module, 'pole_gap', self.pole_gap)
         self.config.set(self.module, 'densify_factor', self.densify_factor)
-        
+
         # list for line features
         features = []
-        
+
         # fields to be created
         fields = QgsFields()
-        
+
         # set create parameters
         geom_type = QgsWkbTypes.LineString
         fields.append(QgsField('latlon', QVariant.String, '', 0, 0))
         fields.append(QgsField('deg', QVariant.Double, '', 10, 6))
         fields.append(QgsField('label', QVariant.String, '', 0, 0))
-        
+
         # creating feature sink
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
         (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT, context, fields, geom_type, crs)
         if sink is None:
             raise QgsProcessingException(self.invalidSinkError(parameters, self.OUTPUT))
-        
+
         # create grid
         feedback.pushConsoleInfo(self.tr('Creating grid...'))
-        
+
         # some parameters
         xmin = max((-180., extent.xMinimum()))
         xmax = min((180., extent.xMaximum()))
@@ -212,9 +209,9 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         ymax = min((90 - self.pole_gap, extent.yMaximum()))
         stepsize_lon = self.interval_lon / self.densify_factor
         stepsize_lat = self.interval_lat / self.densify_factor
-        
+
         # prepare steps once with interval and once with dense interval
-        
+
         # x / lon
         # steps from 0 to +180 and from 0 to -180 with interval_lon
         a = np.arange(0, xmax + stepsize_lon, self.interval_lon)
@@ -227,7 +224,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         a = np.arange(0, xmax + stepsize_lon, stepsize_lon)
         b = np.arange(0, xmin - stepsize_lon, -stepsize_lon)
         # concat both directions
-        lon_steps_dense = np.concatenate((a, b),axis=None)
+        lon_steps_dense = np.concatenate((a, b), axis=None)
         # clip to min max and delete 0 duplicates
         lon_steps_dense = np.clip(lon_steps_dense, xmin, xmax)
         # add xmin and xmax if not already in lon_steps
@@ -238,7 +235,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         # sort by value
         lon_steps.sort()
         lon_steps_dense.sort()
-        
+
         # y / lat
         # steps from 0 to ymax and from 0 to ymin with interval_lat
         a = np.arange(0, ymax + stepsize_lat, self.interval_lat)
@@ -251,7 +248,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         a = np.arange(0, ymax + stepsize_lat, stepsize_lat)
         b = np.arange(0, ymin - stepsize_lat, -stepsize_lat)
         # concat both directions
-        lat_steps_dense = np.concatenate((a, b),axis=None)
+        lat_steps_dense = np.concatenate((a, b), axis=None)
         # clip to min max and delete 0 duplicates
         lat_steps_dense = np.unique(np.clip(lat_steps_dense, ymin, ymax))
         # add ymin and ymax if not already in lat_steps
@@ -262,96 +259,97 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         # sort by value
         lat_steps.sort()
         lat_steps_dense.sort()
-        
+
         # create features
         # x / lon
         for lon in lon_steps:
-                # create geom and attributes
-                vertices = []
-                for lat in lat_steps_dense:
-                    vertices.append(QgsPointXY(lon,lat))
-                latlon = 'lon'
-                deg = float(lon)
-                _, lon_DDM = utils.dd2ddm(0, lon)
-                label = opt_label(lon_DDM, self.interval_lon)
-                geom = QgsGeometry.fromPolylineXY(vertices)
-                
-                # initialize line feature
-                feature = QgsFeature(fields)
-                
-                # set geometry
-                feature.setGeometry(geom)
-                
-                # set attributes
-                feature.setAttribute('latlon', latlon)
-                feature.setAttribute('deg', deg)
-                feature.setAttribute('label', label)
-                
-                # append feature to features list
-                if feature.hasGeometry() and feature.isValid():
-                    features.append(feature)
-        
+            # create geom and attributes
+            vertices = []
+            for lat in lat_steps_dense:
+                vertices.append(QgsPointXY(lon, lat))
+            latlon = 'lon'
+            deg = float(lon)
+            _, lon_ddm = utils.dd2ddm(0, lon)
+            label = opt_label(lon_ddm, self.interval_lon)
+            geom = QgsGeometry.fromPolylineXY(vertices)
+
+            # initialize line feature
+            feature = QgsFeature(fields)
+
+            # set geometry
+            feature.setGeometry(geom)
+
+            # set attributes
+            feature.setAttribute('latlon', latlon)
+            feature.setAttribute('deg', deg)
+            feature.setAttribute('label', label)
+
+            # append feature to features list
+            if feature.hasGeometry() and feature.isValid():
+                features.append(feature)
+
         # y / lat
         for lat in lat_steps:
-                # create geom and attributes
-                vertices = []
-                for lon in lon_steps_dense:
-                    vertices.append(QgsPointXY(lon,lat))
-                latlon = 'lat'
-                deg = float(lat)
-                lat_DDM, _ = utils.dd2ddm(lat, 0)
-                label = opt_label(lat_DDM, self.interval_lat)
-                geom = QgsGeometry.fromPolylineXY(vertices)
-                
-                # initialize line feature
-                feature = QgsFeature(fields)
-                
-                # set geometry
-                feature.setGeometry(geom)
-                
-                # set attributes
-                feature.setAttribute('latlon', latlon)
-                feature.setAttribute('deg', deg)
-                feature.setAttribute('label', label)
-                
-                # append feature to features list
-                if feature.hasGeometry() and feature.isValid():
-                    features.append(feature)
-        
+            # create geom and attributes
+            vertices = []
+            for lon in lon_steps_dense:
+                vertices.append(QgsPointXY(lon, lat))
+            latlon = 'lat'
+            deg = float(lat)
+            lat_ddm, _ = utils.dd2ddm(lat, 0)
+            label = opt_label(lat_ddm, self.interval_lat)
+            geom = QgsGeometry.fromPolylineXY(vertices)
+
+            # initialize line feature
+            feature = QgsFeature(fields)
+
+            # set geometry
+            feature.setGeometry(geom)
+
+            # set attributes
+            feature.setAttribute('latlon', latlon)
+            feature.setAttribute('deg', deg)
+            feature.setAttribute('label', label)
+
+            # append feature to features list
+            if feature.hasGeometry() and feature.isValid():
+                features.append(feature)
+
         # write coverage features to sink
         feedback.pushConsoleInfo(self.tr('Writing features...'))
         sink.addFeatures(features, QgsFeatureSink.FastInsert)
-        
-        # make variables accessible for post processing
+
+        # make variables accessible for post-processing
         self.output = dest_id
-        
-        result = {self.OUTPUT : self.output}
-        
+
+        result = {self.OUTPUT: self.output}
+
         return result
 
     def postProcessAlgorithm(self, context, feedback):  # noqa
         # get layer from source and context
         coord_grid_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
-        
+
         # loading Cruise Tools Coordinate Grid layer style from QML style file
         feedback.pushConsoleInfo(self.tr('Loading style...'))
         coord_grid_layer.loadNamedStyle(self.style_coordinate_grid)
-        
+
         # writing style to GPKG (or else)
         style_name = 'Cruise Tools Coordinate Grid'
         style_desc = 'Coordinate Grid style for QGIS Symbology from Cruise Tools plugin'
-        
+
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        coord_grid_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True, uiFileContent=None)
-        
+        coord_grid_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True,
+                                             uiFileContent=None)
+
         # 100% done
         feedback.setProgress(100)
         feedback.pushInfo(self.tr(f'{utils.return_success()}! Coordinate grid file created!\n'))
-        
-        result = {self.OUTPUT : self.output}
-        
+
+        result = {self.OUTPUT: self.output}
+
         return result
-    
+
     def name(self):  # noqa
         return 'createcoordinategrid'
 

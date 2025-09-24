@@ -1,18 +1,17 @@
 import os
 
-from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingParameterBoolean,
-    QgsProcessingParameterCrs,
-    QgsProcessingParameterVectorLayer
-)
+from qgis.core import QgsProcessing
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingParameterBoolean
+from qgis.core import QgsProcessingParameterCrs
+from qgis.core import QgsProcessingParameterVectorLayer
 
 from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
 from .. import utils
+
 
 class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
     """Write Point Coordinates."""
@@ -30,7 +29,7 @@ class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
     def __init__(self):
         """Initialize WritePointCoordinates."""
         super(WritePointCoordinates, self).__init__()
-        
+
         # initialize default configuration
         self.initConfig()
 
@@ -79,43 +78,44 @@ class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
         )
 
     def processAlgorithm(self, parameters, context, feedback):  # noqa
-        # get input variables as self.* for use in post processing
+        # get input variables as self.* for use in post-processing
         self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         self.latlon_dd = self.parameterAsBoolean(parameters, self.LATLON_DD, context)
         self.latlon_ddm = self.parameterAsBoolean(parameters, self.LATLON_DDM, context)
         self.xy = self.parameterAsBoolean(parameters, self.XY, context)
         self.crs_xy = self.parameterAsCrs(parameters, self.CRS_XY, context)
-        
+
         # set new default values in config
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         self.config.set(self.module, 'latlon_dd', self.latlon_dd)
         self.config.set(self.module, 'latlon_ddm', self.latlon_ddm)
         self.config.set(self.module, 'xy', self.xy)
-        
+
         result = {}
-        
+
         return result
 
     def postProcessAlgorithm(self, context, feedback):  # noqa
-        # layer in-place editing is not working very well in the processAlgortihm
-        # therefore it was moved here to post processing
-        
+        # layer in-place editing is not working very well in the processAlgorithm
+        # therefore it was moved here to post-processing
+
         # get project transformContext for ellipsoidal measurements
         transform_context = context.transformContext()
-        
+
         # run the function from Vector base class
         feedback.pushConsoleInfo(self.tr('Adding coordinate attributes...\n'))
-        error, result = self.write_point_coordinates(self.vector_layer, transform_context, self.latlon_dd, self.latlon_ddm, self.xy, self.crs_xy)
+        error, result = self.write_point_coordinates(self.vector_layer, transform_context, self.latlon_dd,
+                                                     self.latlon_ddm, self.xy, self.crs_xy)
         if error:
             feedback.reportError(self.tr(result), fatalError=True)
             return {}
-        
+
         # 100% done
         feedback.setProgress(100)
         feedback.pushInfo(self.tr(f'{utils.return_success()}! Coordinates are in!\n'))
-        
-        result = {self.OUTPUT : self.vector_layer}
-        
+
+        result = {self.OUTPUT: self.vector_layer}
+
         return result
 
     def name(self):  # noqa

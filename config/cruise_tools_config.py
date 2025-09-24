@@ -1,6 +1,7 @@
 import os
 import configparser
 
+
 class CruiseToolsConfig:
     """Configuration class for Cruise Tools plugin."""
 
@@ -8,9 +9,9 @@ class CruiseToolsConfig:
         """Initialize CruiseToolsConfig."""
         self.config_file = os.path.join(os.path.dirname(__file__), 'cruise_tools_config.ini')
         self.config = configparser.ConfigParser(allow_no_value=True)
-        self.initConfigFile()
+        self.init_config_file()
 
-    def initConfigFile(self):
+    def init_config_file(self):
         """Initialize configuration file.
 
         Settings are grouped by Cruise Tools modules.
@@ -22,6 +23,7 @@ class CruiseToolsConfig:
           max               : depth range maximum (positive up)
           min               : depth range minimum (positive up)
           shader            : default shading type (0: hillshade, 1: slope, 2: combined, 4: multidirectional)
+          alpha             : default selection to add alpha to exported RGB grid or not
           raster_layer      : raster styling reference layer
         
         [CONTOUR]
@@ -40,7 +42,9 @@ class CruiseToolsConfig:
           interval_lat      : default setting for latitude interval for coordinate grids
           pole_gap          : default setting for pole gap for coordinate grids
           densify_factor    : default setting for density factor for coordinate grids
-        
+          raster_layer      : default setting for raster layer for point sampling (if available in project)
+          distance          : default setting for point distance for profile sampling
+
         [PLANNING]
           file_type         : id of file type (0: point planning, 1: line planning)
           default_crs       : default CRS for XY coordinates
@@ -63,6 +67,9 @@ class CruiseToolsConfig:
           device            : PosiView mobile item
           write_device      : Whether to write PosiView device to feature attributes
           write_depth       : Whether to write vehicle depth to feature attributes
+          write_heading     : Whether to write heading to feature attributes
+          write_course      : Whether to write course to feature attributes
+          write_speed       : Whether to write speed to feature attributes
           sample_depth      : Whether to sample bathymetry raster depth at logged position
           layer_raster      : default raster layer for depth sampling
           raster_band       : default raster band
@@ -76,61 +83,67 @@ class CruiseToolsConfig:
         # if not, create a default one
         else:
             self.config['BATHYMETRY'] = {
-                'colormap_modus'   : 0,
-                'color_ramp'       : 0,
-                'max'              : 0,
-                'min'              : -5000,
-                'shader'           : 2,
-                'raster_layer'     : '',
+                'colormap_modus': 0,
+                'color_ramp': 0,
+                'max': 0,
+                'min': -5000,
+                'shader': 2,
+                'alpha ': False,
+                'raster_layer': '',
             }
             self.config['CONTOUR'] = {
-                'interval'         : 100
+                'interval': 100,
             }
             self.config['VECTOR'] = {
-                'latlon_dd'        : True,
-                'latlon_ddm'       : True,
-                'xy'               : False,
-                'm'                : True,
-                'nm'               : True,
-                'km'               : True,
-                'm2'               : False,
-                'km2'              : True,
-                'interval_lon'     : 1,
-                'interval_lat'     : 1,
-                'pole_gap'         : 1,
-                'densify_factor'   : 10,
+                'latlon_dd': True,
+                'latlon_ddm': True,
+                'xy': False,
+                'm': True,
+                'nm': True,
+                'km': True,
+                'm2': False,
+                'km2': True,
+                'interval_lon': 1,
+                'interval_lat': 1,
+                'pole_gap': 1,
+                'densify_factor': 10,
+                'raster_layer': '',
+                'distance': 1000,
             }
             self.config['PLANNING'] = {
-                'file_type'        : 0,
-                'default_crs'      : 'EPSG:4326',
-                'mbes'             : False,
-                'vessel'           : 'DEFAULT',
-                'export_format'    : 0,
-                'dissolve_buffer'  : True,
-                'swath_angle_mode' : 0,
-                'swath_angle'      : 120,
-                'swath_angle_port' : 60,
-                'swath_angle_stb'  : 60,
-                'raster_layer'     : '',
-                'latlon_dd'        : True,
-                'latlon_ddm'       : True,
-                'offset'           : 100,
-                'side'             : 0,
-                'number_of_lines'  : 1,
+                'file_type': 0,
+                'default_crs': 'EPSG:4326',
+                'mbes': False,
+                'vessel': 'DEFAULT',
+                'export_format': 0,
+                'dissolve_buffer': True,
+                'swath_angle_mode': 0,
+                'swath_angle': 120,
+                'swath_angle_port': 60,
+                'swath_angle_stb': 60,
+                'raster_layer': '',
+                'latlon_dd': True,
+                'latlon_ddm': True,
+                'offset': 100,
+                'side': 0,
+                'number_of_lines': 1,
             }
             self.config['LOGGING'] = {
-                'layer_logging'    : '',
-                'device'           : '',
-                'write_device'     : False,
-                'write_depth'      : False,
-                'sample_depth'     : False,
-                'layer_raster'     : '',
-                'raster_band'      : '',
-                'wait_time'        : 1000,
-                'events'           : '',
+                'layer_logging': '',
+                'device': '',
+                'write_device': False,
+                'write_depth': False,
+                'write_heading': False,
+                'write_course': False,
+                'write_speed': False,
+                'sample_depth': False,
+                'layer_raster': '',
+                'raster_band': '',
+                'wait_time': 1000,
+                'events': '',
             }
             self.write()
-        
+
         return
 
     def get(self, section, option, fallback=None):
@@ -262,7 +275,7 @@ class CruiseToolsConfig:
             self.write()
         else:
             print(f'"[{section}]/{option}" is no valid option in the configuration.')
-        
+
         return
 
     def get_minmax(self):

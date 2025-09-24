@@ -1,12 +1,13 @@
 from PyQt5.QtCore import *  # noqa
-from PyQt5.QtWidgets import (
-    QWidget,
-    QGridLayout,
-    QLabel,
-    QToolBox,
-    QTextEdit,
-)
-from PyQt5.QtGui import QFont, QIcon
+
+from PyQt5.QtWidgets import QWidget
+from PyQt5.QtWidgets import QGridLayout
+from PyQt5.QtWidgets import QLabel
+from PyQt5.QtWidgets import QToolBox
+from PyQt5.QtWidgets import QTextEdit
+
+from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QIcon
 
 
 class ReadmeWindow(QWidget):
@@ -17,41 +18,41 @@ class ReadmeWindow(QWidget):
         super().__init__()
         # icon path
         self.icon_path = ':/plugins/cruisetools/icons'
-        
+
         # set window size
         self.resize(600, 570)
-        
+
         # set window icon
         icon = QIcon(f'{self.icon_path}/icon.png')
         self.setWindowIcon(icon)
-        
+
         # set windows title
         self.setWindowTitle('Readme')
-        
+
         # create layout
         layout = QGridLayout()
-        
+
         # create title, big font, centered
         title = QLabel()
         title.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         title_font = QFont('Default', 14, QFont.Bold)
         title.setFont(title_font)
-        
+
         # add title to layout
         layout.addWidget(title, 0, 0)
-        
+
         # create version text, centered under title
         version = QLabel()
         version.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
         version_font = QFont('Default', 10)
         version.setFont(version_font)
-        
+
         # add version to layout
         layout.addWidget(version, 1, 0)
-        
+
         # create toolbox
         toolbox = QToolBox()
-        
+
         # toolbox styleSheet
         toolbox_style = '''
                             QToolBox::tab {
@@ -62,16 +63,16 @@ class ReadmeWindow(QWidget):
                                 background-color: RGB(200, 0, 200);
                             }
                         '''
-        
+
         # set toolbox style
         toolbox.setStyleSheet(toolbox_style)
-        
+
         # add toolbox to layout
         layout.addWidget(toolbox, 2, 0)
-        
+
         # plot readme text in text blocks
         blocks = readme_text.split('\n## ')
-        
+
         # handle title and version block
         for line in blocks[0].splitlines():
             line = line.strip()
@@ -79,49 +80,49 @@ class ReadmeWindow(QWidget):
                 title_text = line.replace('# ', '')
             elif line.startswith('*v'):
                 version_text = line.replace('*', '')
-        
+
         # set version and title text
         title.setText(title_text)
         version.setText(version_text)
-        
+
         # create toolbox content from text blocks
         #idx = 0
         for idx, block in enumerate(blocks[1:]):
             # get block title and content
             block_title, markdown = block.split('\n', 1)
-            
+
             # create text field
             text = QTextEdit()
-            
+
             # make text field read only
             text.setReadOnly(True)
-            
+
             # add content
             #html = self.markdown(markdown) # DEPRECATED
             #text.setHtml(html) # DEPRECATED
             text.setMarkdown(markdown)
-            
+
             # add text to toolbox
             toolbox.addItem(text, block_title)
-            
+
             # get block icon
             icon = self.get_icon(block_title)
-            
+
             # set block icon
             toolbox.setItemIcon(idx, icon)
-            
+
             #idx = idx + 1
-        
+
         # set window layout
         self.setLayout(layout)
 
-    def markdown(self, markdown): # DEPRECATED
+    def markdown(self, markdown):  # DEPRECATED
         """Convert Markdown Readme to HTML (cheap solution).
 
         Parameters
         ----------
         markdown : str
-            markdown text
+            Markdown text
 
         Returns
         -------
@@ -140,7 +141,7 @@ class ReadmeWindow(QWidget):
                     break
                 else:
                     line = f'<b>{line.replace("### ", "")}</b><br>'
-            #if line is a url make it a link
+            #if line is an url make it a link
             if line.startswith('http'):
                 line = f'<br><a href="{line}">{line}</a><br>'
             # clean up some markup stuff
@@ -148,13 +149,13 @@ class ReadmeWindow(QWidget):
             line = line.replace('**', '')
             line = line.replace('`', '')
             line = line.replace('___', '<hr>')
-            
+
             # add line to html list
             html_list.append(line)
-        
+
         # join html list with line breaks
         html = f'{"<br>".join(html_list)}<br>'
-        
+
         return html
 
     def get_icon(self, title):
@@ -184,5 +185,5 @@ class ReadmeWindow(QWidget):
             icon = QIcon(f'{self.icon_path}/log_position.png')
         else:
             icon = QIcon(f'{self.icon_path}/icon_grey.png')
-        
+
         return icon

@@ -1,16 +1,16 @@
 import os
 
-from qgis.core import (
-    QgsProcessing,
-    QgsProcessingAlgorithm,
-    QgsProcessingParameterBoolean,
-    QgsProcessingParameterVectorLayer)
+from qgis.core import QgsProcessing
+from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingParameterBoolean
+from qgis.core import QgsProcessingParameterVectorLayer
 
 from qgis.PyQt.QtCore import QCoreApplication
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
 from .. import utils
+
 
 class WriteLineLength(QgsProcessingAlgorithm, Vector):
     """Write Line Length."""
@@ -27,7 +27,7 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
     def __init__(self):
         """Initialize WriteLineLength."""
         super(WriteLineLength, self).__init__()
-        
+
         # initialize default configuration
         self.initConfig()
 
@@ -69,43 +69,44 @@ class WriteLineLength(QgsProcessingAlgorithm, Vector):
         )
 
     def processAlgorithm(self, parameters, context, feedback):  # noqa
-        # get input variables as self.* for use in post processing
+        # get input variables as self.* for use in post-processing
         self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         self.m = self.parameterAsBoolean(parameters, self.M, context)
         self.km = self.parameterAsBoolean(parameters, self.KM, context)
         self.nm = self.parameterAsBoolean(parameters, self.NM, context)
-        
+
         # set new default values in config
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         self.config.set(self.module, 'm', self.m)
         self.config.set(self.module, 'km', self.km)
         self.config.set(self.module, 'nm', self.nm)
-        
+
         result = {}
-        
+
         return result
 
     def postProcessAlgorithm(self, context, feedback):  # noqa
-        # layer in-place editing is not working very well in the processAlgortihm
-        # therefore it was moved here to post processing
-        
+        # layer in-place editing is not working very well in the processAlgorithm
+        # therefore it was moved here to post-processing
+
         # get project ellipsoid and transformContext for ellipsoidal measurements
         ellipsoid = context.project().crs().ellipsoidAcronym()
         transform_context = context.transformContext()
-        
+
         # run the function from Vector base class
         feedback.pushConsoleInfo(self.tr('Adding length attributes...\n'))
-        error, result = self.write_line_length(self.vector_layer, ellipsoid, transform_context, m=self.m, km=self.km, nm=self.nm)
+        error, result = self.write_line_length(self.vector_layer, ellipsoid, transform_context, m=self.m, km=self.km,
+                                               nm=self.nm)
         if error:
             feedback.reportError(self.tr(result), fatalError=True)
             return {}
-        
+
         # 100% done
         feedback.setProgress(100)
         feedback.pushInfo(self.tr(f'{utils.return_success()}! Lengths are in!\n'))
-        
-        result = {self.OUTPUT : self.vector_layer}
-        
+
+        result = {self.OUTPUT: self.vector_layer}
+
         return result
 
     def name(self):  # noqa
