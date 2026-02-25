@@ -25,7 +25,8 @@ class CruiseToolsConfig:
           shader            : default shading type (0: hillshade, 1: slope, 2: combined, 4: multidirectional)
           alpha             : default selection to add alpha to exported RGB grid or not
           raster_layer      : raster styling reference layer
-        
+          style_default     : default predefined style
+
         [CONTOUR]
           interval          : default interval for contours
         
@@ -48,14 +49,18 @@ class CruiseToolsConfig:
         [PLANNING]
           file_type         : id of file type (0: point planning, 1: line planning)
           default_crs       : default CRS for XY coordinates
-          mbes              : default setting to create MBES swath angle field or not
-          vessel            : 
-          export_format     : default bridge export format (0: default csv, 1: SAM Route Exchange style CSV)
+          mbes              : default setting to create MBES swath angle fields or not
+          speed             : default setting to create speed and time fields or not
+          nav               : default setting to create navigational fields or not
+          vessel            :
+          rtz_catalog       : default RTZ export catalog name
+          radius_fallback   : default fallback value for turn radius for export
           swath_angle_mode  : Whether to use (i) single or (ii) individual swath angles
           swath_angle       : default swath angle for MBES coverage calculation
           swath_angle_port  : default PORT angle for MBES coverage calculation
           swath_angle_stb   : default STARBOARD angle for MBES coverage calculation
           raster_layer      : default raster layer for MBES coverage calculation (if available in project)
+          vertex_suffix     : default setting for adding vertex ID to name field (Planning Line to Vertices)
           latlon_dd         : default setting for writing Lat Lon DD coordinates (Planning Line to Vertices)
           latlon_ddm        : default setting for writing Lat Lon DDM coordinates (Planning Line to Vertices)
           offset            : default offset for parallel line planning
@@ -114,14 +119,18 @@ class CruiseToolsConfig:
                 'file_type': 0,
                 'default_crs': 'EPSG:4326',
                 'mbes': False,
+                'speed': False,
+                'nav': False,
                 'vessel': 'DEFAULT',
-                'export_format': 0,
+                'rtz_catalog': 'Cruise_Tools_Export',
+                'radius_fallback': 0.5,
                 'dissolve_buffer': True,
                 'swath_angle_mode': 0,
                 'swath_angle': 120,
                 'swath_angle_port': 60,
                 'swath_angle_stb': 60,
                 'raster_layer': '',
+                'vertex_suffix': True,
                 'latlon_dd': True,
                 'latlon_ddm': True,
                 'offset': 100,

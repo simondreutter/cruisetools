@@ -199,8 +199,8 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
         style_desc = 'Contour style for QGIS Symbology and Labels from Cruise Tools plugin'
 
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        contours_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True,
-                                           uiFileContent=None)
+        contours_layer.saveStyleToDatabaseV2(name=style_name, description=style_desc, useAsDefault=True,
+                                             uiFileContent=None)
 
         contours_layer.triggerRepaint()
 

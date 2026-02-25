@@ -16,7 +16,7 @@ from qgis.core import QgsProcessingParameterVectorDestination
 from qgis.core import QgsProcessingUtils
 from qgis.core import QgsWkbTypes
 
-from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt.QtCore import QCoreApplication, QMetaType
 from PyQt5.QtGui import QIcon
 
 from .vector import Vector
@@ -189,9 +189,9 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
 
         # set create parameters
         geom_type = QgsWkbTypes.LineString
-        fields.append(QgsField('latlon', QVariant.String, '', 0, 0))
-        fields.append(QgsField('deg', QVariant.Double, '', 10, 6))
-        fields.append(QgsField('label', QVariant.String, '', 0, 0))
+        fields.append(QgsField('latlon', QMetaType.Type.QString, '', 0, 0))
+        fields.append(QgsField('deg', QMetaType.Type.Double, '', 10, 6))
+        fields.append(QgsField('label', QMetaType.Type.QString, '', 0, 0))
 
         # creating feature sink
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
@@ -339,8 +339,8 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         style_desc = 'Coordinate Grid style for QGIS Symbology from Cruise Tools plugin'
 
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        coord_grid_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True,
-                                             uiFileContent=None)
+        coord_grid_layer.saveStyleToDatabaseV2(name=style_name, description=style_desc, useAsDefault=True,
+                                               uiFileContent=None)
 
         # 100% done
         feedback.setProgress(100)

@@ -82,7 +82,6 @@ class LinePlanningToolTip(QObject):
 
                 # (1) Add new feature
                 if isinstance(self.map_tool, QgsMapToolDigitizeFeature) and self.map_tool.toolName() == 'Add feature':
-                    # print('[DEBUG] Add new feature')
                     self.get_new_point(event)
                     return False
 
@@ -91,7 +90,6 @@ class LinePlanningToolTip(QObject):
                     if self.click_counter == 1:
                         self.reset()
                         return True
-                    # print('[DEBUG] Edit feature')
                     self.edit_vertex = True
                     self.click_counter += 1
                     self.get_reference_point(event)
@@ -123,7 +121,6 @@ class LinePlanningToolTip(QObject):
         """
         point_click = self.canvas.getCoordinateTransform().toMapCoordinates(event.pos())
         geom_point_click = QgsGeometry.fromPointXY(point_click)
-        # print(f'[DEBUG] {geom_point_click = }')
 
         # Get all features
         features = list(self.layer.getFeatures())
@@ -136,8 +133,6 @@ class LinePlanningToolTip(QObject):
             if dist < dist_nearest:
                 feat_nearest = f
                 dist_nearest = dist
-        # print(f'[DEBUG] {feat_nearest = }')
-        # print(f'[DEBUG] {dist_nearest = }')
         if feat_nearest:
             # Get line geometry
             geom = feat_nearest.geometry()
@@ -146,18 +141,14 @@ class LinePlanningToolTip(QObject):
             vertex, idx_close, idx_prev, idx_next, _ = geom.closestVertex(point_click)
             if idx_close == 0:
                 idx_prev = idx_next
-            # print(f'[DEBUG] {vertex = }')
-            # print(f'[DEBUG] {idx_close = } {idx_prev = } {idx_next = }')
 
             # Set reference (start) point
             self.point_start = QgsPointXY(geom.vertexAt(idx_prev))
-            # print(f'[DEBUG] {self.point_start = }')
 
             # Get feature fields
             fields = feat_nearest.fields()
 
             speed_kn = feat_nearest[self.field_speed]
-            # print(f'[DEBUG] {speed_kn = }')
             if speed_kn:
                 self.speed_kn = speed_kn
         else:
@@ -224,7 +215,6 @@ class LinePlanningToolTip(QObject):
 
         point_cursor = self.canvas.getCoordinateTransform().toMapCoordinates(event.pos())
         point_cursor = self.transform_map2layer.transform(point_cursor)
-        # print(f'[DEBUG]    {self.point_start = }   {point_cursor = }')
         distance = self.distArea.measureLine(self.point_start, point_cursor)
         self.distance_m = self.distArea.convertLengthMeasurement(distance, Qgis.DistanceUnit.Meters)
         distance_nm = self.distArea.convertLengthMeasurement(distance, Qgis.DistanceUnit.NauticalMiles)
@@ -240,7 +230,6 @@ class LinePlanningToolTip(QObject):
 
     def reset(self):
         """Reset the internal state of the tool."""
-        # print('[DEBUG] Reset')
         self.click_counter = 0
         self.distance_m = None
         self.point_start = None

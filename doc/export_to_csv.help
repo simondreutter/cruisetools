@@ -1,0 +1,3 @@
+Export planning layer to CSV format to get your coordinates up in the ship's ECDIS.
+Waypoints will be created at line feature vertices.
+This is the simplest export. All fields and all values of all (selected) features will be exported to a CSV table.

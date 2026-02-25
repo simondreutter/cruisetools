@@ -11,7 +11,7 @@ from qgis.core import QgsVectorLayerUtils
 
 from qgis.PyQt.QtCore import pyqtSlot
 from PyQt5 import QtTest
-from PyQt5.QtCore import Qt, QDateTime, QVariant
+from PyQt5.QtCore import Qt, QDateTime, QMetaType
 
 from .logging import Logging
 from ..gui.log_position_settings import LogPositionSettings
@@ -51,14 +51,13 @@ class LogPosition(LogPositionSettings, Logging):
                 ('heading', 'course', 'speed'), (self.write_heading, self.write_course, self.write_speed)
             )
         ]
-        
+
         # define validation checks
         check_filter = (
             data['id'] == self.provider_filter['id']
             if self.provider_filter['id'] not in (None, 'None')
             else True
         )
-        # print(data)
         check_coords = all(c in data.keys() for c in keys_coords)
         check_optional = any(c in data.keys() for c in keys_optional)
 
@@ -89,20 +88,16 @@ class LogPosition(LogPositionSettings, Logging):
         self.provider_name, self.provider_filter = [(k, v) for k, v in self.device_properties.get(self.device).items()][
             0]
         self.device_provider = self.posiview_project.dataProviders[self.provider_name]
-        # print('self.provider_name:', self.provider_name)
-        # print('self.provider_filter:', self.provider_filter)
 
         # reset variables
         self.stream = {}
         self.valid_position = False
-        # print('self.stream:', self.stream)  # FIXME
 
         # check for valid GPS information
         n_retries = 0
         while self.valid_position is False:
             self.get_current_position(wait=self.wait_time)
             n_retries += 1
-            # print(f'self.stream ({n_retries}: {self.valid_position}):', self.stream)  # FIXME
             if n_retries == max_retries:
                 self.iface.messageBar().pushMessage(
                     'Log Position ',
@@ -129,7 +124,7 @@ class LogPosition(LogPositionSettings, Logging):
 
         # get CRS of Point layer
         self.crs_layer_logging = self.layer_logging.crs()
-        self.crs_layer_logging_id = self.crs_layer_logging.postgisSrid()
+        self.crs_layer_logging_id = f'{self.crs_layer_logging.authid().replace("EPSG:", "epsg")}'
 
         # get CRS of Raster layer
         if self.sample_depth:
@@ -140,7 +135,7 @@ class LogPosition(LogPositionSettings, Logging):
 
         # transform Point to raster CRS if not identical
         if self.sample_depth:
-            if self.crs_layer_logging != self.crs_layer_raster:
+            if self.crs_layer_raster != self.crs_gps:
                 transformer_latlon2raster = QgsCoordinateTransform(
                     self.crs_gps, self.crs_layer_raster, project=self.project
                 )
@@ -163,16 +158,16 @@ class LogPosition(LogPositionSettings, Logging):
         if self.write_depth:
             self.depth_vehicle = self.info.get('depth', 0)
             # if 'depth' in self.info.keys():
-                # self.depth_vehicle = self.info.get('depth')
+            # self.depth_vehicle = self.info.get('depth')
             # else:
-                # self.depth_vehicle = 0
-                
+            # self.depth_vehicle = 0
+
         if self.write_heading:
             self.heading = self.info.get('heading', None)
-            
+
         if self.write_course:
             self.course = self.info.get('course', None)
-            
+
         if self.write_speed:
             self.speed = self.info.get('speed', None)
 
@@ -191,11 +186,11 @@ class LogPosition(LogPositionSettings, Logging):
         # add UTC timestamp
         field_datetime = 'datetime_UTC'
         if field_datetime not in self.field_names:
-            fields_to_add.append(QgsField(field_datetime, type=QVariant.DateTime))
+            fields_to_add.append(QgsField(field_datetime, type=QMetaType.Type.QDateTime))
 
         # add LAT / LON fields if not in layer fields
         fields_coords = ['lat_DD', 'lon_DD']
-        kwargs_deg = dict(type=QVariant.Double, len=10, prec=6)
+        kwargs_deg = dict(type=QMetaType.Type.Double, len=10, prec=6)
         if not all(f in self.fields for f in fields_coords):
             for fname in fields_coords:
                 if fname not in self.field_names:
@@ -204,58 +199,58 @@ class LogPosition(LogPositionSettings, Logging):
         # add XY fields if not in layer fields AND layer not geographic
         fields_coords_xy = [f'x_{self.crs_layer_logging_id}', f'y_{self.crs_layer_logging_id}']
         if self.add_xy and self.crs_layer_logging != self.crs_gps:
-            kwargs_xy = dict(type=QVariant.Double, len=12, prec=2)
+            kwargs_xy = dict(type=QMetaType.Type.Double, len=12, prec=2)
             if not all(f in self.fields for f in fields_coords_xy):
                 for fname in fields_coords_xy:
                     if fname not in self.field_names:
                         fields_to_add.append(QgsField(fname, **kwargs_xy))
-        
+
         # add PosiView device field
         field_device = 'PosiView_device'
         if self.write_device:
             if field_device not in self.field_names:
-                fields_to_add.append(QgsField(field_device, type=QVariant.String, len=25))
-        
+                fields_to_add.append(QgsField(field_device, type=QMetaType.Type.QString, len=25))
+
         # add vehicle depth field
         field_vehicle_depth = 'vehicle_depth_m'
         if self.write_depth:
             if field_vehicle_depth not in self.field_names:
-                fields_to_add.append(QgsField(field_vehicle_depth, type=QVariant.Double, len=8, prec=2))
+                fields_to_add.append(QgsField(field_vehicle_depth, type=QMetaType.Type.Double, len=8, prec=2))
 
         # add seafloor depth field
         field_depth_seafloor = 'depth_seafloor_m'
         if self.sample_depth:
             if field_depth_seafloor not in self.field_names:
-                fields_to_add.append(QgsField(field_depth_seafloor, type=QVariant.Double, len=8, prec=2))
+                fields_to_add.append(QgsField(field_depth_seafloor, type=QMetaType.Type.Double, len=8, prec=2))
 
         # add heading field
         field_heading = 'heading'
         if self.write_heading:
             if field_heading not in self.field_names:
-                fields_to_add.append(QgsField(field_heading, type=QVariant.Double, len=6, prec=1))
-        
+                fields_to_add.append(QgsField(field_heading, type=QMetaType.Type.Double, len=6, prec=1))
+
         # add course field
         field_course = 'course'
         if self.write_course:
             if field_course not in self.field_names:
-                fields_to_add.append(QgsField(field_course, type=QVariant.Double, len=6, prec=1))
-        
+                fields_to_add.append(QgsField(field_course, type=QMetaType.Type.Double, len=6, prec=1))
+
         # add speed field
         field_speed = 'speed'
         if self.write_speed:
             if field_speed not in self.field_names:
-                fields_to_add.append(QgsField(field_speed, type=QVariant.Double, len=6, prec=2))
-        
+                fields_to_add.append(QgsField(field_speed, type=QMetaType.Type.Double, len=6, prec=2))
+
         # add event field
         field_event = 'event'
         if self.events != [] and self.apply_advanced_settings:
             if field_event not in self.field_names:
-                fields_to_add.append(QgsField(field_event, type=QVariant.String, len=25))
+                fields_to_add.append(QgsField(field_event, type=QMetaType.Type.QString, len=25))
 
         # add notes field
         field_note = 'notes'
         if field_note not in self.field_names:
-            fields_to_add.append(QgsField(field_note, type=QVariant.String, len=0))
+            fields_to_add.append(QgsField(field_note, type=QMetaType.Type.QString, len=0))
 
         # update layer fields
         self.layer_logging_provider.addAttributes(fields_to_add)
@@ -289,11 +284,11 @@ class LogPosition(LogPositionSettings, Logging):
         # get heading field ID
         if self.write_heading:
             id_heading = fields.lookupField(field_heading)
-        
+
         # get course field ID
         if self.write_course:
             id_course = fields.lookupField(field_course)
-            
+
         # get speed field ID
         if self.write_speed:
             id_speed = fields.lookupField(field_speed)
@@ -343,14 +338,14 @@ class LogPosition(LogPositionSettings, Logging):
             feat_attributes,
             self.layer_logging.createExpressionContext()
         )
-                
+
         # open interactive attribute dialog
         accepted = self.iface.openFeatureForm(self.layer_logging, feat)
-        
+
         if accepted:
             # add new Point feature to layer
             self.layer_logging_provider.addFeature(feat)
-            
+
             self.iface.messageBar().pushMessage(
                 'Log Position',
                 'Logged current position and saved it to selected layer',
@@ -365,7 +360,6 @@ class LogPosition(LogPositionSettings, Logging):
         """Log current position."""
         # retrieve available data provider from PosiView plugin
         self.access_posiview_data_provider()
-        # print('\nSTREAM', self.stream, '\n')
 
         if self.valid_position:
             # insert logged position as Point to selected map layer

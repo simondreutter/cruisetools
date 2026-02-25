@@ -41,10 +41,7 @@ class Logging(object):
         self.properties = self.posiview_project.properties()
 
         self.devices = self.properties['Mobiles']
-        # for d, v in self.devices.items():
-        #     print(d, v)
 
         self.devices_names = list(self.devices.keys())
-        # print(self.devices_names)
 
         self.device_properties = {d: self.devices[d].get('provider') for d in self.devices_names}

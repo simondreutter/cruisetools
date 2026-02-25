@@ -93,16 +93,16 @@ class ExportShadedBathymetry(QgsProcessingAlgorithm, Bathymetry):
                 optional=False,
                 defaultValue=self.alpha)
         )
-        
+
         options_param = QgsProcessingParameterString(
             name=self.OPTIONS,
-            description=self.tr('Additional creation options (e.g., COMPRESS=DEFLATE|TILED=YES)'),
+            description=self.tr('Additional creation options (e.g., COMPRESS=DEFLATE|PREDICTOR=2|TILED=YES)'),
             defaultValue='',
             optional=True
         )
         options_param.setFlags(options_param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
         self.addParameter(options_param)
-        
+
         # TODO
         """
         options_param = QgsProcessingParameterString(name=self.OPTIONS,

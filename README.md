@@ -1,25 +1,27 @@
 # Cruise Tools
-*v2.3 [Wandel Sea]*
+*v2.4 [Weddell Sea]*
 
 ## Info
 **The toolbox you need for marine research cruises (planning and stuff)!**  
 
     Authors :   Simon Dreutter & Fynn Warnke
     License :   Gnu GPL v3
-    Email   :   simon.dreutter@awi.de / fynn.warnke@awi.de
+    Email   :   simon.dreutter@awi.de / fwrnke@mailbox.org
 
-Cruise Tools is a python plugin for QGIS (>3.22) that is supposed to fill a niche for cruise planning purposes. There are a handful of steps that we go through each time we extract coordinates for the bridge (DDM, not DD) or load a bathymetry grid (set color scale, hillshade, etc.) or similar. This is annoying and time-consuming, hence, there needs to be a quicker way. This is what Cruise Tools was created for. It's supposed to create one (or two or three) click solutions to substitute 10 (or twenty or thirty) clicks.  
+Cruise Tools is a python plugin for QGIS (>3.40) that is supposed to fill a niche for cruise planning purposes. There are a handful of steps that we go through each time we extract coordinates for the bridge (DDM, not DD) or load a bathymetry grid (set color scale, hillshade, etc.) or similar. This is annoying and time-consuming, hence, there needs to be a quicker way. This is what Cruise Tools was created for. It's supposed to create one (or two or three) click solutions to substitute 10 (or twenty or thirty) clicks.  
 The toolbox is a work in progress, however, it’s functional and should be used along the way of development.
 
 ### Installation
-Cruise Tools is now available via the QGIS plugin repository.
+Cruise Tools is available via the QGIS plugin repository.
 Open QGIS and go to `Plugins > Manage and Install Plugins` and activate `Cruise Tools` (tick it). If the Cruise Tools toolbar is not visible, right-click on an open area on the toolbar and check Cruise Tools there as well.  
-Sad side note: So far, Cruise Tools is developed on and for Windows only. It might work to some extent on a UNIX OS, but we never tested it. :/
+Cruise Tools is developed on Windows and has been tested and used on Unix as well.
 
 ## Bathymetry
 ### Load Bathymetry
 You want to load a bathymetry (or topography) grid with hillshade and a nice color scale. Doing this manually takes about 1000 clicks (depending on how crazy your render settings are). Cruise Tools simply lets you select a grid file (`GeoTIFF` or `netCDF`), sets some color settings and overlays it with a hillshade that’s not just half transparently chucked on there like ArghGIS users tend to do, and adds everything into a handy subgroup.  
 You can adjust the color bar and min/max values in the dialog or later in the layer symbology.
+Additionally, the tool offers the option to copy the layer style of an existing raster layer.
+Furthermore, there are some predefined styles that you can use. If you have a specific layer style that's worth sharing, send us your `QML` file.
 ___
 
 ### Export Shaded Bathymetry
@@ -81,12 +83,12 @@ This is a helper tool for contour lines since bathymetry/topography grids someti
 
 ## Planning
 ### General Info
-The entire Planning menu is intended to create a base for easy export from QGIS into various (vessel specific) exchange formats for the bridge's ECDIS. It has a big fat `under construction` sign on it, but is, for a limited number of vessels, already usable. The idea is that the user creates a point or line planning file from within Cruise Tools, which will a) have a number of fields set up that are useful for the output formats and b) have a style applied that might be handy. Then the layer can be filled with features and the table filled with attributes. When exporting to bridge, Cruise Tools will deal with your geometry type, add point coordinates and handle the output format. So far only RV Sonne and RV Maria S. Merian have output formats that are specific to a certain ECDIS import mechanism. In both cases that is the *SAM Route to Bridge* tool and the exported `CSV` needs to be copied into one of the empty SAM Route `XLSX` sheets. For other ships this is for now just a default `CSV` export which simply contains all attributes and the geometry of the features.  
-Additionally, since v1.1, there is a MBES coverage planning tool. See below.
+The entire Planning menu is intended to create a base for easy export from QGIS into various (vessel specific) exchange formats for the bridge's ECDIS. It has a big fat `under construction` sign on it, but is, for a limited number of vessels, already usable. The idea is that the user creates a point or line planning file from within Cruise Tools, which will a) have a number of fields set up that are useful for the output formats and b) have a style applied that might be handy. Then the layer can be filled with features and the table filled with attributes. When exporting to bridge, Cruise Tools will deal with your geometry type, add point coordinates and handle the output format.  
+Additionally, there is a MBES coverage estimation tool, as well as a tool for planning parallel survey lines. See below.
 ___
 
 ### Create Planning File
-Create a point / line layer for station planning.
+Create a point / line layer for station planning. Select presets to create e.g. navigation or multibeam survey specific fields.
 ___
 
 ### Planning Lines to Vertices
@@ -103,8 +105,13 @@ Your segments (from vertex to vertex) will be projected in `Mercator (EPSG:3395)
 All independent of your layer and project CRS.
 ___
 
-### Export to Bridge
-Export a planning layer to your vessel specific exchange format. The export tool works with both point and line layers. Line layers will be converted to vertices temporarily. If a selection in the planning layer exists, only selected features will be exported.
+### Export Planning
+Export a planning layer to your vessel specific exchange format. The export tools work with both point and line layers. Line layers will be converted to vertices temporarily. If a selection in the planning layer exists, only selected features will be exported.  
+The output formats are compatible with the Cruise Tools planning universe. Navigational parameters will be added to the output, if the attributes exist in the corresponding fields.  
+Available output formats are (so far):  
+  - CSV: Comma Separated Values (all columns, all values)  
+  - RTZ: ECDIS Route Exchange 1.1  
+  - SAM: Route Exchange compatible CSV  
 
 ## Logging
 ### Log Position

@@ -18,7 +18,11 @@ from .planning import CreatePlanningFile
 from .planning import PlanningLinesToVertices
 from .planning import ParallelLinePlanning
 from .planning import EstimateMBESCoverage
-from .planning import ExportToBridge
+from .planning import ExportToCSV
+from .planning import ExportLinesToRTZ
+from .planning import ExportPointsToRTZ
+from .planning import ExportLinesToSAM
+from .planning import ExportPointsToSAM
 
 
 class CruiseToolsProvider(QgsProcessingProvider):
@@ -41,7 +45,11 @@ class CruiseToolsProvider(QgsProcessingProvider):
         self.addAlgorithm(PlanningLinesToVertices())
         self.addAlgorithm(ParallelLinePlanning())
         self.addAlgorithm(EstimateMBESCoverage())
-        self.addAlgorithm(ExportToBridge())
+        self.addAlgorithm(ExportToCSV())
+        self.addAlgorithm(ExportLinesToRTZ())
+        self.addAlgorithm(ExportPointsToRTZ())
+        self.addAlgorithm(ExportLinesToSAM())
+        self.addAlgorithm(ExportPointsToSAM())
 
     def icon(self):
         icon = QIcon(os.path.dirname(__file__) + '/icons/icon.png')

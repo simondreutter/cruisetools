@@ -8,3 +8,13 @@ Shading by stretched slope inclination.
 Shading by a combination of Hillshade and Slope, bringing together the best aspects of both methods. Also widely known as "Simon's magical relief visualization".
 [ Multidirectional ]
 Shading by a combination of synthetic light sources from 225°, 270°, 315°, and 360° Azimuth.
+---
+Creation options to copy and paste:
+No Compression:
+COMPRESS=NONE|BIGTIFF=IF_SAFER
+High Compression:
+COMPRESS=DEFLATE|PREDICTOR=2|ZLEVEL=9
+JPEG Compression:
+COMPRESS=JPEG|JPEG_QUALITY=75
+Crazy options:
+TILED=YES|BLOCKXSIZE=512|BLOCKYSIZE=512|COMPRESS=DEFLATE|PREDICTOR=2|ZLEVEL=9|BIGTIFF=IF_SAFER

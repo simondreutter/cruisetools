@@ -6,7 +6,7 @@
                               -------------------
         begin                : 2019-06-12
         copyright            : (C) 2019 by Simon Dreutter & Fynn Warnke
-        email                : simon.dreutter@awi.de / fynn.warnke@awi.de
+        email                : simon.dreutter@awi.de / fwrnke@mailbox.org
  ***************************************************************************/
 
 /***************************************************************************

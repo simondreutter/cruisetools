@@ -1,12 +1,29 @@
+import datetime as dt
+import math
+import os
+import random
+import re
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 from PyQt5.QtWidgets import *
 
 # import some tools
 from qgis.core import *
-import os
-import random
-import math
+
+
+def backup_file(file):
+    """Backup existing file with timestamp.
+
+    Parameters
+    ----------
+    file : str
+        file to back up
+
+    """
+    timestamp = dt.datetime.now().strftime('%Y%m%d_%H%M%S')
+    backup = f'{file}.backup_{timestamp}'
+    os.rename(file, backup)
 
 
 def dd2ddm(latitude, longitude):
@@ -117,6 +134,26 @@ def return_file_link(path):
     link = f'<a href="{os.path.dirname(path)}">{path}</a>'
 
     return link
+
+
+def sanitize_filename(filename):
+    """Sanitize filename.
+
+    Parameters
+    ----------
+    filename : str
+        input filename
+
+    Returns
+    -------
+    filename : str
+        sanitized filename
+
+    """
+    filename = str(filename).strip()
+    filename = re.sub(r'[^\w\s-]', '', filename.lower())
+    filename = re.sub(r'[-\s]+', '-', filename).strip('-_')
+    return filename
 
 
 def return_success():

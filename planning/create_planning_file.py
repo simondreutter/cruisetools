@@ -13,7 +13,7 @@ from qgis.core import QgsProcessingException
 from qgis.core import QgsProcessingUtils
 from qgis.core import QgsWkbTypes
 
-from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt.QtCore import QCoreApplication, QMetaType
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
@@ -27,7 +27,9 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
     # inputs:
     FILE_TYPE = 'FILE_TYPE'
     CRS = 'CRS'
+    SPEED = 'SPEED'
     MBES = 'MBES'
+    NAV = 'NAV'
     # outputs:
     OUTPUT = 'OUTPUT'
 
@@ -48,15 +50,17 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
         self.default_crs = self.config.get(self.module, 'default_crs')
         self.crs = QgsCoordinateReferenceSystem()
         self.crs.createFromString(self.default_crs)
+        self.speed = self.config.getboolean(self.module, 'speed')
         self.mbes = self.config.getboolean(self.module, 'mbes')
+        self.nav = self.config.getboolean(self.module, 'nav')
 
     def initAlgorithm(self, config=None):  # noqa
-        self.file_types = [self.tr('Point Planning'),
-                           self.tr('Line Planning')]
+        self.file_types = [self.tr('Point planning'),
+                           self.tr('Line planning')]
         self.addParameter(
             QgsProcessingParameterEnum(
                 name=self.FILE_TYPE,
-                description=self.tr('Planning File Type'),
+                description=self.tr('Planning file type'),
                 options=self.file_types,
                 defaultValue=self.file_type,
                 optional=False,
@@ -71,15 +75,29 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
         )
         self.addParameter(
             QgsProcessingParameterBoolean(
+                name=self.SPEED,
+                description=self.tr('Add speed and time fields'),
+                optional=False,
+                defaultValue=self.speed)
+        )
+        self.addParameter(
+            QgsProcessingParameterBoolean(
                 name=self.MBES,
-                description=self.tr('MBES Planning Layer'),
+                description=self.tr('Add multibeam swath angle fields'),
                 optional=False,
                 defaultValue=self.mbes)
         )
         self.addParameter(
+            QgsProcessingParameterBoolean(
+                name=self.NAV,
+                description=self.tr('Add navigation fields'),
+                optional=False,
+                defaultValue=self.nav)
+        )
+        self.addParameter(
             QgsProcessingParameterFeatureSink(
                 name=self.OUTPUT,
-                description=self.tr('Planning File'),
+                description=self.tr('Planning file'),
                 type=QgsProcessing.TypeVectorLine,
                 defaultValue=None,
                 optional=False,
@@ -90,7 +108,9 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
         # get input variables as self.* for use in post-processing
         file_type = self.parameterAsEnum(parameters, self.FILE_TYPE, context)
         crs = self.parameterAsCrs(parameters, self.CRS, context)
+        speed = self.parameterAsBoolean(parameters, self.SPEED, context)
         mbes = self.parameterAsBoolean(parameters, self.MBES, context)
+        nav = self.parameterAsBoolean(parameters, self.NAV, context)
 
         # if CRS is None, use project CRS
         if not crs.isValid():
@@ -100,28 +120,35 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
         self.config.set(self.module, 'file_type', file_type)
         self.config.set(self.module, 'default_crs', crs.authid())
+        self.config.set(self.module, 'speed', speed)
         self.config.set(self.module, 'mbes', mbes)
+        self.config.set(self.module, 'nav', nav)
+
+        # check for type (point or line) and set create parameters
+        if file_type == 0:
+            geom_type = QgsWkbTypes.Point
+        elif file_type == 1:
+            geom_type = QgsWkbTypes.LineString
 
         # fields to be created
         fields = QgsFields()
 
-        # check for type (point or line) and set create parameters
+        # add fields
         feedback.pushConsoleInfo(self.tr('Creating output fields...'))
-        if file_type == 0:
-            geom_type = QgsWkbTypes.Point
-            fields.append(QgsField('name', QVariant.String, '', 0, 0))
-            fields.append(QgsField('notes', QVariant.String, '', 0, 0))
-        elif file_type == 1:
-            geom_type = QgsWkbTypes.LineString
-            fields.append(QgsField('name', QVariant.String, '', 0, 0))
-            fields.append(QgsField('turn_radius_nm', QVariant.Double, '', 4, 2))
-            fields.append(QgsField('speed_kn', QVariant.Double, '', 4, 2))
-            fields.append(QgsField('time_h', QVariant.Double, '', 4, 2))
-            if mbes:
-                fields.append(QgsField('mbes_swath_angle', QVariant.Int, '', 3, 0))
-                fields.append(QgsField('mbes_swath_angle_port', QVariant.Int, '', 3, 0))
-                fields.append(QgsField('mbes_swath_angle_stb', QVariant.Int, '', 3, 0))
-            fields.append(QgsField('notes', QVariant.String, '', 0, 0))
+        fields.append(QgsField('name', QMetaType.Type.QString, '', 0, 0))
+        if speed:
+            fields.append(QgsField('speed_kn', QMetaType.Type.Double, '', 4, 2))
+            fields.append(QgsField('time_h', QMetaType.Type.Double, '', 4, 2))
+        if mbes:
+            fields.append(QgsField('mbes_swath_angle', QMetaType.Type.Int, '', 3, 0))
+            fields.append(QgsField('mbes_swath_angle_port', QMetaType.Type.Int, '', 3, 0))
+            fields.append(QgsField('mbes_swath_angle_stb', QMetaType.Type.Int, '', 3, 0))
+        if nav:
+            fields.append(QgsField('turn_radius_nm', QMetaType.Type.Double, '', 4, 2))
+            fields.append(QgsField('geometry_type', QMetaType.Type.QString, '', 0, 0))
+            fields.append(QgsField('xtd_port_nm', QMetaType.Type.Double, '', 4, 2))
+            fields.append(QgsField('xtd_stb_nm', QMetaType.Type.Double, '', 4, 2))
+        fields.append(QgsField('notes', QMetaType.Type.QString, '', 0, 0))
 
         # creating feature sink
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
@@ -156,8 +183,8 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
 
         # writing style to GPKG (or else)
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        planning_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True,
-                                           uiFileContent=None)
+        planning_layer.saveStyleToDatabaseV2(name=style_name, description=style_desc, useAsDefault=True,
+                                             uiFileContent=None)
 
         # 100% done
         feedback.setProgress(100)

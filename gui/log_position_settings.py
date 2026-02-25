@@ -83,8 +83,8 @@ class LogPositionSettings(QDialog):
             'write_device': False,
             'write_depth': False,
             'write_heading': False,
-            'write_course' : False,
-            'write_speed'  : False,
+            'write_course': False,
+            'write_speed': False,
             'sample_depth': False,
             'wait_time': 1000,
             'event': 'Event 1\nEvent 2\n...',
@@ -121,39 +121,39 @@ class LogPositionSettings(QDialog):
         if self.device in self.devices_names:
             self.comboBox_device.setCurrentText(str(self.device))
         self.layout.addWidget(self.comboBox_device)
-        
+
         self.layout.insertSpacing(6, 10)
-                
+
         # add GroupBox container for attributes
         self.groupBox_attributes = QGroupBox()
         self.groupBox_attributes.setTitle('Write information to attribute table (if in received data stream)')
         self.layout.addWidget(self.groupBox_attributes)
-        
+
         # init GridLayout
         self.layout_groupBox_attributes = QGridLayout()
         self.groupBox_attributes.setLayout(self.layout_groupBox_attributes)
-        
+
         # heading
         self.checkBox_heading = QCheckBox()
         self.checkBox_heading.setText('Heading (°)')
         self.checkBox_heading.setChecked(self.write_heading)
         # self.layout.addWidget(self.checkBox_heading)
         self.layout_groupBox_attributes.addWidget(self.checkBox_heading, 0, 0, 1, 1)
-        
+
         # course
         self.checkBox_course = QCheckBox()
         self.checkBox_course.setText('Course (°)')
         self.checkBox_course.setChecked(self.write_course)
         # self.layout.addWidget(self.checkBox_course)
         self.layout_groupBox_attributes.addWidget(self.checkBox_course, 1, 0, 1, 1)
-        
+
         # speed
         self.checkBox_speed = QCheckBox()
         self.checkBox_speed.setText('Speed (kn)')
         self.checkBox_speed.setChecked(self.write_speed)
         # self.layout.addWidget(self.checkBox_speed)
         self.layout_groupBox_attributes.addWidget(self.checkBox_speed, 2, 0, 1, 1)
-                
+
         # PosiView device
         self.checkBox_device = QCheckBox()
         self.checkBox_device.setText('Write PosiView device name')
@@ -195,7 +195,7 @@ class LogPositionSettings(QDialog):
             self.layer_raster = self.comboBox_raster.currentLayer()
 
         self.update_raster_band()
-        
+
         self.layout.insertSpacing(10, 10)
 
         # -------------------- ADVANCED SETTINGS --------------------
@@ -308,7 +308,7 @@ class LogPositionSettings(QDialog):
         self.raster_band_name = self.comboBox_raster_band.currentText()
         if self.raster_band_name != '':
             self.raster_band = self.band_names.index(self.raster_band_name) + 1
-            
+
         self.apply_advanced_settings = self.groupBox_advancedSettings.isChecked()
 
         wait_time = self.lineEdit_waitTime.text()

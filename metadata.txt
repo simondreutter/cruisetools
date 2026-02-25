@@ -2,9 +2,9 @@
 name=Cruise Tools
 qgisMinimumVersion=3.40
 description=The toolbox you need for marine research cruises (planning and stuff)!
-version=2.3
+version=2.4
 author=Simon Dreutter & Fynn Warnke
-email=simon.dreutter@awi.de;fw.dev@mailbox.org
+email=simon.dreutter@awi.de;fwrnke@mailbox.org
 
 about=
   On marine research cruises, one has to perform reoccurring tasks over an over again which might require a whole bunch of clicks each time. Cruise Tools intends to offer two click (or three click) solutions for some of these tasks.
@@ -35,6 +35,12 @@ experimental=False
 deprecated=False
 
 changelog=
+  2.4 (2026-02-25) [Weddell Sea]
+    - restructured "Export to Bridge"
+    - added RTZ export for planning files
+    - added "Selected features only" option to "Parallel Line Planning"
+    - added "Predefined style" to "Load Bathymetry"
+    - bugfix in "Log Position"
   2.3 (2025-09-24) [Wandel Sea]
     - added "Sample Raster Points"
     - added "Sample Raster Profile"

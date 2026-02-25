@@ -11,7 +11,7 @@ from qgis.core import QgsProcessingParameterFeatureSource
 from qgis.core import QgsProcessingUtils
 from qgis.core import QgsWkbTypes
 
-from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt.QtCore import QCoreApplication, QMetaType
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
@@ -89,12 +89,13 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
         # get input variables
         source = self.parameterAsSource(parameters, self.INPUT, context)
 
-        self.add_vertex_suffix = self.parameterAsBoolean(parameters, self.ADD_VERTEX_ID, context)
+        self.vertex_suffix = self.parameterAsBoolean(parameters, self.ADD_VERTEX_ID, context)
         self.latlon_dd = self.parameterAsBoolean(parameters, self.LATLON_DD, context)
         self.latlon_ddm = self.parameterAsBoolean(parameters, self.LATLON_DDM, context)
 
         # set new default values in config
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
+        self.config.set(self.module, 'vertex_suffix', self.vertex_suffix)
         self.config.set(self.module, 'latlon_dd', self.latlon_dd)
         self.config.set(self.module, 'latlon_ddm', self.latlon_ddm)
 
@@ -107,7 +108,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
 
         # if source does not have fid field, create it in fields
         if 'fid' not in source_fields.names():
-            fields.append(QgsField('fid', QVariant.Int, '', 4, 0))
+            fields.append(QgsField('fid', QMetaType.Type.Int, '', 4, 0))
 
         # add all fields from source to fields variable
         for field in source_fields:
@@ -158,8 +159,8 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
         style_desc = 'Planning Vertices style for QGIS Symbology from Cruise Tools plugin'
 
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        planning_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True,
-                                           uiFileContent=None)
+        planning_layer.saveStyleToDatabaseV2(name=style_name, description=style_desc, useAsDefault=True,
+                                             uiFileContent=None)
 
         # 100% done
         feedback.setProgress(100)

@@ -36,6 +36,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
     MAX = 'MAX'
     Z_POS_DOWN = 'Z_POS_DOWN'
     REF_RASTER = 'REF_RASTER'
+    STYLE = 'STYLE'
     # process:
     LAYERS = {}
     # outputs:
@@ -101,10 +102,23 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         for key in self.color_ramps.keys():
             self.colors_list.append(key)
 
-        # set colormap modi options
-        self.colormap_modus_options = ['Manual input', 'Copy style from existing layer']
+        # predefined color styles
+        self.predefined_styles = {
+            'AWI Basemap blue': ':/plugins/cruisetools/styles/style_awi_basemap_blue.qml',
+            'AWI Basemap grey': ':/plugins/cruisetools/styles/style_awi_basemap_grey.qml',
+            'AWI Basemap greyblue': ':/plugins/cruisetools/styles/style_awi_basemap_greyblue.qml',
+            'AWI Bathymetry Tiles': ':/plugins/cruisetools/styles/style_awi_bathymetry_tiles.qml'
+        }
 
-        # style files for layers
+        # list of predefined styles
+        self.styles_list = []
+        for key in self.predefined_styles.keys():
+            self.styles_list.append(key)
+
+        # set colormap modi options
+        self.colormap_modus_options = ['Manual input', 'Existing reference layer', 'Predefined style']
+
+        # hillshade style files
         self.style_hillshade_prj = ':/plugins/cruisetools/styles/style_hillshade_prj.qml'
         self.style_hillshade_geo = ':/plugins/cruisetools/styles/style_hillshade_geo.qml'
         self.style_hillshade_pos_down_prj = ':/plugins/cruisetools/styles/style_hillshade_pos_down_prj.qml'
@@ -119,6 +133,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         self.color_ramp_default = self.config.getint(self.module, 'color_ramp')
         self.colormap_modus_default = self.config.getint(self.module, 'colormap_modus')
         self.raster_layer_default = self.config.get(self.module, 'raster_layer')
+        self.style_default = self.config.get(self.module, 'style_default')
 
     def initAlgorithm(self, config=None):  # noqa
         self.addParameter(
@@ -148,7 +163,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         self.parameterDefinition(self.COLORMAP_MODUS).setMetadata({
             'widget_wrapper': {
                 'useCheckBoxes': True,
-                'columns': 2,
+                'columns': 3,
             }
         })
         self.addParameter(
@@ -190,6 +205,15 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
                 ),  # None
                 optional=True)
         )
+        self.addParameter(
+            QgsProcessingParameterEnum(
+                name=self.STYLE,
+                description=self.tr('Predefined style'),
+                options=self.styles_list,
+                defaultValue=self.style_default,
+                optional=True,
+                allowMultiple=False)
+        )
 
     def processAlgorithm(self, parameters, context, feedback):  # noqa
         # get input variables
@@ -201,6 +225,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         cmax = self.parameterAsInt(parameters, self.MAX, context)
         z_pos_down = self.parameterAsBoolean(parameters, self.Z_POS_DOWN, context)
         raster_layer = self.parameterAsRasterLayer(parameters, self.REF_RASTER, context)
+        style = self.parameterAsEnum(parameters, self.STYLE, context)
 
         # set new default values in config
         feedback.pushConsoleInfo(self.tr('Storing new default settings in config...'))
@@ -210,6 +235,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         self.config.set(self.module, 'color_ramp', color_ramp)
         if raster_layer is not None:
             self.config.set(self.module, 'raster_layer', raster_layer.name())
+        self.config.set(self.module, 'style_default', style)
 
         # get file info
         base_path, base_name, ext = utils.get_info_from_path(raster)
@@ -223,6 +249,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         if not dem_layer.isValid():
             raise QgsProcessingException(self.invalidSourceError(parameters, self.INPUT))
 
+        # color map by manual input
         if colormap_modus == 0:
             # create color scale values
             feedback.pushConsoleInfo(self.tr('Creating color ramp...'))
@@ -272,7 +299,9 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
             resample_filter.setZoomedInResampler(QgsBilinearRasterResampler())
             resample_filter.setZoomedOutResampler(QgsBilinearRasterResampler())
 
+        # color map by existing reference layer
         elif colormap_modus == 1:
+            feedback.pushConsoleInfo(self.tr('Copying reference raster style...'))
             # get the name of the reference layer's current style
             style_name = raster_layer.styleManager().currentStyle()
 
@@ -285,6 +314,12 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
 
             # set the added style as the current style
             dem_layer.styleManager().setCurrentStyle(style_name_dst)
+
+        # color map by predefined style
+        elif colormap_modus == 2:
+            feedback.pushConsoleInfo(self.tr('Loading predefined style...'))
+            style_file = self.predefined_styles[self.styles_list[style]]
+            dem_layer.loadNamedStyle(style_file)
 
         # trigger repaint
         dem_layer.triggerRepaint()

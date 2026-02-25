@@ -1,0 +1,15 @@
+Export point planning layer to SAM Route Exchange compatible CSV file to get your coordinates up in the ship's ECDIS.
+
+One CSV file will be created containing all (selected) points from the input layer. Route name and file name will be identical.
+The route name will be sanitized (no weird characters).
+The CSV can be opened in Excel and data can be copied over to the SAM Route Exchange Excel sheet, the columns are compatible. Don't copy the header line!
+Waypoints are ordered by "fid" or another selected field. The order of points is relevant as the ECDIS will order waypoints in the route by there order in the SAM Route Exchange file, not by "id". If points are created in a different order than the one you want to have them, better create a custom order field.
+The tool is fully compatible with the Cruise Tools planning universe. Navigational parameters will be added to the CSV output, if the attributes exist in the corresponding fields. Create the planning file with Cruise Tools to avoid field name issues. The following parameters will be considered:
+
+- Speed in knots: speed_kn
+- Turn radius in nm: turn_radius_nm
+- Course geometry: geometryType (can be "Great Circle"/"Orthodrome" or "Rhumb Line"/"Loxodrome")
+- Cross track distance in nm: xtd_port_nm, xtd_stb_nm (will default to the larger of the two)
+- Leg report: notes
+
+Navigational parameters of a waypoint are always valid for the leg to that waypoint.

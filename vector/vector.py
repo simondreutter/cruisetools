@@ -13,7 +13,7 @@ from qgis.core import QgsMultiLineString
 from qgis.core import QgsUnitTypes
 from qgis.core import QgsWkbTypes
 
-from qgis.PyQt.QtCore import QVariant
+from qgis.PyQt.QtCore import QMetaType
 
 from .. import config
 from .. import utils
@@ -186,13 +186,13 @@ class Vector(object):
 
         if latlon_dd:
             # create fields for lat_DD and lon_DD coordinates in attribute table
-            layer.addAttribute(QgsField(lat_dd_field, QVariant.Double, len=10, prec=6))
-            layer.addAttribute(QgsField(lon_dd_field, QVariant.Double, len=10, prec=6))
+            layer.addAttribute(QgsField(lat_dd_field, QMetaType.Type.Double, len=10, prec=6))
+            layer.addAttribute(QgsField(lon_dd_field, QMetaType.Type.Double, len=10, prec=6))
 
         if latlon_ddm:
             # create fields for lat_DDM and lon_DDM coordinates in attribute table
-            layer.addAttribute(QgsField(lat_ddm_field, QVariant.String, len=11))
-            layer.addAttribute(QgsField(lon_ddm_field, QVariant.String, len=12))
+            layer.addAttribute(QgsField(lat_ddm_field, QMetaType.Type.QString, len=11))
+            layer.addAttribute(QgsField(lon_ddm_field, QMetaType.Type.QString, len=12))
 
         if xy:
             # set field precision depending on if CRS is geographic or not
@@ -201,8 +201,8 @@ class Vector(object):
             else:
                 prec = 2
             # create fields for lat_DDM and lon_DDM coordinates in attribute table
-            layer.addAttribute(QgsField(x_field, QVariant.Double, len=10, prec=prec))
-            layer.addAttribute(QgsField(y_field, QVariant.Double, len=10, prec=prec))
+            layer.addAttribute(QgsField(x_field, QMetaType.Type.Double, len=10, prec=prec))
+            layer.addAttribute(QgsField(y_field, QMetaType.Type.Double, len=10, prec=prec))
 
         # update attribute table fields
         layer.updateFields()
@@ -297,11 +297,11 @@ class Vector(object):
 
         # create fields for length_m and/or length_nm
         if m:
-            layer.addAttribute(QgsField(m_field, QVariant.Double, len=15, prec=2))
+            layer.addAttribute(QgsField(m_field, QMetaType.Type.Double, len=15, prec=2))
         if km:
-            layer.addAttribute(QgsField(km_field, QVariant.Double, len=15, prec=3))
+            layer.addAttribute(QgsField(km_field, QMetaType.Type.Double, len=15, prec=3))
         if nm:
-            layer.addAttribute(QgsField(nm_field, QVariant.Double, len=15, prec=3))
+            layer.addAttribute(QgsField(nm_field, QMetaType.Type.Double, len=15, prec=3))
 
         # update attribute table fields
         layer.updateFields()
@@ -399,9 +399,9 @@ class Vector(object):
 
         # create attribute table fields for specified units
         if m2:
-            layer.addAttribute(QgsField(m2_field, QVariant.Double, len=15, prec=2))
+            layer.addAttribute(QgsField(m2_field, QMetaType.Type.Double, len=15, prec=2))
         if km2:
-            layer.addAttribute(QgsField(km2_field, QVariant.Double, len=15, prec=3))
+            layer.addAttribute(QgsField(km2_field, QMetaType.Type.Double, len=15, prec=3))
 
         layer.updateFields()
 
@@ -522,23 +522,23 @@ class Vector(object):
         Returns
         -------
         QgsField
-            A field with QVariant type, length, and precision chosen
+            A field with QMetaType.Type type, length, and precision chosen
             to safely hold values of the raster band.
         """
         # get raster dtype
         dtype = raster_layer.dataProvider().dataType(band)
 
-        # Mapping: QGIS raster dtype → (QVariant type, length, precision)
+        # Mapping: QGIS raster dtype → (QMetaType.Type type, length, precision)
         mapping = {
-            Qgis.Byte: (QVariant.Int, 3, 0),  # 0–255
-            Qgis.Int16: (QVariant.Int, 6, 0),  # -32768–32767
-            Qgis.UInt16: (QVariant.Int, 5, 0),  # 0–65535
-            Qgis.Int32: (QVariant.Int, 11, 0),  # full 32-bit signed
-            Qgis.UInt32: (QVariant.Double, 20, 0),  # too big for Int
-            Qgis.Float32: (QVariant.Double, 20, 8),  # ~8 digits precision
-            Qgis.Float64: (QVariant.Double, 32, 15),  # ~15 digits precision
+            Qgis.Byte: (QMetaType.Type.Int, 3, 0),  # 0–255
+            Qgis.Int16: (QMetaType.Type.Int, 6, 0),  # -32768–32767
+            Qgis.UInt16: (QMetaType.Type.Int, 5, 0),  # 0–65535
+            Qgis.Int32: (QMetaType.Type.Int, 11, 0),  # full 32-bit signed
+            Qgis.UInt32: (QMetaType.Type.Double, 20, 0),  # too big for Int
+            Qgis.Float32: (QMetaType.Type.Double, 20, 8),  # ~8 digits precision
+            Qgis.Float64: (QMetaType.Type.Double, 32, 15),  # ~15 digits precision
         }
 
-        var_type, length, precision = mapping.get(dtype, (QVariant.String, 255, 0))
+        var_type, length, precision = mapping.get(dtype, (QMetaType.Type.QString, 255, 0))
 
         return QgsField(name, var_type, len=length, prec=precision)

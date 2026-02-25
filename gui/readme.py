@@ -86,7 +86,7 @@ class ReadmeWindow(QWidget):
         version.setText(version_text)
 
         # create toolbox content from text blocks
-        #idx = 0
+        # idx = 0
         for idx, block in enumerate(blocks[1:]):
             # get block title and content
             block_title, markdown = block.split('\n', 1)
@@ -98,8 +98,8 @@ class ReadmeWindow(QWidget):
             text.setReadOnly(True)
 
             # add content
-            #html = self.markdown(markdown) # DEPRECATED
-            #text.setHtml(html) # DEPRECATED
+            # html = self.markdown(markdown) # DEPRECATED
+            # text.setHtml(html) # DEPRECATED
             text.setMarkdown(markdown)
 
             # add text to toolbox
@@ -111,52 +111,10 @@ class ReadmeWindow(QWidget):
             # set block icon
             toolbox.setItemIcon(idx, icon)
 
-            #idx = idx + 1
+            # idx = idx + 1
 
         # set window layout
         self.setLayout(layout)
-
-    def markdown(self, markdown):  # DEPRECATED
-        """Convert Markdown Readme to HTML (cheap solution).
-
-        Parameters
-        ----------
-        markdown : str
-            Markdown text
-
-        Returns
-        -------
-        html : str
-            converted markdown string in html
-
-        """
-        # empty list for html lines
-        html_list = []
-        # loop over lines in block text
-        for line in markdown.splitlines():
-            line = line.strip()
-            # if line is heading 3 make it bold
-            if line.startswith('### '):
-                if line.startswith('### Installation'):
-                    break
-                else:
-                    line = f'<b>{line.replace("### ", "")}</b><br>'
-            #if line is an url make it a link
-            if line.startswith('http'):
-                line = f'<br><a href="{line}">{line}</a><br>'
-            # clean up some markup stuff
-            line = line.replace('\\*', '*')
-            line = line.replace('**', '')
-            line = line.replace('`', '')
-            line = line.replace('___', '<hr>')
-
-            # add line to html list
-            html_list.append(line)
-
-        # join html list with line breaks
-        html = f'{"<br>".join(html_list)}<br>'
-
-        return html
 
     def get_icon(self, title):
         """Get Icon for Readme Dialog.

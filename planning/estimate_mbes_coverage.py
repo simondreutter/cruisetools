@@ -28,7 +28,7 @@ from qgis.core import QgsProcessingUtils
 from qgis.core import QgsProject
 from qgis.core import QgsWkbTypes
 
-from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt.QtCore import QCoreApplication, QMetaType
 from PyQt5.QtGui import QIcon
 
 from .planning import Planning
@@ -144,7 +144,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             0: 'Total angle',
             1: 'Port/Starboard angles'
         }
-        
+
         self.densify_modes = ['Number of points', 'Distance']
 
         # style files for mbes coverage layers
@@ -153,11 +153,11 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
 
         # distance for line densifier
         self.vertex_distance = 50  # m
-        
+
         # buffer settings
         self.buffer_segments = 10
         self.buffer_join_style = QgsGeometry.JoinStyleRound
-        
+
         # initialize default configuration
         self.initConfig()
 
@@ -224,7 +224,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE,
-                description=self.tr('Swath angle (fallback)'),
+                description=self.tr('Swath angle [°] (fallback)'),
                 type=QgsProcessingParameterNumber.Integer,
                 optional=True,
                 defaultValue=self.swath_angle,
@@ -244,7 +244,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             ),
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE_PORT,
-                description=self.tr('Port angle (fallback)'),
+                description=self.tr('Port angle [°] (fallback)'),
                 type=QgsProcessingParameterNumber.Integer,
                 optional=True,
                 defaultValue=self.swath_angle_port,
@@ -263,7 +263,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             ),
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE_STARBOARD,
-                description=self.tr('Starboard angle (fallback)'),
+                description=self.tr('Starboard angle [°] (fallback)'),
                 type=QgsProcessingParameterNumber.Integer,
                 optional=True,
                 defaultValue=self.swath_angle_stb,
@@ -273,7 +273,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         for param in params:
             param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
             self.addParameter(param)
-        
+
         # DENSIFY OPTIONS
         self.addParameter(
             QgsProcessingParameterEnum(
@@ -295,17 +295,17 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         )
         self.addParameter(
             QgsProcessingParameterNumber(
-                    name=self.DENSIFY_VALUE,
-                    description=self.tr('Number of points [#] OR Distance [m]'),
-                    type=QgsProcessingParameterNumber.Integer,
-                    defaultValue=100,
-                    optional=True,
-                    minValue=0)
+                name=self.DENSIFY_VALUE,
+                description=self.tr('Number of points [#] OR Distance [m]'),
+                type=QgsProcessingParameterNumber.Integer,
+                defaultValue=100,
+                optional=True,
+                minValue=0)
         )
         self.parameterDefinition(self.DENSIFY_VALUE).setFlags(
             QgsProcessingParameterDefinition.FlagAdvanced
         )
-        
+
         # RASTER
         raster_layers = [lyr for lyr in QgsProject.instance().mapLayers().values() if lyr.type() == 1]
         raster_layer_names = [r.name() for r in raster_layers]
@@ -338,7 +338,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                 optional=False,
                 createByDefault=True)
         )
-    
+
     def processAlgorithm(self, parameters, context, feedback):  # noqa
         # get input variables
         source = self.parameterAsSource(parameters, self.INPUT_LINE, context)
@@ -356,11 +356,11 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         swath_angle_port_fallback = self.parameterAsInt(parameters, self.SWATH_ANGLE_PORT, context)
         swath_angle_field_stb = self.parameterAsString(parameters, self.SWATH_ANGLE_FIELD_STARBOARD, context)
         swath_angle_stb_fallback = self.parameterAsInt(parameters, self.SWATH_ANGLE_STARBOARD, context)
-        
+
         # densify mode
         densify_mode = self.densify_modes[self.parameterAsInt(parameters, self.DENSIFY_MODE, context)]
         densify_value = self.parameterAsInt(parameters, self.DENSIFY_VALUE, context)
-        
+
         raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT_RASTER, context)
         band_number = self.parameterAsInt(parameters, self.BAND, context)
 
@@ -416,7 +416,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         feedback.pushConsoleInfo(self.tr('Sampling values...'))
         feedback.pushConsoleInfo(self.tr('Computing depth dependent buffers...'))
         feedback.pushConsoleInfo(self.tr('Unionizing output features...'))
-        
+
         for feature_id, feature in enumerate(features):
             # get feature geometry
             feature_geom = feature.geometry()
@@ -487,22 +487,22 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                     check = segment_geom_dense_raster.transform(trans_utm2raster)
                     if check != 0:
                         raise Exception('CRS transformation failed')
-                        
+
                     # Extract segment vertices
                     segment_vertices_utm = segment_geom_dense_utm.asPolyline()
                     segment_vertices_raster = segment_geom_dense_raster.asPolyline()
 
                     # initialize additional fields
-                    feature_id_field = QgsField('feature_id', QVariant.Int, 'Integer', len=5, prec=0)
-                    part_id_field = QgsField('part_id', QVariant.Int, 'Integer', len=5, prec=0)
-                    segment_id_field = QgsField('segment_id', QVariant.Int, 'Integer', len=5, prec=0)
-                    
+                    feature_id_field = QgsField('feature_id', QMetaType.Type.Int, 'Integer', len=5, prec=0)
+                    part_id_field = QgsField('part_id', QMetaType.Type.Int, 'Integer', len=5, prec=0)
+                    segment_id_field = QgsField('segment_id', QMetaType.Type.Int, 'Integer', len=5, prec=0)
+
                     # init list of outer beams
                     beams_stbd = []
                     beams_port = []
-                    
+
                     bearing = 0
-                    
+
                     # loop over all vertices of line segment
                     for i, pt in enumerate(segment_vertices_utm):
                         # Calculate bearing (in degrees) using local UTM projection
@@ -510,38 +510,38 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                             degrees(da.bearing(pt, segment_vertices_utm[i + 1])) % 360
                             if i < len(segment_vertices_utm) - 1 else bearing  # use previous bearing for last vertex
                         )
-                        
+
                         # Sample raster at densified point along line segement (in raster CRS)
                         pt_depth, check = raster_layer.dataProvider().sample(segment_vertices_raster[i], band_number)
                         if not check:
-                            # print(f'[WARN] No depth found. Skipping point < {i} >')
                             continue
-                        
+
                         # Get swath angle
                         if swath_angle_mode == 0:
                             swath_angle = get_swath_angle(feature, swath_angle_field, swath_angle_fallback)
                             swath_angle_port = swath_angle_stb = swath_angle // 2
                         elif swath_angle_mode == 1:
-                            swath_angle_port = get_swath_angle(feature, swath_angle_field_port, swath_angle_port_fallback)
+                            swath_angle_port = get_swath_angle(feature, swath_angle_field_port,
+                                                               swath_angle_port_fallback)
                             swath_angle_stb = get_swath_angle(feature, swath_angle_field_stb, swath_angle_stb_fallback)
-                        
+
                         # Calculate horizontal distance (flat surface)
                         dist_stbd_flat = abs(tan(radians(swath_angle_stb)) * pt_depth)
                         dist_port_flat = abs(tan(radians(swath_angle_port)) * pt_depth)
-                        
+
                         # Project starboard/port outer beams
                         pt_stbd_flat = pt.project(dist_stbd_flat, (bearing + 90) % 360)
                         pt_port_flat = pt.project(dist_port_flat, (bearing - 90) % 360)
-                        
+
                         # Create swath line geometry (flat)
                         swath_flat = QgsGeometry.fromPolylineXY([pt_port_flat, pt_stbd_flat])
-                        
+
                         # Sample bathymetry along perpendicular line (swath)
                         FACTOR_EXTEND = 1.5  # 50% extension to account for seafloor dipping away from ship
                         dist_stbd_extend = dist_stbd_flat * FACTOR_EXTEND
                         dist_port_extend = dist_port_flat * FACTOR_EXTEND
                         n_swath_densify = 100
-    
+
                         # Extend swath (horizontal) by 50% to each side
                         swath_flat_extend = swath_flat.extendLine(dist_port_extend, dist_stbd_extend)
                         swath_flat_extend_raster = QgsGeometry(swath_flat_extend)  # deep copy
@@ -552,60 +552,56 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                         ])
                         if len(swath_flat_depths) == 0:
                             raise Exception('No depths could be sampled from the input raster!')
-                        
+
                         # Interpolate NaNs in sampled depths
                         idx_nans = np.isnan(swath_flat_depths)
                         x = np.arange(len(swath_flat_depths))
                         # Note: np.interp replaces outer NaNs with the last valid value
                         swath_flat_depths[idx_nans] = np.interp(x[idx_nans], x[~idx_nans], swath_flat_depths[~idx_nans])
-                        
+
                         # Calculate intersection of outer beams with bathymetry (sampled depths)
                         # using an arbitrary reference system (x: distance along swath, y: depth)
                         # Init beams
                         beam_stbd = QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(dist_stbd_flat, pt_depth)])
-                        beam_port = QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(-dist_port_flat, pt_depth)])
-                        
+                        beam_port = QgsGeometry.fromPolylineXY(
+                            [QgsPointXY(0, 0), QgsPointXY(-dist_port_flat, pt_depth)])
+
                         # Extend beams
                         beam_stbd = beam_stbd.extendLine(0, beam_stbd.length() * FACTOR_EXTEND)
                         beam_port = beam_port.extendLine(0, beam_port.length() * FACTOR_EXTEND)
-                        
+
                         # Init bathymetric profile (extended)
-                        xx = np.linspace(-(dist_port_flat + dist_port_extend), dist_stbd_flat + dist_stbd_extend, n_swath_densify, endpoint=True)
-                        swath_bathy = QgsGeometry.fromPolylineXY([QgsPointXY(x, y) for x, y in zip(xx, swath_flat_depths)])
-                        
+                        xx = np.linspace(-(dist_port_flat + dist_port_extend), dist_stbd_flat + dist_stbd_extend,
+                                         n_swath_densify, endpoint=True)
+                        swath_bathy = QgsGeometry.fromPolylineXY(
+                            [QgsPointXY(x, y) for x, y in zip(xx, swath_flat_depths)])
+
                         # Get outer beam positions
                         # STARBOARD
                         intersection_stbd = beam_stbd.intersection(swath_bathy)
                         if not intersection_stbd.isEmpty():
                             # Project expected outer beam position
                             if intersection_stbd.isMultipart():
-                                # print(f'[WARN] Multiple stbd intersections found for point < {i} > (using nearest point)')
                                 dist_stbd = abs(list(intersection_stbd.vertices())[0].x())
                             else:
                                 dist_stbd = abs(intersection_stbd.asPoint().x())
                             pt_stbd = pt.project(dist_stbd, (bearing + 90) % 360)
                             pt_stbd_src = trans_utm2line.transform(QgsPointXY(pt_stbd))
                             beams_stbd.append(pt_stbd_src)
-                        # else:
-                            # print(f'[WARN] No starboard intersection found for point < {i} >')
-                        
+
                         # PORT
                         intersection_port = beam_port.intersection(swath_bathy)
                         if not intersection_port.isEmpty():
                             # Project expected outer beam position
                             if intersection_port.isMultipart():
-                                # print(f'[WARN] Multiple port intersections found for point < {i} >! Using nearest point.')
                                 dist_port = abs(list(intersection_port.vertices())[0].x())
                             else:
                                 dist_port = abs(intersection_port.asPoint().x())
                             pt_port = pt.project(dist_port, (bearing - 90) % 360)
                             pt_port_src = trans_utm2line.transform(QgsPointXY(pt_port))
                             beams_port.append(pt_port_src)
-                        # else:
-                            # print(f'[WARN] No port intersection found for point < {i} >!')
-                    
+
                     if len(beams_stbd) == 0 or len(beams_port) == 0:
-                        # print(f'[WARN]  Found no valid depths along segment < {segment_id} >!')
                         continue
 
                     # Create coverage polygon for line segement
@@ -631,16 +627,16 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                         if swath_angle_mode == 0 and swath_angle_field == '':
                             swath_angle_field_name = 'mbes_swath_angle'
                             buffer_fields.append(
-                                QgsField(swath_angle_field_name, QVariant.Int, 'Integer', len=5, prec=0))
+                                QgsField(swath_angle_field_name, QMetaType.Type.Int, 'Integer', len=5, prec=0))
                         elif swath_angle_mode == 1:
                             if swath_angle_field_port == '':
                                 swath_angle_field_port_name = 'mbes_swath_angle_port'
                                 buffer_fields.append(
-                                    QgsField(swath_angle_field_port_name, QVariant.Int, 'Integer', len=5, prec=0))
+                                    QgsField(swath_angle_field_port_name, QMetaType.Type.Int, 'Integer', len=5, prec=0))
                             if swath_angle_field_stb == '':
                                 swath_angle_field_stb_name = 'mbes_swath_angle_stb'
                                 buffer_fields.append(
-                                    QgsField(swath_angle_field_stb_name, QVariant.Int, 'Integer', len=5, prec=0))
+                                    QgsField(swath_angle_field_stb_name, QMetaType.Type.Int, 'Integer', len=5, prec=0))
 
                         # initialize polygon feature
                         fpoly = QgsFeature(buffer_fields)
@@ -668,18 +664,18 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                         # store segment coverage polygon
                         if fpoly.hasGeometry() and fpoly.isValid():
                             buffer_union_features.append(fpoly)
-                
+
                 # [DISSOLVE]
                 if dissolve_buffer and len(list_buffer_union_segments) > 0:
                     # create coverage poylgon for all segments of part (aka feature for non MultiLineString)
                     buffer_part = QgsGeometry.unaryUnion(list_buffer_union_segments)
-                    
+
                     # remove input line vertices from coverage polygon --> "infill corners"
                     v_buffer = buffer_part.asPolygon()[0]  # outer ring
                     v_filt = [v for v in v_buffer if v not in vertices]
-                    
+
                     buffer_part = QgsGeometry.fromPolygonXY([v_filt])
-                    
+
                     # init fields
                     buffer_fields = QgsFields()
 
@@ -696,16 +692,17 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                     # if no input swath_angle field was selected on input, create one
                     if swath_angle_mode == 0 and swath_angle_field == '':
                         swath_angle_field_name = 'mbes_swath_angle'
-                        buffer_fields.append(QgsField(swath_angle_field_name, QVariant.Int, 'Integer', len=5, prec=0))
+                        buffer_fields.append(
+                            QgsField(swath_angle_field_name, QMetaType.Type.Int, 'Integer', len=5, prec=0))
                     elif swath_angle_mode == 1:
                         if swath_angle_field_port == '':
                             swath_angle_field_port_name = 'mbes_swath_angle_port'
                             buffer_fields.append(
-                                QgsField(swath_angle_field_port_name, QVariant.Int, 'Integer', len=5, prec=0))
+                                QgsField(swath_angle_field_port_name, QMetaType.Type.Int, 'Integer', len=5, prec=0))
                         if swath_angle_field_stb == '':
                             swath_angle_field_stb_name = 'mbes_swath_angle_stb'
                             buffer_fields.append(
-                                QgsField(swath_angle_field_stb_name, QVariant.Int, 'Integer', len=5, prec=0))
+                                QgsField(swath_angle_field_stb_name, QMetaType.Type.Int, 'Integer', len=5, prec=0))
 
                     # initialize polygon feature
                     fpoly = QgsFeature(buffer_fields)
@@ -739,7 +736,8 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
 
         # if buffer_union_features is empty, no buffer features where created
         if buffer_union_features == []:
-            raise Exception('No depth values could be sampled from the input raster! Please check input line and raster.')
+            raise Exception(
+                'No depth values could be sampled from the input raster! Please check input line and raster.')
 
         # creating feature sink
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
@@ -759,9 +757,9 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         result = {self.OUTPUT: self.output}
 
         return result
-    
+
     def postProcessAlgorithm(self, context, feedback):  # noqa
-        
+
         # get layer from source and context
         mbes_coverage_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
 
@@ -774,8 +772,8 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         style_desc = 'MBES Coverage style for QGIS Symbology from Cruise Tools plugin'
 
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        mbes_coverage_layer.saveStyleToDatabase(name=style_name, description=style_desc, useAsDefault=True,
-                                                uiFileContent=None)
+        mbes_coverage_layer.saveStyleToDatabaseV2(name=style_name, description=style_desc, useAsDefault=True,
+                                                  uiFileContent=None)
 
         # 100% done
         feedback.setProgress(100)

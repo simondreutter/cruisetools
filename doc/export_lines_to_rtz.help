@@ -1,0 +1,22 @@
+Export line planning layer to RTZ [ECDIS Route Exchange 1.1] format to get your coordinates up in the ship's ECDIS. Set a catalog name and select an export directory. The tool will create an ECDIS compatible folder structure:
+
+RouteExchange
+----Catalog_name
+--------Route1.rtz
+--------Route2.rtz
+--------Route3.rtz
+
+For each (selected) line feature, the tool creates a separate RTZ file. Route name and file name need to be identical. Route name (and hence also file name) will be taken from the "name" field, if it exists and is filled. Otherwise a generic route name will be used.
+Catalog name and route names will be sanitized (no weird characters).
+Waypoints will be created at line feature vertices.
+The tool is fully compatible with the Cruise Tools planning universe. Navigational parameters will be added to the RTZ output, if the attributes exist in the corresponding fields. Create the planning file with Cruise Tools to avoid field name issues. The following parameters will be considered:
+
+- Speed in knots: speed_kn
+- Turn radius in nm: turn_radius_nm
+- Course geometry: geometryType (can be "Orthodrome"/"Great Circle" or "Loxodrome"/"Rhumb Line")
+- Cross track distance in nm: xtd_port_nm, xtd_stb_nm
+- Leg report: notes
+
+Navigational parameters of a line will be identical for all waypoint legs. If you require different navigational parameters for the legs, convert "Planning Lines to Vertices" and change parameters accordingly before using the "Export Points to RTZ" tool.
+
+This Tool has so far only been tested on the WÄRTSILÄ NACOS Platinum ECDIS. Use it with caution, double check your export results and create bug reports if you are having issues!

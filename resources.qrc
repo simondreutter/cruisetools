@@ -21,7 +21,16 @@
         <file>icons/parallel_line_planning.png</file>
         <file>icons/estimate_mbes_coverage.png</file>
         <file>icons/export_to_bridge.png</file>
+        <file>icons/export_to_csv.png</file>
+        <file>icons/export_lines_to_rtz.png</file>
+        <file>icons/export_points_to_rtz.png</file>
+        <file>icons/export_lines_to_sam.png</file>
+        <file>icons/export_points_to_sam.png</file>
         <file>icons/log_position.png</file>
+        <file>styles/style_awi_basemap_blue.qml</file>
+        <file>styles/style_awi_basemap_grey.qml</file>
+        <file>styles/style_awi_basemap_greyblue.qml</file>
+        <file>styles/style_awi_bathymetry_tiles.qml</file>
         <file>styles/style_hillshade_prj.qml</file>
         <file>styles/style_hillshade_geo.qml</file>
         <file>styles/style_hillshade_pos_down_prj.qml</file>

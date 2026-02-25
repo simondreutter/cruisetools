@@ -6,6 +6,7 @@ from qgis.core import QgsFeature
 from qgis.core import QgsGeometry
 from qgis.core import QgsProcessing
 from qgis.core import QgsProcessingAlgorithm
+from qgis.core import QgsProcessingParameterBoolean
 from qgis.core import QgsProcessingParameterEnum
 from qgis.core import QgsProcessingParameterNumber
 from qgis.core import QgsProcessingParameterVectorLayer
@@ -23,6 +24,7 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
     # Processing parameters
     # inputs:
     INPUT = 'INPUT'
+    SELECTED = 'SELECTED'
     OFFSET = 'OFFSET'
     SIDE = 'SIDE'
     NUMBER_OF_LINES = 'NUMBER_OF_LINES'
@@ -65,6 +67,13 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
                 optional=False)
         )
         self.addParameter(
+            QgsProcessingParameterBoolean(
+                name=self.SELECTED,
+                description=self.tr('Selected features only'),
+                optional=False,
+                defaultValue=False)
+        )
+        self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.OFFSET,
                 description=self.tr('Offset [meters]'),
@@ -97,6 +106,7 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
     def processAlgorithm(self, parameters, context, feedback):  # noqa
         # get input variables
         layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
+        selected = self.parameterAsBoolean(parameters, self.SELECTED, context)
         offset = self.parameterAsInt(parameters, self.OFFSET, context)
         side = self.parameterAsInt(parameters, self.SIDE, context)
         number_of_lines = self.parameterAsInt(parameters, self.NUMBER_OF_LINES, context)
@@ -120,9 +130,15 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
         transform_context = context.transformContext()
 
         # get (selected) features
-        features = layer.getFeatures()
+        if selected:
+            features = layer.getSelectedFeatures()
+        else:
+            features = layer.getFeatures()
 
         feedback.pushConsoleInfo(self.tr('Creating parallel features...'))
+
+        # check if layer has a "name" attribute
+        name_index = layer.fields().indexFromName('name')
 
         # empty list for original features to be deleted
         # this is necessary to keep the original line in order with the parallels
@@ -138,6 +154,8 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
 
             # get feature id
             id = feature.id()
+            if name_index != -1:
+                base_name = feature['name']
 
             # get feature geometry
             geom = feature.geometry()
@@ -185,6 +203,8 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
                 feature_parallel = QgsFeature(fields)
 
                 # set feature attributes and geometry
+                if name_index != -1:
+                    attributes[name_index] = f"{base_name}_{i + 1}"
                 feature_parallel.setAttributes(attributes)
                 feature_parallel.setGeometry(geom_parallel)
 
@@ -206,8 +226,8 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
         layer.addFeatures(features_to_add)
 
         # update layer # commented out to keep layer in edit mode
-        #layer.commitChanges()
-        #layer.triggerRepaint()
+        # layer.commitChanges()
+        # layer.triggerRepaint()
 
         # 100% done
         feedback.setProgress(100)

@@ -40,7 +40,6 @@ class SampleRasterPoints(QgsProcessingAlgorithm, Vector):
         """Get default values from CruiseToolsConfig."""
         self.raster_layer_name = self.config.getint(self.module, 'raster_layer')
 
-
     def initAlgorithm(self, config=None):  # noqa
         self.addParameter(
             QgsProcessingParameterVectorLayer(
@@ -53,7 +52,7 @@ class SampleRasterPoints(QgsProcessingAlgorithm, Vector):
         self.addParameter(
             QgsProcessingParameterBoolean(
                 name=self.SELECTED,
-                description=self.tr('Sample only selected features'),
+                description=self.tr('Selected features only'),
                 optional=False,
                 defaultValue=False)
         )
@@ -131,7 +130,7 @@ class SampleRasterPoints(QgsProcessingAlgorithm, Vector):
         feedback.pushConsoleInfo(self.tr('Removing old sample field...'))
         self.delete_fields_by_prefix(self.vector_layer, raster_value_field_name)
 
-        # get raster dtype as mapped QVariant
+        # get raster dtype as mapped QMetaType.Type
         feedback.pushConsoleInfo(self.tr('Creating new sample field...'))
         raster_value_field = self.raster_band_field(self.raster_layer, self.band_number, raster_value_field_name)
 

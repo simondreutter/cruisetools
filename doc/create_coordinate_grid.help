@@ -1,4 +1,4 @@
-Create a vector line layer with geographic coordinate grids lines (EPSG:4326).
+Create a vector line layer with geographic coordinate grid lines (EPSG:4326).
 Adjust the extent of the grid in case you don't want one for the entire world.
 The grid can be created with different intervals in both Longitude and Latidude. If you consider creating a grid with less than 1 degree spacing, you can type fractions (like "1/2" or "1/30") in the fields.
 Regarding the non-metric coversion from degree to minutes, the following intervals can make sense:

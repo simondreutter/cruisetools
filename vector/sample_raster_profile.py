@@ -20,7 +20,7 @@ from qgis.core import QgsProcessingParameterVectorLayer
 from qgis.core import QgsProject
 from qgis.core import QgsWkbTypes
 
-from qgis.PyQt.QtCore import QCoreApplication, QVariant
+from qgis.PyQt.QtCore import QCoreApplication, QMetaType
 from PyQt5.QtGui import QIcon, QColor
 
 from .vector import Vector
@@ -51,7 +51,6 @@ class SampleRasterProfile(QgsProcessingAlgorithm, Vector):
         """Get default values from CruiseToolsConfig."""
         self.distance = self.config.getint(self.module, 'distance')
         self.raster_layer_name = self.config.getint(self.module, 'raster_layer')
-
 
     def initAlgorithm(self, config=None):  # noqa
         self.addParameter(
@@ -145,7 +144,7 @@ class SampleRasterProfile(QgsProcessingAlgorithm, Vector):
 
         # line fid
         fields = QgsFields()
-        fields.append(QgsField('line_fid', QVariant.Int))
+        fields.append(QgsField('line_fid', QMetaType.Type.Int))
 
         # add all fields from source to new fields
         for field in self.vector_layer.fields():
