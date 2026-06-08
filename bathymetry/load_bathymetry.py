@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from qgis.core import QgsBilinearRasterResampler
 from qgis.core import QgsBrightnessContrastFilter
@@ -17,7 +17,7 @@ from qgis.core import QgsRasterShader
 from qgis.core import QgsSingleBandPseudoColorRenderer
 
 from qgis.PyQt.QtCore import QCoreApplication
-from PyQt5.QtGui import QIcon, QColor
+from qgis.PyQt.QtGui import QIcon, QColor
 
 from .bathymetry import Bathymetry
 from .. import utils
@@ -104,10 +104,10 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
 
         # predefined color styles
         self.predefined_styles = {
-            'AWI Basemap blue': ':/plugins/cruisetools/styles/style_awi_basemap_blue.qml',
-            'AWI Basemap grey': ':/plugins/cruisetools/styles/style_awi_basemap_grey.qml',
-            'AWI Basemap greyblue': ':/plugins/cruisetools/styles/style_awi_basemap_greyblue.qml',
-            'AWI Bathymetry Tiles': ':/plugins/cruisetools/styles/style_awi_bathymetry_tiles.qml'
+            'AWI Basemap blue': self.plugin_dir / 'styles' / 'style_awi_basemap_blue.qml',
+            'AWI Basemap grey': self.plugin_dir / 'styles' / 'style_awi_basemap_grey.qml',
+            'AWI Basemap greyblue': self.plugin_dir / 'styles' / 'style_awi_basemap_greyblue.qml',
+            'AWI Bathymetry Tiles': self.plugin_dir / 'styles' / 'style_awi_bathymetry_tiles.qml'
         }
 
         # list of predefined styles
@@ -119,10 +119,10 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         self.colormap_modus_options = ['Manual input', 'Existing reference layer', 'Predefined style']
 
         # hillshade style files
-        self.style_hillshade_prj = ':/plugins/cruisetools/styles/style_hillshade_prj.qml'
-        self.style_hillshade_geo = ':/plugins/cruisetools/styles/style_hillshade_geo.qml'
-        self.style_hillshade_pos_down_prj = ':/plugins/cruisetools/styles/style_hillshade_pos_down_prj.qml'
-        self.style_hillshade_pos_down_geo = ':/plugins/cruisetools/styles/style_hillshade_pos_down_geo.qml'
+        self.style_hillshade_prj = self.plugin_dir / 'styles' / 'style_hillshade_prj.qml'
+        self.style_hillshade_geo = self.plugin_dir / 'styles' / 'style_hillshade_geo.qml'
+        self.style_hillshade_pos_down_prj = self.plugin_dir / 'styles' / 'style_hillshade_pos_down_prj.qml'
+        self.style_hillshade_pos_down_geo = self.plugin_dir / 'styles' / 'style_hillshade_pos_down_geo.qml'
 
         # initialize default configuration
         self.initConfig()
@@ -135,12 +135,12 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         self.raster_layer_default = self.config.get(self.module, 'raster_layer')
         self.style_default = self.config.get(self.module, 'style_default')
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterFile(
                 name=self.INPUT,
                 description=self.tr('Input raster file'),
-                behavior=QgsProcessingParameterFile.File,
+                behavior=QgsProcessingParameterFile.Behavior.File,
                 optional=False,
                 fileFilter='GTiff (*.tif *.tiff);;netCDF (*.nc *.grd)')
         )
@@ -179,7 +179,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
             QgsProcessingParameterNumber(
                 name=self.MAX,
                 description=self.tr('Maximum depth'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=False,
                 defaultValue=self.max)
         )
@@ -187,12 +187,12 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
             QgsProcessingParameterNumber(
                 name=self.MIN,
                 description=self.tr('Minimum depth'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=False,
                 defaultValue=self.min)
         )
         raster_layers = [lyr for lyr in QgsProject.instance().mapLayers().values() if
-                         lyr.type() == QgsMapLayer.RasterLayer]
+                         lyr.type() == QgsMapLayer.LayerType.RasterLayer]
         raster_layer_names = [r.name() for r in raster_layers]
         self.addParameter(
             QgsProcessingParameterRasterLayer(
@@ -215,7 +215,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
                 allowMultiple=False)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables
         raster = self.parameterAsFile(parameters, self.INPUT, context)
         colormap_modus = self.parameterAsEnum(parameters, self.COLORMAP_MODUS, context)
@@ -268,7 +268,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
                 ramp.append(QgsColorRampShader.ColorRampItem(values[i], QColor(str(item)), str(values[i])))
             color_ramp = QgsColorRampShader()
             color_ramp.setColorRampItemList(ramp)
-            color_ramp.setColorRampType(QgsColorRampShader.Interpolated)
+            color_ramp.setColorRampType(QgsColorRampShader.Type.Interpolated)
 
             # create shader and set color_ramp
             feedback.pushConsoleInfo(self.tr('Creating raster shader...'))
@@ -319,7 +319,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         elif colormap_modus == 2:
             feedback.pushConsoleInfo(self.tr('Loading predefined style...'))
             style_file = self.predefined_styles[self.styles_list[style]]
-            dem_layer.loadNamedStyle(style_file)
+            dem_layer.loadNamedStyle(str(style_file))
 
         # trigger repaint
         dem_layer.triggerRepaint()
@@ -338,14 +338,14 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
         # if raster is Z positive down, load *_pos_down_* style
         feedback.pushConsoleInfo(self.tr('Setting hillshade style...\n'))
         if dem_layer.crs().isGeographic() and not z_pos_down:
-            hillshade_layer.loadNamedStyle(self.style_hillshade_geo)
+            hillshade_layer.loadNamedStyle(str(self.style_hillshade_geo))
         elif dem_layer.crs().isGeographic() and z_pos_down:
-            hillshade_layer.loadNamedStyle(self.style_hillshade_pos_down_geo)
+            hillshade_layer.loadNamedStyle(str(self.style_hillshade_pos_down_geo))
         # else load hillshade_prj style
         elif z_pos_down:
-            hillshade_layer.loadNamedStyle(self.style_hillshade_pos_down_prj)
+            hillshade_layer.loadNamedStyle(str(self.style_hillshade_pos_down_prj))
         else:
-            hillshade_layer.loadNamedStyle(self.style_hillshade_prj)
+            hillshade_layer.loadNamedStyle(str(self.style_hillshade_prj))
 
         # trigger repaint
         hillshade_layer.triggerRepaint()
@@ -363,7 +363,7 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
 
         return {}
 
-    def postProcessAlgorithm(self, context, feedback):  # noqa
+    def postProcessAlgorithm(self, context, feedback):
         project = context.project()
 
         # create group
@@ -386,32 +386,31 @@ class LoadBathymetry(QgsProcessingAlgorithm, Bathymetry):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'loadbathymetry'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/load_bathymetry.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'load_bathymetry.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Load Bathymetry')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Bathymetry')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'bathymetry'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/load_bathymetry.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'load_bathymetry.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return LoadBathymetry()

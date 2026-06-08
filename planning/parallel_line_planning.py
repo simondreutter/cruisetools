@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from qgis.core import Qgis
 from qgis.core import QgsCoordinateTransform
@@ -12,7 +12,7 @@ from qgis.core import QgsProcessingParameterNumber
 from qgis.core import QgsProcessingParameterVectorLayer
 
 from qgis.PyQt.QtCore import QCoreApplication
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
@@ -57,12 +57,12 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
         self.offset = self.config.getint(self.module, 'offset')
         self.number_of_lines = self.config.getint(self.module, 'number_of_lines')
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterVectorLayer(
                 name=self.INPUT,
                 description=self.tr('Input line planning layer'),
-                types=[QgsProcessing.TypeVectorLine],
+                types=[QgsProcessing.SourceType.TypeVectorLine],
                 defaultValue=None,
                 optional=False)
         )
@@ -77,7 +77,7 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterNumber(
                 name=self.OFFSET,
                 description=self.tr('Offset [meters]'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=False,
                 defaultValue=self.offset,
                 minValue=0,
@@ -96,14 +96,14 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterNumber(
                 name=self.NUMBER_OF_LINES,
                 description=self.tr('Number of lines'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=False,
                 defaultValue=self.number_of_lines,
                 minValue=1,
                 maxValue=100)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables
         layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         selected = self.parameterAsBoolean(parameters, self.SELECTED, context)
@@ -121,7 +121,10 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
         # positive is left/port
         # negative is right/starboard
         if side == 0:
+            side_suffix = 'stb'
             offset = -offset
+        else:
+            side_suffix = 'port'
 
         # get source CRS
         crs_layer = layer.sourceCrs()
@@ -152,8 +155,7 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
             features_to_delete.append(feature)
             features_to_add.append(feature)
 
-            # get feature id
-            id = feature.id()
+            # get base name if name field exists
             if name_index != -1:
                 base_name = feature['name']
 
@@ -204,7 +206,7 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
 
                 # set feature attributes and geometry
                 if name_index != -1:
-                    attributes[name_index] = f"{base_name}_{i + 1}"
+                    attributes[name_index] = f"{base_name}_{side_suffix}{i + 1}"
                 feature_parallel.setAttributes(attributes)
                 feature_parallel.setGeometry(geom_parallel)
 
@@ -237,32 +239,31 @@ class ParallelLinePlanning(QgsProcessingAlgorithm, Planning):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'parallellineplanning'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/parallel_line_planning.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'parallel_line_planning.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Parallel Line Planning')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Planning')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'planning'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/parallel_line_planning.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'parallel_line_planning.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return ParallelLinePlanning()

@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 import configparser
 
 
@@ -7,7 +7,7 @@ class CruiseToolsConfig:
 
     def __init__(self):
         """Initialize CruiseToolsConfig."""
-        self.config_file = os.path.join(os.path.dirname(__file__), 'cruise_tools_config.ini')
+        self.config_file = Path(__file__).resolve().parent / 'cruise_tools_config.ini'
         self.config = configparser.ConfigParser(allow_no_value=True)
         self.init_config_file()
 
@@ -24,6 +24,7 @@ class CruiseToolsConfig:
           min               : depth range minimum (positive up)
           shader            : default shading type (0: hillshade, 1: slope, 2: combined, 4: multidirectional)
           alpha             : default selection to add alpha to exported RGB grid or not
+          options           : default GDAL creation options
           raster_layer      : raster styling reference layer
           style_default     : default predefined style
 
@@ -83,7 +84,7 @@ class CruiseToolsConfig:
         
         """
         # if config file exists, read it
-        if os.path.isfile(self.config_file):
+        if self.config_file.is_file():
             self.read()
         # if not, create a default one
         else:
@@ -94,7 +95,9 @@ class CruiseToolsConfig:
                 'min': -5000,
                 'shader': 2,
                 'alpha ': False,
+                'options ': '',
                 'raster_layer': '',
+                'style_default': 3,
             }
             self.config['CONTOUR'] = {
                 'interval': 100,

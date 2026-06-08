@@ -18,20 +18,16 @@
  *                                                                         *
  ***************************************************************************/
 """
-from PyQt5.QtCore import *  # noqa
-from PyQt5.QtGui import *  # noqa
-from PyQt5.QtWidgets import *  # noqa
+from pathlib import Path
 
-# Initialize Qt resources from file resources.py
-from .resources import *  # noqa
-
-# Import the code for the DockWidget
-import os.path
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
+from qgis.PyQt.QtWidgets import *
 
 # Import some tools
-from qgis.core import *  # noqa
-from qgis.gui import *  # noqa
-from qgis.utils import *  # noqa
+from qgis.core import *
+from qgis.gui import *
+from qgis.utils import *
 import processing
 
 # Import Cruise Tools modules
@@ -42,14 +38,12 @@ from .planning import LinePlanningToolTip
 
 # Import GUI
 from .gui.readme import ReadmeWindow
-
-
 # from .gui.log_position_settings import LogPositionSettings
 
-class CruiseTools:  # noqa
+class CruiseTools:
     """QGIS Plugin - Cruise Tools"""
 
-    def __init__(self, iface):  # noqa
+    def __init__(self, iface):
         """Constructor.
 
         Parameters
@@ -64,27 +58,22 @@ class CruiseTools:  # noqa
         self.iface = iface
 
         # initialize plugin directory
-        self.plugin_dir = os.path.dirname(__file__)
+        self.plugin_dir = Path(__file__).resolve().parent
 
         # initialize locale
-        locale = QSettings().value('locale/userLocale')[0:2]  # noqa
-        locale_path = os.path.join(
-            self.plugin_dir,
-            'i18n',
-            f'CruiseTools_{locale}.qm'
-        )
+        locale = QSettings().value('locale/userLocale')[0:2]
+        locale_path = self.plugin_dir / 'i18n' / f'CruiseTools_{locale}.qm'
 
-        if os.path.exists(locale_path):
-            self.translator = QTranslator()  # noqa
+        if locale_path.exists():
+            self.translator = QTranslator()
             self.translator.load(locale_path)
 
-            if qVersion() > '4.3.3':  # noqa
-                QCoreApplication.installTranslator(self.translator)  # noqa
+            if qVersion() > '4.3.3':
+                QCoreApplication.installTranslator(self.translator)
 
         # Declare instance attributes
         self.actions = []
         self.menu = self.tr('&Cruise Tools')
-        # TODO: We are going to let the user set this up in a future iteration
         self.toolbar = self.iface.addToolBar('CruiseTools')
         self.toolbar.setObjectName('CruiseTools')
 
@@ -101,14 +90,13 @@ class CruiseTools:  # noqa
         self.first_start = None
 
         self.settingsDialog = None
-        self.shortcutsManager = None
+
+        self.shortcuts = None
 
         self.connect_listener()
 
     def tr(self, message):
         """Get the translation for a string using Qt translation API.
-        
-        We implement this ourselves since we do not inherit QObject.
 
         Parameters
         ----------
@@ -122,7 +110,7 @@ class CruiseTools:  # noqa
 
         """
         # noinspection PyTypeChecker,PyArgumentList,PyCallByClass
-        return QCoreApplication.translate('CruiseTools', message)  # noqa
+        return QCoreApplication.translate('CruiseTools', message)
 
     def add_action(
             self,
@@ -170,8 +158,8 @@ class CruiseTools:  # noqa
         action : QAction
 
         """
-        icon = QIcon(icon_path)  # noqa
-        action = QAction(icon, text, parent)  # noqa
+        icon = QIcon(icon_path)
+        action = QAction(icon, text, parent)
         action.triggered.connect(callback)
         action.setEnabled(enabled_flag)
 
@@ -193,10 +181,10 @@ class CruiseTools:  # noqa
 
         return action
 
-    def initProcessing(self):  # noqa
+    def initProcessing(self):
         # Add the processing provider
         self.provider = CruiseToolsProvider()
-        QgsApplication.processingRegistry().addProvider(self.provider)  # noqa
+        QgsApplication.processingRegistry().addProvider(self.provider)
 
     def initGui(self):
         """Create the menu entries and toolbar icons inside the QGIS GUI."""
@@ -205,12 +193,15 @@ class CruiseTools:  # noqa
         # get first start indication
         self.first_start = True
 
-        icon_path = ':/plugins/cruisetools/icons'
+        # icons path
+        icons_path = self.plugin_dir / 'icons'
 
-        # README BUTTON
-        icon = QIcon(f'{icon_path}/icon.png')  # noqa
+        # -------------------------------------------------------------------------------
+        # ----------------------------------   README   ---------------------------------
+        # -------------------------------------------------------------------------------
+        icon = icons_path / 'icon.png'
         readme = self.add_action(
-            icon,
+            str(icon),
             text=self.tr('Cruise Tools'),
             callback=self.run_readme,
             parent=self.iface.mainWindow()
@@ -218,14 +209,20 @@ class CruiseTools:  # noqa
         readme.setToolTip('Cruise Tools README')
         readme.triggered.connect(self.check_posiview_plugin)
 
-        # BATHYMETRY SUBMENU
-        bathy_menu = QMenu()  # noqa
+        # -------------------------------------------------------------------------------
+        # -------------------------------   BATHYMETRY   --------------------------------
+        # -------------------------------------------------------------------------------
+        bathy_menu = QMenu('Bathymetry')
         # show tool tips
         bathy_menu.setToolTipsVisible(True)
 
         # load bathymetry button
-        icon = QIcon(f'{icon_path}/load_bathymetry.png')  # noqa
-        load_bathymetry = bathy_menu.addAction(icon, self.tr('Load Bathymetry'), self.run_load_bathymetry)
+        icon = QIcon(str(icons_path / 'load_bathymetry.png'))
+        load_bathymetry = bathy_menu.addAction(
+            icon,
+            self.tr('Load Bathymetry'),
+            self.run_load_bathymetry
+        )
         load_bathymetry.setToolTip(
             'Load a bathymetry grid file (*.tif, *.nc) with pre defined style and hillshade.\n'
             'Change color ramp and depth scale in the Cruise Tools settings, or later in the\n'
@@ -233,9 +230,12 @@ class CruiseTools:  # noqa
         )
 
         # export bathymetry button
-        icon = QIcon(f'{icon_path}/export_shaded_bathymetry.png')  # noqa
-        export_shaded_bathymetry = bathy_menu.addAction(icon, self.tr('Export Shaded Bathymetry'),
-                                                        self.run_export_shaded_bathymetry)
+        icon = QIcon(str(icons_path / 'export_shaded_bathymetry.png'))
+        export_shaded_bathymetry = bathy_menu.addAction(
+            icon,
+            self.tr('Export Shaded Bathymetry'),
+            self.run_export_shaded_bathymetry
+        )
         export_shaded_bathymetry.setToolTip(
             'Export an RGB version of a loaded raster layer with set colorramp.\n'
             'and shaded by Hillshade, Slope or both.'
@@ -244,45 +244,58 @@ class CruiseTools:  # noqa
         bathy_menu.addSeparator()
 
         # raster coverage button
-        icon = QIcon(f'{icon_path}/calculate_raster_coverage.png')  # noqa
-        calculate_raster_coverage = bathy_menu.addAction(icon, self.tr('Calculate Raster Coverage'),
-                                                         self.run_calculate_raster_coverage)
+        icon = QIcon(str(icons_path / 'calculate_raster_coverage.png'))
+        calculate_raster_coverage = bathy_menu.addAction(
+            icon,
+            self.tr('Calculate Raster Coverage'),
+            self.run_calculate_raster_coverage
+        )
         calculate_raster_coverage.setToolTip('Calculate approximate coverage area of raster datasets.')
 
         # setup bathymetry menu
-        icon = QIcon(f'{icon_path}/bathymetry_menu.png')  # noqa
-        self.bathyAction = QAction(icon, 'Bathymetry', self.iface.mainWindow())  # noqa
-        self.bathyAction.setMenu(bathy_menu)
-        self.actions.append(self.bathyAction)  # required for proper unloading
-        self.iface.addPluginToMenu(self.menu, self.bathyAction)  # add `bathy_menu` to menu (Plugins > Cruise Tools)
-
-        self.bathyButton = QToolButton()  # noqa
-        self.bathyButton.setMenu(bathy_menu)
-        self.bathyButton.setDefaultAction(self.bathyAction)
-        self.bathyButton.setPopupMode(QToolButton.InstantPopup)  # noqa
-        self.transformToolbar = self.toolbar.addWidget(self.bathyButton)
-
-        # CONTOURS BUTTON
-        icon = f'{icon_path}/create_contours.png'
-        create_contours = self.add_action(
+        icon = icons_path / 'bathymetry_menu.png'
+        icon = QIcon(str(icon))
+        self.bathy_action = QAction(
             icon,
+            'Bathymetry',
+            self.iface.mainWindow()
+        )
+        self.bathy_action.setMenu(bathy_menu)
+        self.actions.append(self.bathy_action)  # required for proper unloading
+        # add `bathy_menu` to menu (Plugins > Cruise Tools)
+        self.iface.addPluginToMenu(self.menu, self.bathy_action)
+
+        self.bathy_button = QToolButton()
+        self.bathy_button.setMenu(bathy_menu)
+        self.bathy_button.setDefaultAction(self.bathy_action)
+        self.bathy_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.transformToolbar = self.toolbar.addWidget(self.bathy_button)
+
+        # -------------------------------------------------------------------------------
+        # --------------------------------   CONTOURS   ---------------------------------
+        # -------------------------------------------------------------------------------
+        icon = icons_path / 'create_contours.png'
+        create_contours = self.add_action(
+            str(icon),
             text=self.tr('Create Contours'),
             callback=self.run_create_contours,
             parent=self.iface.mainWindow()
         )
         create_contours.setToolTip('Create nice contour lines.')
 
-        # VECTOR SUBMENU
-        vector_menu = QMenu()  # noqa
+        # -------------------------------------------------------------------------------
+        # ---------------------------------   VECTOR   ----------------------------------
+        # -------------------------------------------------------------------------------
+        vector_menu = QMenu('Vector')
         # show tool tips
         vector_menu.setToolTipsVisible(True)
 
         # write point coordinates button
-        icon = QIcon(f'{icon_path}/write_point_coordinates.png')  # noqa
+        icon = QIcon(str(icons_path / 'write_point_coordinates.png'))
         write_point_coordinates = vector_menu.addAction(
             icon,
             self.tr('Write Point Coordinates'),
-            self.run_write_point_coordinates,
+            self.run_write_point_coordinates
         )
         write_point_coordinates.setToolTip(
             'Add attributes to the selected point layer containing\n'
@@ -291,8 +304,12 @@ class CruiseTools:  # noqa
         )
 
         # write line length button
-        icon = QIcon(f'{icon_path}/write_line_length.png')  # noqa
-        write_line_length = vector_menu.addAction(icon, self.tr('Write Line Length'), self.run_write_line_length)
+        icon = QIcon(str(icons_path / 'write_line_length.png'))
+        write_line_length = vector_menu.addAction(
+            icon,
+            self.tr('Write Line Length'),
+            self.run_write_line_length
+        )
         write_line_length.setToolTip(
             f'Add attributes to the selected line layer containing\n'
             f'length in meters and nautical miles\n\n'
@@ -301,10 +318,10 @@ class CruiseTools:  # noqa
         )
 
         # write polygon area button
-        icon = QIcon(f'{icon_path}/write_polygon_area.png')  # noqa
+        icon = QIcon(str(icons_path / 'write_polygon_area.png'))
         write_polygon_area = vector_menu.addAction(icon, self.tr('Write Polygon Area'), self.run_write_polygon_area)
         write_polygon_area.setToolTip(
-            f'Add attributes to the selected polygon layer containing\n'  # noqa
+            f'Add attributes to the selected polygon layer containing\n'
             f'area in square meters and square kilometers.\n\n'
             f'Measurements are ellipsoidal, based on Project\n'
             f'measurement ellipsoid ({QgsProject.instance().crs().ellipsoidAcronym()}).'
@@ -313,26 +330,29 @@ class CruiseTools:  # noqa
         vector_menu.addSeparator()
 
         # sample raster points button
-        icon = QIcon(f'{icon_path}/sample_raster_points.png')  # noqa
-        sample_raster_points = vector_menu.addAction(icon, self.tr('Sample Raster Points'),
-                                                     self.run_sample_raster_points)
+        icon = QIcon(str(icons_path / 'sample_raster_points.png'))
+        sample_raster_points = vector_menu.addAction(
+            icon,
+            self.tr('Sample Raster Points'),
+            self.run_sample_raster_points
+        )
         sample_raster_points.setToolTip(
-            f'Sample raster layer at locations of the selected point layer.'  # noqa
+            f'Sample raster layer at locations of the selected point layer.'
         )
 
         # sample raster profile button
-        icon = QIcon(f'{icon_path}/sample_raster_profile.png')  # noqa
+        icon = QIcon(str(icons_path / 'sample_raster_profile.png'))
         sample_raster_profile = vector_menu.addAction(icon, self.tr('Sample Raster Profile'),
                                                       self.run_sample_raster_profile)
         sample_raster_profile.setToolTip(
-            f'Sample raster layer along the selected line layer\n'  # noqa
+            f'Sample raster layer along the selected line layer\n'
             f'with an even spacing of sample points.'
         )
 
         vector_menu.addSeparator()
 
         # create coordinate grid button
-        icon = QIcon(f'{icon_path}/create_coordinate_grid.png')  # noqa
+        icon = QIcon(str(icons_path / 'create_coordinate_grid.png'))
         create_coordinate_grid = vector_menu.addAction(icon, self.tr('Create Coordinate Grid'),
                                                        self.run_create_coordinate_grid)
         create_coordinate_grid.setToolTip(
@@ -342,54 +362,77 @@ class CruiseTools:  # noqa
         vector_menu.addSeparator()
 
         # swap vectors button
-        icon = QIcon(f'{icon_path}/swap_vectors.png')  # noqa
+        icon = QIcon(str(icons_path / 'swap_vectors.png'))
         swap_vectors = vector_menu.addAction(icon, self.tr('Swap Vectors'), self.run_swap_vectors)
         swap_vectors.setToolTip('Swap direction of selected line layer (for contour labels, etc.).')
 
         # setup vector menu
-        icon = QIcon(f'{icon_path}/vector_menu.png')  # noqa
-        self.vectorAction = QAction(icon, 'Vector', self.iface.mainWindow())  # noqa
-        self.vectorAction.setMenu(vector_menu)
-        self.actions.append(self.vectorAction)  # required for proper unloading
-        self.iface.addPluginToMenu(self.menu, self.vectorAction)  # add `vector_menu` to menu (Plugins > Cruise Tools)
+        icon = QIcon(str(icons_path / 'vector_menu.png'))
+        self.vector_action = QAction(
+            icon,
+            'Vector',
+            self.iface.mainWindow()
+        )
+        self.vector_action.setMenu(vector_menu)
+        self.actions.append(self.vector_action)  # required for proper unloading
+        # add `vector_menu` to menu (Plugins > Cruise Tools)
+        self.iface.addPluginToMenu(self.menu, self.vector_action)
 
-        self.vectorButton = QToolButton()  # noqa
-        self.vectorButton.setMenu(vector_menu)
-        self.vectorButton.setDefaultAction(self.vectorAction)
-        self.vectorButton.setPopupMode(QToolButton.InstantPopup)  # noqa
-        self.transformToolbar = self.toolbar.addWidget(self.vectorButton)
+        self.vector_button = QToolButton()
+        self.vector_button.setMenu(vector_menu)
+        self.vector_button.setDefaultAction(self.vector_action)
+        self.vector_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.transformToolbar = self.toolbar.addWidget(self.vector_button)
 
-        # PLANNING SUBMENU
-        planning_menu = QMenu()  # noqa
+        # -------------------------------------------------------------------------------
+        # --------------------------------   PLANNING   ---------------------------------
+        # -------------------------------------------------------------------------------
+        planning_menu = QMenu('Planning')
         # show tool tips
         planning_menu.setToolTipsVisible(True)
 
         # create point planning file button
-        icon = QIcon(f'{icon_path}/create_planning_file.png')  # noqa
-        create_planning_file = planning_menu.addAction(icon, self.tr('Create Planning File'),
-                                                       self.run_create_planning_file)
+        icon = QIcon(str(icons_path / 'create_planning_file.png'))
+        create_planning_file = planning_menu.addAction(
+            icon,
+            self.tr('Create Planning File'),
+            self.run_create_planning_file
+        )
         create_planning_file.setToolTip('Create new point/line layer for planning purposes.')
 
         # planning lines to vertices button
-        icon = QIcon(f'{icon_path}/planning_lines_to_vertices.png')  # noqa
-        planning_lines_to_vertices = planning_menu.addAction(icon, self.tr('Planning Lines to Vertices'),
-                                                             self.run_planning_lines_to_vertices)
-        planning_lines_to_vertices.setToolTip('Extract vertices from planning line layer.')
+        icon = QIcon(str(icons_path / 'planning_lines_to_vertices.png'))
+        planning_lines_to_vertices = planning_menu.addAction(
+            icon,
+            self.tr('Planning Lines to Vertices'),
+            self.run_planning_lines_to_vertices
+        )
+        planning_lines_to_vertices.setToolTip(
+            'Extract vertices from planning line layer.'
+        )
 
         planning_menu.addSeparator()
 
         # parallel line planning
-        icon = QIcon(f'{icon_path}/parallel_line_planning.png')  # noqa
-        parallel_line_planning = planning_menu.addAction(icon, self.tr('Parallel Line Planning'),
-                                                         self.run_parallel_line_planning)
-        parallel_line_planning.setToolTip('Plan parallel survey lines.')
+        icon = QIcon(str(icons_path / 'parallel_line_planning.png'))
+        parallel_line_planning = planning_menu.addAction(
+            icon,
+            self.tr('Parallel Line Planning'),
+            self.run_parallel_line_planning
+        )
+        parallel_line_planning.setToolTip(
+            'Plan parallel survey lines.'
+        )
 
         planning_menu.addSeparator()
 
         # estimate mbes coverage
-        icon = QIcon(f'{icon_path}/estimate_mbes_coverage.png')  # noqa
-        estimate_mbes_coverage = planning_menu.addAction(icon, self.tr('Estimate MBES Coverage'),
-                                                         self.run_estimate_mbes_coverage)
+        icon = QIcon(str(icons_path / 'estimate_mbes_coverage.png'))
+        estimate_mbes_coverage = planning_menu.addAction(
+            icon,
+            self.tr('Estimate MBES Coverage'),
+            self.run_estimate_mbes_coverage
+        )
         estimate_mbes_coverage.setToolTip(
             'Estimate MBES coverage for a survey planning line.\n\n'
             'Survey settings can be set in the dialog.'
@@ -397,109 +440,160 @@ class CruiseTools:  # noqa
 
         planning_menu.addSeparator()
 
-        # setup export menu
-        export_menu = QMenu('Export Planning', self.iface.mainWindow())  # noqa
-        icon = QIcon(f'{icon_path}/export_to_bridge.png')  # noqa
+        # setup export submenu
+        export_menu = QMenu('Export Planning', self.iface.mainWindow())
+        icon = QIcon(str(icons_path / 'export_planning.png'))
         export_menu.setIcon(icon)
         export_menu.setToolTipsVisible(True)
         planning_menu.addMenu(export_menu)
 
         # export to CSV button
-        icon = QIcon(f'{icon_path}/export_to_csv.png')  # noqa
-        export_to_csv = export_menu.addAction(icon, self.tr('Export To CSV'), self.run_export_to_csv)
-        export_to_csv.setToolTip('Export planning layer to CSV.')
+        icon = QIcon(str(icons_path / 'export_to_csv.png'))
+        export_to_csv = export_menu.addAction(
+            icon,
+            self.tr('Export To CSV'),
+            self.run_export_to_csv
+        )
+        export_to_csv.setToolTip(
+            'Export planning layer to CSV.'
+        )
 
         export_menu.addSeparator()
 
         # export lines to RTZ button
-        icon = QIcon(f'{icon_path}/export_lines_to_rtz.png')  # noqa
-        export_lines_to_rtz = export_menu.addAction(icon, self.tr('Export Lines To RTZ'), self.run_export_lines_to_rtz)
-        export_lines_to_rtz.setToolTip('Export line planning layer to RTZ [ECDIS Route Exchange 1.1].')
+        icon = QIcon(str(icons_path / 'export_lines_to_rtz.png'))
+        export_lines_to_rtz = export_menu.addAction(
+            icon,
+            self.tr('Export Lines To RTZ'),
+            self.run_export_lines_to_rtz
+        )
+        export_lines_to_rtz.setToolTip(
+            'Export line planning layer to RTZ [ECDIS Route Exchange 1.1].'
+        )
 
         # export points to RTZ button
-        icon = QIcon(f'{icon_path}/export_points_to_rtz.png')  # noqa
-        export_points_to_rtz = export_menu.addAction(icon, self.tr('Export Points To RTZ'),
-                                                     self.run_export_points_to_rtz)
-        export_points_to_rtz.setToolTip('Export point planning layer to RTZ [ECDIS Route Exchange 1.1].')
+        icon = QIcon(str(icons_path / 'export_points_to_rtz.png'))
+        export_points_to_rtz = export_menu.addAction(
+            icon,
+            self.tr('Export Points To RTZ'),
+            self.run_export_points_to_rtz
+        )
+        export_points_to_rtz.setToolTip(
+            'Export point planning layer to RTZ [ECDIS Route Exchange 1.1].'
+        )
 
         export_menu.addSeparator()
 
         # export lines to RTZ button
-        icon = QIcon(f'{icon_path}/export_lines_to_sam.png')  # noqa
-        export_lines_to_sam = export_menu.addAction(icon, self.tr('Export Lines To SAM'), self.run_export_lines_to_sam)
-        export_lines_to_sam.setToolTip('Export line planning layer to SAM Route Exchange compatible CSV file.')
+        icon = QIcon(str(icons_path / 'export_lines_to_sam.png'))
+        export_lines_to_sam = export_menu.addAction(
+            icon,
+            self.tr('Export Lines To SAM'),
+            self.run_export_lines_to_sam
+        )
+        export_lines_to_sam.setToolTip(
+            'Export line planning layer to SAM Route Exchange compatible CSV file.'
+        )
 
         # export points to RTZ button
-        icon = QIcon(f'{icon_path}/export_points_to_sam.png')  # noqa
-        export_points_to_sam = export_menu.addAction(icon, self.tr('Export Points To SAM'),
-                                                     self.run_export_points_to_sam)
-        export_points_to_sam.setToolTip('Export point planning layer to SAM Route Exchange compatible CSV file.')
+        icon = QIcon(str(icons_path / 'export_points_to_sam.png'))
+        export_points_to_sam = export_menu.addAction(
+            icon,
+            self.tr('Export Points To SAM'),
+            self.run_export_points_to_sam
+        )
+        export_points_to_sam.setToolTip(
+            'Export point planning layer to SAM Route Exchange compatible CSV file.'
+        )
 
         # setup planning menu
-        icon = QIcon(f'{icon_path}/planning_menu.png')  # noqa
-        self.planningAction = QAction(icon, 'Planning', self.iface.mainWindow())  # noqa
-        self.planningAction.setMenu(planning_menu)
-        self.actions.append(self.planningAction)  # required for proper unloading
-        self.iface.addPluginToMenu(self.menu,
-                                   self.planningAction)  # add `planning_menu` to menu (Plugins > Cruise Tools)
+        icon = QIcon(str(icons_path / 'planning_menu.png'))
+        self.planning_action = QAction(
+            icon,
+            'Planning',
+            self.iface.mainWindow()
+        )
+        self.planning_action.setMenu(planning_menu)
+        self.actions.append(self.planning_action)  # required for proper unloading
+        # add `planning_menu` to menu (Plugins > Cruise Tools)
+        self.iface.addPluginToMenu(self.menu, self.planning_action)
 
-        self.planningButton = QToolButton()  # noqa
-        self.planningButton.setMenu(planning_menu)
-        self.planningButton.setDefaultAction(self.planningAction)
-        self.planningButton.setPopupMode(QToolButton.InstantPopup)  # noqa
-        self.transformToolbar = self.toolbar.addWidget(self.planningButton)
+        self.planning_button = QToolButton()
+        self.planning_button.setMenu(planning_menu)
+        self.planning_button.setDefaultAction(self.planning_action)
+        self.planning_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.transformToolbar = self.toolbar.addWidget(self.planning_button)
 
-        # LOGGING SUBMENU
-        logging_menu = QMenu()  # noqa
+        # -------------------------------------------------------------------------------
+        # ---------------------------------   LOGGING   ---------------------------------
+        # -------------------------------------------------------------------------------
+        logging_menu = QMenu('Logging')
         logging_menu.setToolTipsVisible(True)
 
-        # icon = QIcon(':images/themes/default/propertyicons/system.svg')  # noqa
         icon = QIcon(':images/themes/default/processingAlgorithm.svg')
-        self.logPositionSettings = logging_menu.addAction(
-            icon, self.tr('Log Position settings'), self.run_log_position_settings,
+        self.log_position_settings_action = logging_menu.addAction(
+            icon,
+            self.tr('Log Position settings'),
+            self.run_log_position_settings
         )
-        self.logPositionSettings.setToolTip('Set settings for position logging')
+        self.log_position_settings_action.setToolTip(
+            'Set settings for position logging'
+        )
 
-        # icon = QIcon(':images/themes/default/cursors/mCapturePoint.svg')  # noqa
-        icon = QIcon(f'{icon_path}/log_position.png')  # noqa
-        self.logPosition = QAction(icon, 'Log Position', self.iface.mainWindow())  # noqa
-        self.logPosition.hovered.connect(self.check_posiview_plugin)
-        self.logPosition.triggered.connect(self.run_log_position)
-        self.logPosition.setMenu(logging_menu)
+        # icon = QIcon(':images/themes/default/cursors/mCapturePoint.svg')
+        icon = QIcon(str(icons_path / 'log_position.png'))
+        self.log_position_action = QAction(
+            icon,
+            'Log Position',
+            self.iface.mainWindow()
+        )
+        self.log_position_action.hovered.connect(self.check_posiview_plugin)
+        self.log_position_action.triggered.connect(self.run_log_position)
+        self.log_position_action.setMenu(logging_menu)
         self.check_posiview_plugin(show_message=False)
 
-        self.actions.append(self.logPosition)  # required for proper unloading
-        self.iface.addPluginToMenu(self.menu, self.logPosition)  # add `planning_menu` to menu (Plugins > Cruise Tools)
+        self.actions.append(self.log_position_action)  # required for proper unloading
+        # add `logging_menu` to menu (Plugins > Cruise Tools)
+        self.iface.addPluginToMenu(self.menu, self.log_position_action)
 
         # create Toolbar button
-        self.logPositionButton = QToolButton()
-        self.logPositionButton.setDefaultAction(self.logPosition)
-        self.transformToolbar = self.toolbar.addWidget(self.logPositionButton)
+        self.log_position_button = QToolButton()
+        self.log_position_button.setDefaultAction(self.log_position_action)
+        self.transformToolbar = self.toolbar.addWidget(self.log_position_button)
 
-        # register keyboard shortcuts
-        self.shortcutsManager = QgsGui.shortcutsManager()
-        check_log_position = self.shortcutsManager.registerAction(self.logPosition, 'F10')
-        check_log_position_settings = self.shortcutsManager.registerAction(self.logPositionSettings, 'Ctrl+F10')
+        # -------------------------------------------------------------------------------
+        # --------------------------------   SHORTCUTS   --------------------------------
+        # -------------------------------------------------------------------------------
+        self.shortcuts = {
+            self.log_position_action: 'F10',
+            self.log_position_settings_action: 'Ctrl+F10'
+        }
+        for action, shortcut in self.shortcuts.items():
+            QgsGui.shortcutsManager().registerAction(action, shortcut)
 
     # ===============================================================================
 
     def unload(self):
         """Remove the plugin menu item and icon from QGIS GUI."""
+        # remove shortcuts
+        for action, shortcut in self.shortcuts.items():
+            try:
+                QgsGui.shortcutsManager().unregisterAction(action)
+            except RuntimeError:
+                pass
+
         for action in self.actions:
             self.iface.removePluginMenu(
                 self.tr('&Cruise Tools'),
                 action
             )
             self.iface.removeToolBarIcon(action)
+
         # remove the toolbar
         del self.toolbar
 
         # remove from processing toolbox
         QgsApplication.processingRegistry().removeProvider(self.provider)
-
-        # remove shortcut
-        check_log_position = self.shortcutsManager.unregisterAction(self.logPosition)
-        check_log_position_settings = self.shortcutsManager.unregisterAction(self.logPositionSettings)
 
         # remove listener
         self.disconnect_listener()
@@ -511,13 +605,14 @@ class CruiseTools:  # noqa
     def run_readme(self):
         """Show README."""
         # load README.md
-        with open(os.path.join(self.plugin_dir, 'README.md'), 'r') as f:
+        readme_file = self.plugin_dir / 'README.md'
+        with open(readme_file, 'r') as f:
             readme_text = f.read()
         self.readme = ReadmeWindow(readme_text)
         self.readme.show()
         iface.messageBar().pushMessage('Cruise Tools ',
                                        'Awesome and practical Cruise Tools by the Bauernprogrammiererz Fynn & Simon! <3',
-                                       level=Qgis.Info)
+                                       level=Qgis.MessageLevel.Info)
         return
 
     # ===============================================================================
@@ -529,7 +624,7 @@ class CruiseTools:  # noqa
         result = processing.execAlgorithmDialog('cruisetools:loadbathymetry', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Grid loaded successfully!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_export_shaded_bathymetry(self):
@@ -538,7 +633,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! Shaded bathymetry file is created: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_calculate_raster_coverage(self):
@@ -547,7 +642,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! Raster area has been calculated!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     # ===============================================================================
@@ -561,7 +656,7 @@ class CruiseTools:  # noqa
             iface.activeLayer().setSubsetString('"length_m" > 1000')
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! Contours have been computed: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     # ===============================================================================
@@ -573,7 +668,7 @@ class CruiseTools:  # noqa
         result = processing.execAlgorithmDialog('cruisetools:writepointcoordinates', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Coordinates are in!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_write_line_length(self):
@@ -581,7 +676,7 @@ class CruiseTools:  # noqa
         result = processing.execAlgorithmDialog('cruisetools:writelinelength', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Lengths are in!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_write_polygon_area(self):
@@ -589,7 +684,7 @@ class CruiseTools:  # noqa
         result = processing.execAlgorithmDialog('cruisetools:writepolygonarea', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Areas are in!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_sample_raster_points(self):
@@ -597,7 +692,7 @@ class CruiseTools:  # noqa
         result = processing.execAlgorithmDialog('cruisetools:samplerasterpoints', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Raster values are in!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_sample_raster_profile(self):
@@ -605,7 +700,7 @@ class CruiseTools:  # noqa
         result = processing.execAlgorithmDialog('cruisetools:samplerasterprofile', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Profile sampled!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_create_coordinate_grid(self):
@@ -613,7 +708,7 @@ class CruiseTools:  # noqa
         result = processing.execAlgorithmDialog('cruisetools:createcoordinategrid', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Coordinate grid file created!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_swap_vectors(self):
@@ -621,7 +716,7 @@ class CruiseTools:  # noqa
         result = processing.execAlgorithmDialog('cruisetools:swapvectors', {})
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ', f'{utils.return_success()}! Vectors swapped successfully!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     # ===============================================================================
@@ -634,7 +729,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! Point planning file: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_planning_lines_to_vertices(self):
@@ -643,7 +738,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! Line vertices file: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_parallel_line_planning(self):
@@ -652,7 +747,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! Parallel lines have been planned!',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_estimate_mbes_coverage(self):
@@ -661,7 +756,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! MBES coverage has been estimated: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_export_to_csv(self):
@@ -670,7 +765,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! CSV file: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_export_lines_to_rtz(self):
@@ -679,7 +774,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! RTZ files is here: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_export_points_to_rtz(self):
@@ -688,7 +783,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! RTZ file is here: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_export_lines_to_sam(self):
@@ -697,7 +792,7 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! CSV files is here: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def run_export_points_to_sam(self):
@@ -706,20 +801,23 @@ class CruiseTools:  # noqa
         if not result == {}:
             iface.messageBar().pushMessage('Cruise Tools ',
                                            f'{utils.return_success()}! CSV file is here: {utils.return_file_link(result["OUTPUT"])}',
-                                           level=Qgis.Success)
+                                           level=Qgis.MessageLevel.Success)
         return
 
     def init_event_listener(self):
         """Initialize canvas event listener for CruiseTools planning lines."""
         canvas = self.iface.mapCanvas()
         layer = self.iface.activeLayer()
+        
+        # Check for CruiseTools planning layer
+        # TODO: Needs more sophisticated failsafe checks...
+        if layer and QgsWkbTypes.GeometryType.LineGeometry and 'speed_kn' in layer.fields().names():
+            # Initialize listener
+            # Otherwise we get a AttributeError: 'CruiseTools' object has no attribute 'listener'
+            # when trying to remove the listener, e.g. after discarding updates from 
+            # "Parallel Line Planning" tool
+            self.listener = None
 
-        if layer and QgsWkbTypes.LineGeometry and 'speed_kn' in layer.fields().names():
-            is_planning_layer = True
-        else:
-            is_planning_layer = False
-
-        if is_planning_layer:
             # Start listener 
             if layer.isEditable():
                 self.listener = LinePlanningToolTip(canvas)
@@ -757,11 +855,11 @@ class CruiseTools:  # noqa
                 self.posiview_enabled = True
 
         if not self.posiview_enabled and show_message:
-            self.logPosition.setToolTip(
+            self.log_position_action.setToolTip(
                 '<b>PosiView Plugin not enabled!</b><br>Please enable and start tracking of a device in order to use "Log Position"'
             )
 
-        self.logPosition.setEnabled(self.posiview_enabled)
+        self.log_position_action.setEnabled(self.posiview_enabled)
 
     def run_log_position_settings(self):
         """Run LogPositionSettings module."""
@@ -792,7 +890,7 @@ class CruiseTools:  # noqa
                 widget.layout().addWidget(button)
 
                 # show message
-                iface.messageBar().pushWidget(widget, Qgis.Warning, duration=5)
+                iface.messageBar().pushWidget(widget, Qgis.MessageLevel.Warning, duration=5)
             else:
                 # log position
                 self.log_position_class.log_position()
@@ -807,6 +905,6 @@ class CruiseTools:  # noqa
             self.iface.messageBar().pushMessage(
                 'Log Position',
                 'PosiView Plugin is not tracking! Please start tracking in order to use "Log Position".',
-                level=Qgis.Critical,
+                level=Qgis.MessageLevel.Critical,
                 duration=3
             )

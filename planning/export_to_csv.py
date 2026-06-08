@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from qgis.core import QgsCoordinateTransform
 from qgis.core import QgsCoordinateReferenceSystem
@@ -11,7 +11,7 @@ from qgis.core import QgsProcessingParameterFileDestination
 from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
@@ -39,7 +39,7 @@ class ExportToCSV(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterFeatureSource(
                 name=self.INPUT,
                 description=self.tr('Input planning layer'),
-                types=[QgsProcessing.TypeVectorPoint, QgsProcessing.TypeVectorLine],
+                types=[QgsProcessing.SourceType.TypeVectorPoint, QgsProcessing.SourceType.TypeVectorLine],
                 optional=False)
         )
         self.addParameter(
@@ -66,7 +66,7 @@ class ExportToCSV(QgsProcessingAlgorithm, Planning):
         # get geometry type of input layer
         geom_type = QgsWkbTypes.geometryType(source.wkbType())
 
-        if geom_type == QgsWkbTypes.LineGeometry:
+        if geom_type == QgsWkbTypes.GeometryType.LineGeometry:
             # fields to be created (empty)
             fields = QgsFields()
 
@@ -86,7 +86,7 @@ class ExportToCSV(QgsProcessingAlgorithm, Planning):
 
             # get line vertices
             points = self.lines_to_vertices(features, fields)
-        elif geom_type == QgsWkbTypes.PointGeometry:
+        elif geom_type == QgsWkbTypes.GeometryType.PointGeometry:
             points = source.getFeatures()
         else:
             feedback.reportError(self.tr('Unknown Geometry WKB Type'), fatalError=True)
@@ -140,7 +140,7 @@ class ExportToCSV(QgsProcessingAlgorithm, Planning):
         return 'exporttocsv'
 
     def icon(self):
-        return QIcon(f'{self.plugin_dir}/icons/export_to_csv.png')
+        return QIcon(str(self.plugin_dir / 'icons' / 'export_to_csv.png'))
 
     def displayName(self):
         return self.tr('Export To CSV')
@@ -154,9 +154,9 @@ class ExportToCSV(QgsProcessingAlgorithm, Planning):
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/export_to_csv.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'export_to_csv.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()

@@ -1,8 +1,9 @@
 [general]
 name=Cruise Tools
 qgisMinimumVersion=3.40
+qgisMaximumVersion=4.99
 description=The toolbox you need for marine research cruises (planning and stuff)!
-version=2.4
+version=2.5
 author=Simon Dreutter & Fynn Warnke
 email=simon.dreutter@awi.de;fwrnke@mailbox.org
 
@@ -35,6 +36,9 @@ experimental=False
 deprecated=False
 
 changelog=
+  2.5 (2026-04-02) [Weddell Sea]
+    - updated Cruise Tools for QGIS 4
+    - code cleanup and debugging
   2.4 (2026-02-25) [Weddell Sea]
     - restructured "Export to Bridge"
     - added RTZ export for planning files

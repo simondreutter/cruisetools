@@ -1,4 +1,5 @@
-import os
+from pathlib import Path
+
 import processing
 
 from qgis.core import QgsGeometry
@@ -10,7 +11,7 @@ from qgis.core import QgsProcessingParameterRasterLayer
 from qgis.core import QgsUnitTypes
 
 from qgis.PyQt.QtCore import QCoreApplication
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .bathymetry import Bathymetry
 from .. import utils
@@ -35,9 +36,9 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         super(CalculateRasterCoverage, self).__init__()
 
         # area of Bremen in km^2
-        self.bremen_area = 419.4
+        self.BREMEN_AREA = 419.4
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 name=self.INPUT,
@@ -64,7 +65,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
                 createByDefault=False)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables
         raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT, context)
         band_number = self.parameterAsInt(parameters, self.BAND, context)
@@ -105,7 +106,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         area = da.measureArea(extent)
 
         # convert area
-        area_m2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaSquareMeters)
+        area_m2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaUnit.AreaSquareMeters)
 
         # 30% done
         feedback.setProgress(30)
@@ -154,7 +155,7 @@ class CalculateRasterCoverage(QgsProcessingAlgorithm, Bathymetry):
         feedback.pushConsoleInfo(self.tr(f'Data Coverage [%] ....... : {round(coverage_percentage * 100, 2)}\n'))
 
         feedback.pushConsoleInfo(
-            self.tr(f'This is {round(coverage_km2 / self.bremen_area, 2)} times the area of Bremen\n'))
+            self.tr(f'This is {round(coverage_km2 / self.BREMEN_AREA, 2)} times the area of Bremen\n'))
 
         feedback.pushConsoleInfo(self.tr('------------------------------------------\n'))
 
@@ -197,38 +198,37 @@ Data Coverage [km2]:   {round(coverage_km2, 3)}
 Data Coverage [m2]:    {round(coverage_m2, 2)}
 Data Coverage [%]:     {round(coverage_percentage * 100, 2)}
 
-This is {round(coverage_km2 / self.bremen_area, 2)} times the area of Bremen
+This is {round(coverage_km2 / self.BREMEN_AREA, 2)} times the area of Bremen
 
 '''
         with open(output, 'w') as f:
             f.write(content)
 
-    def name(self):  # noqa
+    def name(self):
         return 'calculaterastercoverage'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/calculate_raster_coverage.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'calculate_raster_coverage.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Calculate Raster Coverage')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Bathymetry')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'bathymetry'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/calculate_raster_coverage.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'calculate_raster_coverage.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return CalculateRasterCoverage()

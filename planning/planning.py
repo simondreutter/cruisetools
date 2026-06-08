@@ -1,4 +1,5 @@
 import csv
+from pathlib import Path
 import os
 
 from qgis.core import QgsGeometry
@@ -16,7 +17,7 @@ class Planning(Vector):
         """Initialize Planning."""
         self.module = 'PLANNING'
         self.config = config.CruiseToolsConfig()
-        self.plugin_dir = f'{os.path.dirname(__file__)}/..'
+        self.plugin_dir = Path(__file__).resolve().parent.parent
 
     def lines_to_vertices(self, features, fields):
         """Create Vertex features from Line features.
@@ -99,17 +100,19 @@ class Planning(Vector):
                 dict = dict(zip(fields, attributes))
                 dict['lat_DD'] = lat
                 dict['lon_DD'] = lon
-        output : str
+        output : pathlib.Path or str
             output CSV file
 
         Returns
         -------
         error : boolean
             0/1 - no error/error
-        result : str
+        result : pathlib.Path or str
             output path or error msg if error == 1
 
         """
+        output = Path(output)
+
         # map for different geometry types
         geometry_map = {
             'Loxodrome': 'Rhumbline',
@@ -168,7 +171,7 @@ class Planning(Vector):
                 dict = dict(zip(fields, attributes))
                 dict['lat_DD'] = lat
                 dict['lon_DD'] = lon
-        output : str
+        output : pathlib.Path or str
             output RTZ file
         line : bool
             line switch. If True, name will be ignored and waypoint
@@ -185,12 +188,14 @@ class Planning(Vector):
         -------
         error : boolean
             0/1 - no error/error
-        result : str
+        result : pathlib.Path or str
             output path or error msg if error == 1
 
         """
+        output = Path(output)
+
         # route name
-        route_name = os.path.splitext(os.path.basename(output))[0]
+        route_name = output.stem
 
         # map for different geometry types
         geometry_map = {
@@ -228,10 +233,16 @@ class Planning(Vector):
         # empty XML string for waypoint tags
         waypoints_xml = ''
 
+        # id in case no fid field exists
+        fid = 1
+
         # iterate over points in table
         for feature in table:
             # get the id / fid
             wp_id = feature.get('fid')
+            if not wp_id:
+                wp_id = fid
+                fid += 1
 
             # get coordinates
             lat = feature['lat_DD']
@@ -359,7 +370,7 @@ class Planning(Vector):
                 dict = dict(zip(fields, attributes))
                 dict['lat_DD'] = lat
                 dict['lon_DD'] = lon
-        output : str
+        output : pathlib.Path or str
             output CSV file
         line : bool
             line switch. If True, name will be ignored and waypoint
@@ -376,10 +387,12 @@ class Planning(Vector):
         -------
         error : boolean
             0/1 - no error/error
-        result : str
+        result : pathlib.Path or str
             output path or error msg if error == 1
 
         """
+        output = Path(output)
+
         # map for different geometry types
         geometry_map = {
             'Loxodrome': 'Rhumbline',
@@ -423,10 +436,16 @@ class Planning(Vector):
                       'Additional Notes']
             writer.writerow(header)
 
+            # id in case no fid field exists
+            fid = 1
+
             # iterate over points in table
             for feature in table:
                 # get the id / fid
                 wp_id = feature.get('fid')
+                if not wp_id:
+                    wp_id = fid
+                    fid += 1
 
                 # get coordinates
                 lat = feature['lat_DD']

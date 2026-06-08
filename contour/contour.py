@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from .. import config
 
@@ -10,4 +10,4 @@ class Contour(object):
         """Initialize Contour."""
         self.module = 'CONTOUR'
         self.config = config.CruiseToolsConfig()
-        self.plugin_dir = f'{os.path.dirname(__file__)}/..'
+        self.plugin_dir = Path(__file__).resolve().parent.parent

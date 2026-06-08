@@ -1,22 +1,22 @@
-from PyQt5.QtCore import Qt
+from qgis.PyQt.QtCore import Qt
 
-from PyQt5.QtWidgets import QCheckBox
-from PyQt5.QtWidgets import QComboBox
-from PyQt5.QtWidgets import QDialog
-from PyQt5.QtWidgets import QDialogButtonBox
-from PyQt5.QtWidgets import QGridLayout
-from PyQt5.QtWidgets import QFrame
-from PyQt5.QtWidgets import QGroupBox
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtWidgets import QLineEdit
-from PyQt5.QtWidgets import QSizePolicy
-from PyQt5.QtWidgets import QSpacerItem
-from PyQt5.QtWidgets import QTextEdit
-from PyQt5.QtWidgets import QVBoxLayout
+from qgis.PyQt.QtWidgets import QCheckBox
+from qgis.PyQt.QtWidgets import QComboBox
+from qgis.PyQt.QtWidgets import QDialog
+from qgis.PyQt.QtWidgets import QDialogButtonBox
+from qgis.PyQt.QtWidgets import QGridLayout
+from qgis.PyQt.QtWidgets import QFrame
+from qgis.PyQt.QtWidgets import QGroupBox
+from qgis.PyQt.QtWidgets import QLabel
+from qgis.PyQt.QtWidgets import QLineEdit
+from qgis.PyQt.QtWidgets import QSizePolicy
+from qgis.PyQt.QtWidgets import QSpacerItem
+from qgis.PyQt.QtWidgets import QTextEdit
+from qgis.PyQt.QtWidgets import QVBoxLayout
 
-from PyQt5.QtGui import QFont
-from PyQt5.QtGui import QIcon
-from PyQt5.QtGui import QValidator
+from qgis.PyQt.QtGui import QFont
+from qgis.PyQt.QtGui import QIcon
+from qgis.PyQt.QtGui import QValidator
 
 from qgis.gui import QgsMapLayerComboBox
 from qgis.gui import QgsCollapsibleGroupBox
@@ -30,11 +30,11 @@ from qgis.core import QgsMapLayerType
 class NotEmptyValidator(QValidator):
     """https://stackoverflow.com/a/63862815."""
 
-    def validate(self, text: str, pos):  # noqa
+    def validate(self, text: str, pos):
         if bool(text.strip()):
-            state = QValidator.Acceptable
+            state = QValidator.State.Acceptable
         else:
-            state = QValidator.Intermediate  # so that field can be made empty temporarily
+            state = QValidator.State.Intermediate  # so that field can be made empty temporarily
         return state, text, pos
 
 
@@ -43,8 +43,8 @@ class QHLine(QFrame):
 
     def __init__(self):
         super(QHLine, self).__init__()
-        self.setFrameShape(QFrame.HLine)
-        self.setFrameShadow(QFrame.Sunken)
+        self.setFrameShape(QFrame.Shape.HLine)
+        self.setFrameShadow(QFrame.Shadow.Sunken)
 
 
 # TODO: Logging multiple devices at the same time
@@ -102,8 +102,8 @@ class LogPositionSettings(QDialog):
         self.layout.addWidget(self.label_lyr_pt)
 
         self.comboBox_lyr_pt = QgsMapLayerComboBox()
-        self.comboBox_lyr_pt.setFilters(QgsMapLayerProxyModel.PointLayer)
-        if self.layer_logging is not None and self.layer_logging.geometryType() == QgsWkbTypes.PointGeometry:
+        self.comboBox_lyr_pt.setFilters(QgsMapLayerProxyModel.Filter.PointLayer)
+        if self.layer_logging is not None and self.layer_logging.geometryType() == QgsWkbTypes.GeometryType.PointGeometry:
             self.comboBox_lyr_pt.setLayer(self.layer_logging)
         # else:
         #     self.comboBox_raster.setCurrentIndex(1)
@@ -182,7 +182,7 @@ class LogPositionSettings(QDialog):
 
         # ========== MBES raster ==========
         self.comboBox_raster = QgsMapLayerComboBox()
-        self.comboBox_raster.setFilters(QgsMapLayerProxyModel.RasterLayer)
+        self.comboBox_raster.setFilters(QgsMapLayerProxyModel.Filter.RasterLayer)
         self.comboBox_raster.layerChanged.connect(self.update_raster_band)
         self.layout_groupBox_raster.addWidget(self.comboBox_raster)  # , 6, 0
 
@@ -216,7 +216,7 @@ class LogPositionSettings(QDialog):
         self.layout_groupBox.addWidget(self.label_waitTime, 0, 0, 1, 1)
 
         self.lineEdit_waitTime = QLineEdit(self.groupBox_advancedSettings)
-        self.lineEdit_waitTime.setAlignment(Qt.AlignRight | Qt.AlignVCenter)
+        self.lineEdit_waitTime.setAlignment(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         # validator = NotEmptyValidator(self.lineEdit_waitTime)
         # self.lineEdit_waitTime.setValidator(validator)
         if self.wait_time != '':
@@ -243,7 +243,7 @@ class LogPositionSettings(QDialog):
 
         # ------------------------- BUTTONS --------------------------
         # add vertical spacer
-        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.verticalSpacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         self.layout.addItem(self.verticalSpacer)
 
         # add line separator
@@ -252,9 +252,9 @@ class LogPositionSettings(QDialog):
         # init buttons
         self.buttonBox = QDialogButtonBox()
         self.buttonBox.setStandardButtons(
-            QDialogButtonBox.Cancel | QDialogButtonBox.Apply | QDialogButtonBox.RestoreDefaults
+            QDialogButtonBox.StandardButton.Cancel | QDialogButtonBox.StandardButton.Apply | QDialogButtonBox.StandardButton.RestoreDefaults
         )
-        self.buttonBox.button(QDialogButtonBox.Apply).setToolTip('Apply & save settings')
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Apply).setToolTip('Apply & save settings')
         self.layout.addWidget(self.buttonBox)
 
         # set window layout
@@ -262,9 +262,9 @@ class LogPositionSettings(QDialog):
 
     def connect_buttons(self):
         """Connect dialog buttons."""
-        self.buttonBox.button(QDialogButtonBox.Apply).clicked.connect(self.apply_and_accept)
-        self.buttonBox.button(QDialogButtonBox.Cancel).clicked.connect(self.cancel)
-        self.buttonBox.button(QDialogButtonBox.RestoreDefaults).clicked.connect(self.restore_default_settings)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Apply).clicked.connect(self.apply_and_accept)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.Cancel).clicked.connect(self.cancel)
+        self.buttonBox.button(QDialogButtonBox.StandardButton.RestoreDefaults).clicked.connect(self.restore_default_settings)
 
     def apply_and_accept(self):
         """Apply settings and accept Dialog."""
@@ -331,14 +331,15 @@ class LogPositionSettings(QDialog):
 
         self.config.set(self.module, 'sample_depth', self.sample_depth)
         if self.sample_depth:
-            self.config.set(self.module, 'layer_raster', self.layer_raster.name())
-            self.config.set(self.module, 'raster_band', self.raster_band)
+            if self.layer_raster:
+                self.config.set(self.module, 'layer_raster', self.layer_raster.name())
+                self.config.set(self.module, 'raster_band', self.raster_band)
 
         self.config.set(self.module, 'wait_time', self.wait_time)
         self.config.set(self.module, 'events', ';'.join(self.events))
 
         self.iface.messageBar().pushMessage(
-            'Log Position ', 'Saved user settings to Cruise Tools config', level=Qgis.Success, duration=2
+            'Log Position ', 'Saved user settings to Cruise Tools config', level=Qgis.MessageLevel.Success, duration=2
         )
 
     def restore_default_settings(self):

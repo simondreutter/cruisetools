@@ -1,5 +1,5 @@
 import numpy as np
-import os
+from pathlib import Path
 
 from qgis.core import QgsFeature
 from qgis.core import QgsFeatureSink
@@ -17,7 +17,7 @@ from qgis.core import QgsProcessingUtils
 from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .vector import Vector
 from .. import utils
@@ -94,7 +94,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         super(CreateCoordinateGrid, self).__init__()
 
         # style files for planning layer
-        self.style_coordinate_grid = ':/plugins/cruisetools/styles/style_coordinate_grid.qml'
+        self.style_coordinate_grid = self.plugin_dir / 'styles' / 'style_coordinate_grid.qml'
 
         # initialize default configuration
         self.initConfig()
@@ -117,7 +117,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
             QgsProcessingParameterNumber(
                 name=self.INTERVAL_LON,
                 description=self.tr('Longitude interval [degrees]'),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 optional=False,
                 defaultValue=self.interval_lon,
                 minValue=0.,
@@ -127,7 +127,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
             QgsProcessingParameterNumber(
                 name=self.INTERVAL_LAT,
                 description=self.tr('Latitude interval [degrees]'),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 optional=False,
                 defaultValue=self.interval_lat,
                 minValue=0.,
@@ -137,7 +137,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
             QgsProcessingParameterNumber(
                 name=self.POLE_GAP,
                 description=self.tr('Pole gap [degree]'),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 optional=False,
                 defaultValue=self.pole_gap,
                 minValue=0.,
@@ -147,7 +147,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
             QgsProcessingParameterNumber(
                 name=self.DENSITY_FACTOR,
                 description=self.tr('Density factor'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=False,
                 defaultValue=self.densify_factor,
                 minValue=0,
@@ -162,7 +162,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
                 createByDefault=False)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # CRS geo
         crs = QgsCoordinateReferenceSystem('EPSG:4326')
 
@@ -188,7 +188,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
         fields = QgsFields()
 
         # set create parameters
-        geom_type = QgsWkbTypes.LineString
+        geom_type = QgsWkbTypes.Type.LineString
         fields.append(QgsField('latlon', QMetaType.Type.QString, '', 0, 0))
         fields.append(QgsField('deg', QMetaType.Type.Double, '', 10, 6))
         fields.append(QgsField('label', QMetaType.Type.QString, '', 0, 0))
@@ -317,7 +317,7 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
 
         # write coverage features to sink
         feedback.pushConsoleInfo(self.tr('Writing features...'))
-        sink.addFeatures(features, QgsFeatureSink.FastInsert)
+        sink.addFeatures(features, QgsFeatureSink.Flag.FastInsert)
 
         # make variables accessible for post-processing
         self.output = dest_id
@@ -326,13 +326,13 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
 
         return result
 
-    def postProcessAlgorithm(self, context, feedback):  # noqa
+    def postProcessAlgorithm(self, context, feedback):
         # get layer from source and context
         coord_grid_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
 
         # loading Cruise Tools Coordinate Grid layer style from QML style file
         feedback.pushConsoleInfo(self.tr('Loading style...'))
-        coord_grid_layer.loadNamedStyle(self.style_coordinate_grid)
+        coord_grid_layer.loadNamedStyle(str(self.style_coordinate_grid))
 
         # writing style to GPKG (or else)
         style_name = 'Cruise Tools Coordinate Grid'
@@ -350,32 +350,31 @@ class CreateCoordinateGrid(QgsProcessingAlgorithm, Vector):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'createcoordinategrid'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/create_coordinate_grid.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'create_coordinate_grid.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Create Coordinate Grid')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Vector')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'vector'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/create_coordinate_grid.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'create_coordinate_grid.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return CreateCoordinateGrid()

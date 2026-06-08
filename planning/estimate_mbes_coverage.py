@@ -1,6 +1,6 @@
-import os
 from math import tan, radians, degrees
 import numpy as np
+from pathlib import Path
 
 from qgis.core import QgsCoordinateTransform
 from qgis.core import QgsCoordinateReferenceSystem
@@ -29,7 +29,7 @@ from qgis.core import QgsProject
 from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
@@ -148,15 +148,14 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         self.densify_modes = ['Number of points', 'Distance']
 
         # style files for mbes coverage layers
-        self.style_mbes_coverage = ':/plugins/cruisetools/styles/style_mbes_coverage.qml'
-        self.style_mbes_coverage_vertices = ':/plugins/cruisetools/styles/style_mbes_coverage_vertices.qml'
+        self.style_mbes_coverage = self.plugin_dir / 'styles' / 'style_mbes_coverage.qml'
 
         # distance for line densifier
         self.vertex_distance = 50  # m
 
         # buffer settings
         self.buffer_segments = 10
-        self.buffer_join_style = QgsGeometry.JoinStyleRound
+        self.buffer_join_style = QgsGeometry.JoinStyle.JoinStyleRound
 
         # initialize default configuration
         self.initConfig()
@@ -171,12 +170,12 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         # self.line_layer_name = self.config.getint(self.module, 'line_layer')
         self.raster_layer_name = self.config.getint(self.module, 'raster_layer')
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 name=self.INPUT_LINE,
                 description=self.tr('Input MBES line planning layer'),
-                types=[QgsProcessing.TypeVectorLine],
+                types=[QgsProcessing.SourceType.TypeVectorLine],
                 defaultValue=None,
                 # (
                 #     self.line_layer_name
@@ -208,7 +207,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             }
         })
         self.parameterDefinition(self.SWATH_ANGLE_MODE).setFlags(
-            QgsProcessingParameterDefinition.FlagAdvanced
+            QgsProcessingParameterDefinition.Flag.FlagAdvanced
         )
 
         self.addParameter(
@@ -217,7 +216,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                 description=self.tr('Swath angle field'),
                 defaultValue='mbes_swath_angle',
                 parentLayerParameterName=self.INPUT_LINE,
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 allowMultiple=False,
                 optional=True)
         )
@@ -225,7 +224,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE,
                 description=self.tr('Swath angle [°] (fallback)'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=True,
                 defaultValue=self.swath_angle,
                 minValue=10,
@@ -238,14 +237,14 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                 description=self.tr('Port angle field'),
                 defaultValue='mbes_swath_angle_port',
                 parentLayerParameterName=self.INPUT_LINE,
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 allowMultiple=False,
                 optional=True
             ),
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE_PORT,
                 description=self.tr('Port angle [°] (fallback)'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=True,
                 defaultValue=self.swath_angle_port,
                 minValue=5,
@@ -257,21 +256,21 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                 description=self.tr('Starboard angle field'),
                 defaultValue='mbes_swath_angle_stb',
                 parentLayerParameterName=self.INPUT_LINE,
-                type=QgsProcessingParameterField.Numeric,
+                type=QgsProcessingParameterField.DataType.Numeric,
                 allowMultiple=False,
                 optional=True
             ),
             QgsProcessingParameterNumber(
                 name=self.SWATH_ANGLE_STARBOARD,
                 description=self.tr('Starboard angle [°] (fallback)'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=True,
                 defaultValue=self.swath_angle_stb,
                 minValue=5,
                 maxValue=80)
         ]
         for param in params:
-            param.setFlags(param.flags() | QgsProcessingParameterDefinition.FlagAdvanced)
+            param.setFlags(param.flags() | QgsProcessingParameterDefinition.Flag.FlagAdvanced)
             self.addParameter(param)
 
         # DENSIFY OPTIONS
@@ -291,19 +290,19 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             }
         })
         self.parameterDefinition(self.DENSIFY_MODE).setFlags(
-            QgsProcessingParameterDefinition.FlagAdvanced
+            QgsProcessingParameterDefinition.Flag.FlagAdvanced
         )
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.DENSIFY_VALUE,
                 description=self.tr('Number of points [#] OR Distance [m]'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 defaultValue=100,
                 optional=True,
                 minValue=0)
         )
         self.parameterDefinition(self.DENSIFY_VALUE).setFlags(
-            QgsProcessingParameterDefinition.FlagAdvanced
+            QgsProcessingParameterDefinition.Flag.FlagAdvanced
         )
 
         # RASTER
@@ -333,13 +332,13 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterFeatureSink(
                 name=self.OUTPUT,
                 description=self.tr('MBES coverage'),
-                type=QgsProcessing.TypeVectorPolygon,
+                type=QgsProcessing.SourceType.TypeVectorPolygon,
                 defaultValue=None,
                 optional=False,
                 createByDefault=True)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables
         source = self.parameterAsSource(parameters, self.INPUT_LINE, context)
 
@@ -547,9 +546,9 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                         swath_flat_extend_raster = QgsGeometry(swath_flat_extend)  # deep copy
                         swath_flat_extend_raster.transform(trans_utm2raster)
                         vertices_swath_flat = swath_flat_extend_raster.densifyByCount(n_swath_densify).asPolyline()
-                        swath_flat_depths = np.array([
-                            raster_layer.dataProvider().sample(v, band_number)[0] for v in vertices_swath_flat
-                        ])
+                        swath_flat_depths = np.array(
+                            [raster_layer.dataProvider().sample(v, band_number)[0] for v in vertices_swath_flat]
+                        )
                         if len(swath_flat_depths) == 0:
                             raise Exception('No depths could be sampled from the input raster!')
 
@@ -562,16 +561,20 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
                         # Calculate intersection of outer beams with bathymetry (sampled depths)
                         # using an arbitrary reference system (x: distance along swath, y: depth)
                         # Init beams
-                        beam_stbd = QgsGeometry.fromPolylineXY([QgsPointXY(0, 0), QgsPointXY(dist_stbd_flat, pt_depth)])
+                        beam_stbd = QgsGeometry.fromPolylineXY(
+                            [QgsPointXY(0, 0), QgsPointXY(dist_stbd_flat, pt_depth)]
+                        )
                         beam_port = QgsGeometry.fromPolylineXY(
-                            [QgsPointXY(0, 0), QgsPointXY(-dist_port_flat, pt_depth)])
+                            [QgsPointXY(0, 0), QgsPointXY(-dist_port_flat, pt_depth)]
+                        )
 
                         # Extend beams
                         beam_stbd = beam_stbd.extendLine(0, beam_stbd.length() * FACTOR_EXTEND)
                         beam_port = beam_port.extendLine(0, beam_port.length() * FACTOR_EXTEND)
 
                         # Init bathymetric profile (extended)
-                        xx = np.linspace(-(dist_port_flat + dist_port_extend), dist_stbd_flat + dist_stbd_extend,
+                        xx = np.linspace(-(dist_port_flat + dist_port_extend),
+                                         dist_stbd_flat + dist_stbd_extend,
                                          n_swath_densify, endpoint=True)
                         swath_bathy = QgsGeometry.fromPolylineXY(
                             [QgsPointXY(x, y) for x, y in zip(xx, swath_flat_depths)])
@@ -667,7 +670,7 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
 
                 # [DISSOLVE]
                 if dissolve_buffer and len(list_buffer_union_segments) > 0:
-                    # create coverage poylgon for all segments of part (aka feature for non MultiLineString)
+                    # create coverage polygon for all segments of part (aka feature for non MultiLineString)
                     buffer_part = QgsGeometry.unaryUnion(list_buffer_union_segments)
 
                     # remove input line vertices from coverage polygon --> "infill corners"
@@ -742,14 +745,14 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
         # creating feature sink
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
         (sink, dest_id) = self.parameterAsSink(
-            parameters, self.OUTPUT, context, buffer_fields, QgsWkbTypes.MultiPolygon, source.sourceCrs()
+            parameters, self.OUTPUT, context, buffer_fields, QgsWkbTypes.Type.MultiPolygon, source.sourceCrs()
         )
         if sink is None:
             raise QgsProcessingException(self.invalidSinkError(parameters, self.OUTPUT))
 
         # write coverage features to sink
         feedback.pushConsoleInfo(self.tr('Writing features...'))
-        sink.addFeatures(buffer_union_features, QgsFeatureSink.FastInsert)
+        sink.addFeatures(buffer_union_features, QgsFeatureSink.Flag.FastInsert)
 
         # make variables accessible for post-processing
         self.output = dest_id
@@ -758,21 +761,23 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
 
         return result
 
-    def postProcessAlgorithm(self, context, feedback):  # noqa
+    def postProcessAlgorithm(self, context, feedback):
 
         # get layer from source and context
         mbes_coverage_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
 
         # loading Cruise Tools Planning style from QML style file
         feedback.pushConsoleInfo(self.tr('Loading style...'))
-        mbes_coverage_layer.loadNamedStyle(self.style_mbes_coverage)
+        mbes_coverage_layer.loadNamedStyle(str(self.style_mbes_coverage))
 
         # writing style to GPKG (or else)
         style_name = 'Cruise Tools MBES Coverage'
         style_desc = 'MBES Coverage style for QGIS Symbology from Cruise Tools plugin'
 
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        mbes_coverage_layer.saveStyleToDatabaseV2(name=style_name, description=style_desc, useAsDefault=True,
+        mbes_coverage_layer.saveStyleToDatabaseV2(name=style_name,
+                                                  description=style_desc,
+                                                  useAsDefault=True,
                                                   uiFileContent=None)
 
         # 100% done
@@ -783,32 +788,31 @@ class EstimateMBESCoverage(QgsProcessingAlgorithm, Planning):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'estimatembescoverage'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/estimate_mbes_coverage.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'estimate_mbes_coverage.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Estimate MBES Coverage')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Planning')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'planning'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/estimate_mbes_coverage.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'estimate_mbes_coverage.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return EstimateMBESCoverage()

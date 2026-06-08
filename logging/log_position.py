@@ -10,8 +10,8 @@ from qgis.core import QgsPointXY
 from qgis.core import QgsVectorLayerUtils
 
 from qgis.PyQt.QtCore import pyqtSlot
-from PyQt5 import QtTest
-from PyQt5.QtCore import Qt, QDateTime, QMetaType
+from qgis.PyQt import QtTest
+from qgis.PyQt.QtCore import Qt, QDateTime, QMetaType
 
 from .logging import Logging
 from ..gui.log_position_settings import LogPositionSettings
@@ -106,7 +106,7 @@ class LogPosition(LogPositionSettings, Logging):
                         'Please check the PosiView data provider for your device '
                         'or increase the GPS listening time!'
                     ),
-                    level=Qgis.Critical,
+                    level=Qgis.MessageLevel.Critical,
                     duration=0
                 )
                 break
@@ -127,14 +127,14 @@ class LogPosition(LogPositionSettings, Logging):
         self.crs_layer_logging_id = f'{self.crs_layer_logging.authid().replace("EPSG:", "epsg")}'
 
         # get CRS of Raster layer
-        if self.sample_depth:
+        if self.sample_depth and self.layer_raster:
             self.crs_layer_raster = self.layer_raster.crs()
 
         # init Point
         self.pt = QgsPointXY(self.info.get('lon'), self.info.get('lat'))
 
         # transform Point to raster CRS if not identical
-        if self.sample_depth:
+        if self.sample_depth and self.layer_raster:
             if self.crs_layer_raster != self.crs_gps:
                 transformer_latlon2raster = QgsCoordinateTransform(
                     self.crs_gps, self.crs_layer_raster, project=self.project
@@ -172,9 +172,11 @@ class LogPosition(LogPositionSettings, Logging):
             self.speed = self.info.get('speed', None)
 
         # sample depth if required
-        if self.sample_depth:
+        if self.sample_depth and self.layer_raster:
             self.depth_seafloor, self.depth_valid = self.layer_raster.dataProvider().sample(self.pt_raster,
                                                                                             self.raster_band)
+        else:
+            self.depth_valid = False
 
         # ===== START EDITING =====
         if not self.layer_logging.isEditable():
@@ -301,7 +303,7 @@ class LogPosition(LogPositionSettings, Logging):
             if 'time' in self.info.keys()
             else datetime.datetime.utcnow()
         )
-        timestamp_utc.setTimeSpec(Qt.UTC)  # declare QDateTime as UTC time (for QGIS)
+        timestamp_utc.setTimeSpec(Qt.TimeSpec.UTC)  # declare QDateTime as UTC time (for QGIS)
         feat_attributes = {
             id_dt_utc: timestamp_utc,
             id_lat_dd: round(self.pt.y(), 6),
@@ -349,7 +351,7 @@ class LogPosition(LogPositionSettings, Logging):
             self.iface.messageBar().pushMessage(
                 'Log Position',
                 'Logged current position and saved it to selected layer',
-                level=Qgis.Info,
+                level=Qgis.MessageLevel.Info,
                 duration=2
             )
 

@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from qgis.core import QgsProject
 from qgis.utils import iface, plugins
@@ -17,7 +17,7 @@ class Logging(object):
 
         self.module = 'LOGGING'
 
-        self.plugin_dir = f'{os.path.dirname(__file__)}/..'
+        self.plugin_dir = Path(__file__).resolve().parent.parent
 
         self.config = CruiseToolsConfig()
 

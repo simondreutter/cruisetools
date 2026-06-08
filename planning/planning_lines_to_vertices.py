@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from qgis.core import QgsFeatureSink
 from qgis.core import QgsField
@@ -12,7 +12,7 @@ from qgis.core import QgsProcessingUtils
 from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
@@ -35,7 +35,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
         super(PlanningLinesToVertices, self).__init__()
 
         # style files for planning layer
-        self.style_planning_lines_vertices = ':/plugins/cruisetools/styles/style_planning_lines_to_vertices.qml'
+        self.style_planning_lines_vertices = self.plugin_dir / 'styles' / 'style_planning_lines_to_vertices.qml'
 
         # initialize default configuration
         self.initConfig()
@@ -45,12 +45,12 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
         self.latlon_dd = self.config.getboolean(self.module, 'latlon_dd')
         self.latlon_ddm = self.config.getboolean(self.module, 'latlon_ddm')
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterFeatureSource(
                 name=self.INPUT,
                 description=self.tr('Input Line Planning Layer'),
-                types=[QgsProcessing.TypeVectorLine],
+                types=[QgsProcessing.SourceType.TypeVectorLine],
                 defaultValue=None,
                 optional=False)
         )
@@ -58,7 +58,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterFeatureSink(
                 name=self.OUTPUT,
                 description=self.tr('Planning Line Vertices'),
-                type=QgsProcessing.TypeVectorLine,
+                type=QgsProcessing.SourceType.TypeVectorLine,
                 defaultValue=None,
                 optional=False,
                 createByDefault=True)
@@ -85,7 +85,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
                 defaultValue=self.latlon_ddm)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables
         source = self.parameterAsSource(parameters, self.INPUT, context)
 
@@ -117,7 +117,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
         # creating feature sink for vertices
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
         (sink, dest_id) = self.parameterAsSink(parameters, self.OUTPUT, context,
-                                               fields, QgsWkbTypes.Point, source.sourceCrs())
+                                               fields, QgsWkbTypes.Type.Point, source.sourceCrs())
 
         # get features from source
         features = source.getFeatures()
@@ -126,7 +126,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
         vertices = self.lines_to_vertices(features, fields)
 
         # write vertex features to sink
-        sink.addFeatures(vertices, QgsFeatureSink.FastInsert)
+        sink.addFeatures(vertices, QgsFeatureSink.Flag.FastInsert)
 
         # make variables accessible for post-processing
         self.output = dest_id
@@ -135,7 +135,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
 
         return result
 
-    def postProcessAlgorithm(self, context, feedback):  # noqa
+    def postProcessAlgorithm(self, context, feedback):
         # get layer from source and context
         planning_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
 
@@ -152,7 +152,7 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
 
         # loading Cruise Tools Planning style from QML style file
         feedback.pushConsoleInfo(self.tr('Loading style...'))
-        planning_layer.loadNamedStyle(self.style_planning_lines_vertices)
+        planning_layer.loadNamedStyle(str(self.style_planning_lines_vertices))
 
         # writing style to GPKG (or else)
         style_name = 'Cruise Tools Planning Vertices'
@@ -170,32 +170,31 @@ class PlanningLinesToVertices(QgsProcessingAlgorithm, Planning):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'planninglinestovertices'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/planning_lines_to_vertices.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'planning_lines_to_vertices.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Planning Lines To Vertices')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Planning')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'planning'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/planning_lines_to_vertices.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'planning_lines_to_vertices.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return PlanningLinesToVertices()

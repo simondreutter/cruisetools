@@ -1,7 +1,7 @@
 from math import pi
 
-from PyQt5.QtCore import QObject, QEvent, Qt
-from PyQt5.QtWidgets import QToolTip
+from qgis.PyQt.QtCore import QObject, QEvent, Qt
+from qgis.PyQt.QtWidgets import QToolTip
 
 from qgis.core import Qgis
 from qgis.core import QgsProject
@@ -54,7 +54,7 @@ class LinePlanningToolTip(QObject):
             iface.messageBar().pushMessage(
                 'Cruise Tools',
                 'Project ellipsoid for distance calculations is not set! Please consider configuring a ellipsoid matching the project CRS (Project > Properties... > General > Ellipsoid)',
-                level=Qgis.Warning,
+                level=Qgis.MessageLevel.Warning,
                 duration=8
             )
 
@@ -75,8 +75,8 @@ class LinePlanningToolTip(QObject):
             False otherwise.
 
         """
-        if event.type() == QEvent.MouseButtonPress:
-            if event.button() == Qt.LeftButton:
+        if event.type() == QEvent.Type.MouseButtonPress:
+            if event.button() == Qt.MouseButton.LeftButton:
                 self.map_tool = self.canvas.mapTool()
                 self.layer = self.canvas.currentLayer()
 
@@ -95,16 +95,16 @@ class LinePlanningToolTip(QObject):
                     self.get_reference_point(event)
                     return False
 
-            elif event.button() == Qt.RightButton:
+            elif event.button() == Qt.MouseButton.RightButton:
                 self.reset()
                 return True
 
-        elif event.type() == QEvent.MouseMove:
+        elif event.type() == QEvent.Type.MouseMove:
             self.updateToolTip(event)
             return False
 
-        elif event.type() == QEvent.KeyPress:
-            if event.key() == Qt.Key_Escape:
+        elif event.type() == QEvent.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Escape:
                 self.reset()
                 return True
 

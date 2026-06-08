@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from qgis.core import QgsField
 from qgis.core import QgsFields
@@ -14,7 +14,7 @@ from qgis.core import QgsProcessingUtils
 from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
@@ -38,8 +38,8 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
         super(CreatePlanningFile, self).__init__()
 
         # style files for planning layer
-        self.style_planning_lines = ':/plugins/cruisetools/styles/style_planning_lines.qml'
-        self.style_planning_points = ':/plugins/cruisetools/styles/style_planning_points.qml'
+        self.style_planning_lines = self.plugin_dir / 'styles' / 'style_planning_lines.qml'
+        self.style_planning_points = self.plugin_dir / 'styles' / 'style_planning_points.qml'
 
         # initialize default configuration
         self.initConfig()
@@ -54,7 +54,7 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
         self.mbes = self.config.getboolean(self.module, 'mbes')
         self.nav = self.config.getboolean(self.module, 'nav')
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.file_types = [self.tr('Point planning'),
                            self.tr('Line planning')]
         self.addParameter(
@@ -98,13 +98,13 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterFeatureSink(
                 name=self.OUTPUT,
                 description=self.tr('Planning file'),
-                type=QgsProcessing.TypeVectorLine,
+                type=QgsProcessing.SourceType.TypeVectorLine,
                 defaultValue=None,
                 optional=False,
                 createByDefault=True)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables as self.* for use in post-processing
         file_type = self.parameterAsEnum(parameters, self.FILE_TYPE, context)
         crs = self.parameterAsCrs(parameters, self.CRS, context)
@@ -126,9 +126,9 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
 
         # check for type (point or line) and set create parameters
         if file_type == 0:
-            geom_type = QgsWkbTypes.Point
+            geom_type = QgsWkbTypes.Type.Point
         elif file_type == 1:
-            geom_type = QgsWkbTypes.LineString
+            geom_type = QgsWkbTypes.Type.LineString
 
         # fields to be created
         fields = QgsFields()
@@ -164,7 +164,7 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
 
         return result
 
-    def postProcessAlgorithm(self, context, feedback):  # noqa
+    def postProcessAlgorithm(self, context, feedback):
         # get layer from source and context
         planning_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
 
@@ -179,7 +179,7 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
 
         # loading Cruise Tools Planning style from QML style file
         feedback.pushConsoleInfo(self.tr('Loading style...'))
-        planning_layer.loadNamedStyle(style)
+        planning_layer.loadNamedStyle(str(style))
 
         # writing style to GPKG (or else)
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
@@ -194,32 +194,31 @@ class CreatePlanningFile(QgsProcessingAlgorithm, Planning):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'createplanningfile'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/create_planning_file.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'create_planning_file.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Create Planning File')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Planning')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'planning'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/create_planning_file.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'create_planning_file.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return CreatePlanningFile()

@@ -1,12 +1,12 @@
 import datetime as dt
 import math
-import os
+from pathlib import Path
 import random
 import re
 
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from qgis.PyQt.QtCore import *
+from qgis.PyQt.QtGui import *
+from qgis.PyQt.QtWidgets import *
 
 # import some tools
 from qgis.core import *
@@ -17,13 +17,14 @@ def backup_file(file):
 
     Parameters
     ----------
-    file : str
+    file : pathlib.Path or str
         file to back up
 
     """
+    file = Path(file)
     timestamp = dt.datetime.now().strftime('%Y%m%d_%H%M%S')
-    backup = f'{file}.backup_{timestamp}'
-    os.rename(file, backup)
+    backup = file.with_name(f'{file.name}.backup_{timestamp}')
+    file.rename(backup)
 
 
 def dd2ddm(latitude, longitude):
@@ -81,8 +82,9 @@ def get_driver_from_path(file_path):
         GDAL driver name
 
     """
+    file_path = Path(file_path)
     driver = None
-    ext = os.path.splitext(file_path)[1].upper()
+    ext = file_path.suffix.upper()
     if '.TIF' in ext:
         driver = 'GTiff'
     elif ext == '.GPKG':
@@ -109,10 +111,10 @@ def get_info_from_path(file_path):
         base path, base name, and extension
 
     """
-    file_info = QFileInfo(file_path)
-    base_path = file_info.absolutePath()
-    base_name = file_info.baseName()
-    ext = os.path.splitext(file_path)[1]
+    file_path = Path(file_path)
+    base_path = str(file_path.parent.resolve())
+    base_name = file_path.name
+    ext = file_path.suffix
 
     return base_path, base_name, ext
 
@@ -131,7 +133,8 @@ def return_file_link(path):
         HTML link to base path
 
     """
-    link = f'<a href="{os.path.dirname(path)}">{path}</a>'
+    path = Path(path)
+    link = f'<a href="{path.parent}">{path}</a>'
 
     return link
 

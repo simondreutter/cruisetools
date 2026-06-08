@@ -1,4 +1,5 @@
 from math import floor
+from pathlib import Path
 import os
 
 from qgis.core import QgsCoordinateTransform
@@ -21,7 +22,7 @@ from qgis.core import QgsProject
 from qgis.core import QgsWkbTypes
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from PyQt5.QtGui import QIcon, QColor
+from qgis.PyQt.QtGui import QIcon, QColor
 
 from .vector import Vector
 from .. import utils
@@ -52,12 +53,12 @@ class SampleRasterProfile(QgsProcessingAlgorithm, Vector):
         self.distance = self.config.getint(self.module, 'distance')
         self.raster_layer_name = self.config.getint(self.module, 'raster_layer')
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterVectorLayer(
                 name=self.INPUT_LINE,
                 description=self.tr('Input line vector layer'),
-                types=[QgsProcessing.TypeVectorLine],
+                types=[QgsProcessing.SourceType.TypeVectorLine],
                 defaultValue=None,
                 optional=False)
         )
@@ -72,7 +73,7 @@ class SampleRasterProfile(QgsProcessingAlgorithm, Vector):
             QgsProcessingParameterNumber(
                 name=self.DISTANCE,
                 description=self.tr('Sample distance [meters]'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=True,
                 defaultValue=self.distance,
                 minValue=10)
@@ -103,13 +104,13 @@ class SampleRasterProfile(QgsProcessingAlgorithm, Vector):
             QgsProcessingParameterFeatureSink(
                 name=self.OUTPUT,
                 description=self.tr('Profile samples'),
-                type=QgsProcessing.TypeVectorPoint,
+                type=QgsProcessing.SourceType.TypeVectorPoint,
                 defaultValue=None,
                 optional=False,
                 createByDefault=True)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables as self.* for use in post-processing
         self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT_LINE, context)
         selected = self.parameterAsBoolean(parameters, self.SELECTED, context)
@@ -160,7 +161,7 @@ class SampleRasterProfile(QgsProcessingAlgorithm, Vector):
         # creating feature sink
         feedback.pushConsoleInfo(self.tr('Creating feature sink...'))
         (sink, dest_id) = self.parameterAsSink(
-            parameters, self.OUTPUT, context, fields, QgsWkbTypes.Point, self.vector_layer.sourceCrs()
+            parameters, self.OUTPUT, context, fields, QgsWkbTypes.Type.Point, self.vector_layer.sourceCrs()
         )
         if sink is None:
             raise QgsProcessingException(self.invalidSinkError(parameters, self.OUTPUT))
@@ -214,7 +215,7 @@ class SampleRasterProfile(QgsProcessingAlgorithm, Vector):
                 out_feat.setAttributes(attrs)
 
                 # add feature to sink
-                sink.addFeature(out_feat, QgsFeatureSink.FastInsert)
+                sink.addFeature(out_feat, QgsFeatureSink.Flag.FastInsert)
 
         # make variables accessible for post-processing
         self.output = dest_id
@@ -227,32 +228,31 @@ class SampleRasterProfile(QgsProcessingAlgorithm, Vector):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'samplerasterprofile'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/sample_raster_profile.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'sample_raster_profile.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Sample Raster Profile')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Vector')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'vector'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/sample_raster_profile.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'sample_raster_profile.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return SampleRasterProfile()

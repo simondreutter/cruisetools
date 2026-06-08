@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from qgis.core import QgsCoordinateTransform
 from qgis.core import QgsCoordinateReferenceSystem
@@ -12,7 +12,7 @@ from qgis.core import QgsProcessingParameterNumber
 from qgis.core import QgsProcessingParameterString
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
@@ -48,14 +48,14 @@ class ExportLinesToRTZ(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterFeatureSource(
                 name=self.INPUT,
                 description=self.tr('Input line planning layer'),
-                types=[QgsProcessing.TypeVectorLine],
+                types=[QgsProcessing.SourceType.TypeVectorLine],
                 optional=False)
         )
         self.addParameter(
             QgsProcessingParameterNumber(
                 name=self.RADIUS_FALLBACK,
                 description=self.tr('Turn radius [nm] (fallback)'),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=self.radius_fallback,
                 minValue=0.0,
                 maxValue=5.0,
@@ -103,9 +103,8 @@ class ExportLinesToRTZ(QgsProcessingAlgorithm, Planning):
         feedback.pushConsoleInfo(self.tr('Creating output directory...'))
         # sanitize catalog name
         rtz_catalog = utils.sanitize_filename(rtz_catalog)
-        output_dir = os.path.join(output, 'RouteExchange', rtz_catalog)
-        if not os.path.isdir(output_dir):
-            os.makedirs(output_dir)
+        output_dir = Path(output) / 'RouteExchange' / rtz_catalog
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         # fields to be created (empty)
         fields = QgsFields()
@@ -150,8 +149,8 @@ class ExportLinesToRTZ(QgsProcessingAlgorithm, Planning):
             route_name = utils.sanitize_filename(route_name)
 
             # output route file
-            route_file = os.path.join(output_dir, f'{route_name}.rtz')
-            if os.path.isfile(route_file):
+            route_file = output_dir / f'{route_name}.rtz'
+            if route_file.is_file():
                 feedback.pushConsoleInfo(self.tr(f'Route file {route_name}.rtz already exists!'))
                 feedback.pushConsoleInfo(self.tr(f'Backing up existing file...'))
                 utils.backup_file(route_file)
@@ -210,7 +209,7 @@ class ExportLinesToRTZ(QgsProcessingAlgorithm, Planning):
         return 'exportlinestortz'
 
     def icon(self):
-        return QIcon(f'{self.plugin_dir}/icons/export_lines_to_rtz.png')
+        return QIcon(str(self.plugin_dir / 'icons' / 'export_lines_to_rtz.png'))
 
     def displayName(self):
         return self.tr('Export Lines To RTZ')
@@ -224,9 +223,9 @@ class ExportLinesToRTZ(QgsProcessingAlgorithm, Planning):
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/export_lines_to_rtz.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'export_lines_to_rtz.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()

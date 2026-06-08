@@ -1,4 +1,4 @@
-import os
+from pathlib import Path
 
 from qgis.core import QgsCoordinateTransform
 from qgis.core import QgsCoordinateReferenceSystem
@@ -12,7 +12,7 @@ from qgis.core import QgsProcessingParameterNumber
 from qgis.core import QgsProcessingParameterString
 
 from qgis.PyQt.QtCore import QCoreApplication, QMetaType
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .planning import Planning
 from .. import utils
@@ -48,7 +48,7 @@ class ExportPointsToSAM(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterFeatureSource(
                 name=self.INPUT,
                 description=self.tr('Input point planning layer'),
-                types=[QgsProcessing.TypeVectorPoint],
+                types=[QgsProcessing.SourceType.TypeVectorPoint],
                 optional=False)
         )
         self.addParameter(
@@ -63,7 +63,7 @@ class ExportPointsToSAM(QgsProcessingAlgorithm, Planning):
             QgsProcessingParameterNumber(
                 name=self.RADIUS_FALLBACK,
                 description=self.tr('Turn radius [nm] (fallback)'),
-                type=QgsProcessingParameterNumber.Double,
+                type=QgsProcessingParameterNumber.Type.Double,
                 defaultValue=self.radius_fallback,
                 minValue=0.0,
                 maxValue=5.0,
@@ -108,16 +108,16 @@ class ExportPointsToSAM(QgsProcessingAlgorithm, Planning):
         )
 
         # make output directory
-        if not os.path.isdir(output):
-            feedback.pushConsoleInfo(self.tr('Creating output directory...'))
-            os.makedirs(output)
+        feedback.pushConsoleInfo(self.tr('Creating output directory...'))
+        output_dir = Path(output)
+        output_dir.mkdir(parents=True, exist_ok=True)
 
         # sanitize route name
         route_name = utils.sanitize_filename(route_name)
 
         # output route file
-        route_file = os.path.join(output, f'{route_name}.csv')
-        if os.path.isfile(route_file):
+        route_file = output_dir / f'{route_name}.csv'
+        if route_file.is_file():
             feedback.pushConsoleInfo(self.tr(f'Route file {route_name}.csv already exists!'))
             feedback.pushConsoleInfo(self.tr(f'Backing up existing file...'))
             utils.backup_file(route_file)
@@ -179,7 +179,7 @@ class ExportPointsToSAM(QgsProcessingAlgorithm, Planning):
         return 'exportpointstosam'
 
     def icon(self):
-        return QIcon(f'{self.plugin_dir}/icons/export_points_to_sam.png')
+        return QIcon(str(self.plugin_dir / 'icons' / 'export_points_to_sam.png'))
 
     def displayName(self):
         return self.tr('Export Points To SAM')
@@ -193,9 +193,9 @@ class ExportPointsToSAM(QgsProcessingAlgorithm, Planning):
     def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/export_points_to_sam.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'export_points_to_sam.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()

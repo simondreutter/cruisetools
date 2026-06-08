@@ -1,5 +1,5 @@
 # Cruise Tools
-*v2.4 [Weddell Sea]*
+*v2.5 [Weddell Sea]*
 
 ## Info
 **The toolbox you need for marine research cruises (planning and stuff)!**  

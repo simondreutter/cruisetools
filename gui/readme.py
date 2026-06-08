@@ -1,13 +1,15 @@
-from PyQt5.QtCore import *  # noqa
+from pathlib import Path
 
-from PyQt5.QtWidgets import QWidget
-from PyQt5.QtWidgets import QGridLayout
-from PyQt5.QtWidgets import QLabel
-from PyQt5.QtWidgets import QToolBox
-from PyQt5.QtWidgets import QTextEdit
+from qgis.PyQt.QtCore import *
 
-from PyQt5.QtGui import QFont
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtWidgets import QWidget
+from qgis.PyQt.QtWidgets import QGridLayout
+from qgis.PyQt.QtWidgets import QLabel
+from qgis.PyQt.QtWidgets import QToolBox
+from qgis.PyQt.QtWidgets import QTextEdit
+
+from qgis.PyQt.QtGui import QFont
+from qgis.PyQt.QtGui import QIcon
 
 
 class ReadmeWindow(QWidget):
@@ -17,13 +19,13 @@ class ReadmeWindow(QWidget):
         """Initialize ReadmeWindow."""
         super().__init__()
         # icon path
-        self.icon_path = ':/plugins/cruisetools/icons'
+        self.icon_path = Path(__file__).resolve().parent.parent / 'icons'
 
         # set window size
         self.resize(600, 570)
 
         # set window icon
-        icon = QIcon(f'{self.icon_path}/icon.png')
+        icon = QIcon(str(self.icon_path / 'icon.png'))
         self.setWindowIcon(icon)
 
         # set windows title
@@ -34,8 +36,8 @@ class ReadmeWindow(QWidget):
 
         # create title, big font, centered
         title = QLabel()
-        title.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
-        title_font = QFont('Default', 14, QFont.Bold)
+        title.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
+        title_font = QFont('Default', 14, QFont.Weight.Bold)
         title.setFont(title_font)
 
         # add title to layout
@@ -43,7 +45,7 @@ class ReadmeWindow(QWidget):
 
         # create version text, centered under title
         version = QLabel()
-        version.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
+        version.setAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignVCenter)
         version_font = QFont('Default', 10)
         version.setFont(version_font)
 
@@ -132,16 +134,16 @@ class ReadmeWindow(QWidget):
         """
         title = title.lower()
         if title == 'bathymetry':
-            icon = QIcon(f'{self.icon_path}/bathymetry_menu.png')
+            icon = QIcon(str(self.icon_path / 'bathymetry_menu.png'))
         elif title == 'contour':
-            icon = QIcon(f'{self.icon_path}/create_contours.png')
+            icon = QIcon(str(self.icon_path / 'create_contours.png'))
         elif title == 'vector':
-            icon = QIcon(f'{self.icon_path}/vector_menu.png')
+            icon = QIcon(str(self.icon_path / 'vector_menu.png'))
         elif title == 'planning':
-            icon = QIcon(f'{self.icon_path}/planning_menu.png')
+            icon = QIcon(str(self.icon_path / 'planning_menu.png'))
         elif title == 'logging':
-            icon = QIcon(f'{self.icon_path}/log_position.png')
+            icon = QIcon(str(self.icon_path / 'log_position.png'))
         else:
-            icon = QIcon(f'{self.icon_path}/icon_grey.png')
+            icon = QIcon(str(self.icon_path / 'icon_grey.png'))
 
         return icon

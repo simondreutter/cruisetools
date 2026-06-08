@@ -1,3 +1,4 @@
+from pathlib import Path
 import os
 
 from qgis.core import QgsProcessing
@@ -7,7 +8,7 @@ from qgis.core import QgsProcessingParameterCrs
 from qgis.core import QgsProcessingParameterVectorLayer
 
 from qgis.PyQt.QtCore import QCoreApplication
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .vector import Vector
 from .. import utils
@@ -39,12 +40,12 @@ class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
         self.latlon_ddm = self.config.getboolean(self.module, 'latlon_ddm')
         self.xy = self.config.getboolean(self.module, 'xy')
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterVectorLayer(
                 name=self.INPUT,
                 description=self.tr('Input vector layer'),
-                types=[QgsProcessing.TypeVectorPoint],
+                types=[QgsProcessing.SourceType.TypeVectorPoint],
                 defaultValue=None,
                 optional=False)
         )
@@ -77,7 +78,7 @@ class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
                 defaultValue=None)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables as self.* for use in post-processing
         self.vector_layer = self.parameterAsVectorLayer(parameters, self.INPUT, context)
         self.latlon_dd = self.parameterAsBoolean(parameters, self.LATLON_DD, context)
@@ -95,7 +96,7 @@ class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
 
         return result
 
-    def postProcessAlgorithm(self, context, feedback):  # noqa
+    def postProcessAlgorithm(self, context, feedback):
         # layer in-place editing is not working very well in the processAlgorithm
         # therefore it was moved here to post-processing
 
@@ -118,32 +119,31 @@ class WritePointCoordinates(QgsProcessingAlgorithm, Vector):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'writepointcoordinates'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/write_point_coordinates.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'write_point_coordinates.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Write Point Coordinates')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Vector')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'vector'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/write_point_coordinates.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'write_point_coordinates.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return WritePointCoordinates()

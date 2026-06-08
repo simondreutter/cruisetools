@@ -1,4 +1,5 @@
-import os
+from pathlib import Path
+
 import processing
 
 from qgis.core import QgsProcessingAlgorithm
@@ -10,7 +11,7 @@ from qgis.core import QgsProcessingParameterVectorDestination
 from qgis.core import QgsProcessingUtils
 
 from qgis.PyQt.QtCore import QCoreApplication
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .contour import Contour
 from .. import utils
@@ -35,13 +36,13 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
         self.initConfig()
 
         # style file for contour layer
-        self.style_contours = ':/plugins/cruisetools/styles/style_contours.qml'
+        self.style_contours = self.plugin_dir / 'styles' / 'style_contours.qml'
 
     def initConfig(self):
         """Get default values from CruiseToolsConfig."""
         self.interval = self.config.getint(self.module, 'interval')
 
-    def initAlgorithm(self, config=None):  # noqa
+    def initAlgorithm(self, config=None):
         self.addParameter(
             QgsProcessingParameterRasterLayer(
                 name=self.INPUT,
@@ -69,7 +70,7 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
             QgsProcessingParameterNumber(
                 name=self.INTERVAL,
                 description=self.tr('Contour interval'),
-                type=QgsProcessingParameterNumber.Integer,
+                type=QgsProcessingParameterNumber.Type.Integer,
                 optional=False,
                 defaultValue=self.interval,
                 minValue=0,
@@ -84,7 +85,7 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
                 createByDefault=False)
         )
 
-    def processAlgorithm(self, parameters, context, feedback):  # noqa
+    def processAlgorithm(self, parameters, context, feedback):
         # get input variables
         raster_layer = self.parameterAsRasterLayer(parameters, self.INPUT, context)
         band_number = self.parameterAsInt(parameters, self.BAND, context)
@@ -106,10 +107,10 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
         crs = raster_layer.crs()
 
         # get temporary folder
-        tmp_folder = QgsProcessingUtils.tempFolder()
+        tmp_folder = Path(QgsProcessingUtils.tempFolder())
 
         # temp file for raw contours
-        contours_raw = os.path.join(tmp_folder, f'contours_raw.{ext}')
+        contours_raw = tmp_folder / f'contours_raw.{ext}'
 
         # parameters for contour algorithm
         params_contour = {'INPUT': raster_layer,
@@ -120,7 +121,7 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
                           'IGNORE_NODATA': False,
                           'NODATA': raster_layer.dataProvider().sourceNoDataValue(band_number),
                           'OFFSET': 0,
-                          'OUTPUT': contours_raw}
+                          'OUTPUT': str(contours_raw)}
 
         # create raw contours
         feedback.pushConsoleInfo(self.tr(f'Creating raw contours with {interval} m interval...'))
@@ -130,14 +131,14 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
         feedback.setProgress(35)
 
         # temp file for raw contours
-        contours_smooth = os.path.join(tmp_folder, f'contours_smooth.{ext}')
+        contours_smooth = tmp_folder / f'contours_smooth.{ext}'
 
         # parameters for smoothing
-        params_smooth = {'INPUT': contours_raw,
+        params_smooth = {'INPUT': str(contours_raw),
                          'ITERATIONS': 3,
                          'MAX_ANGLE': 180,
                          'OFFSET': 0.25,
-                         'OUTPUT': contours_smooth}
+                         'OUTPUT': str(contours_smooth)}
 
         # smooth contours
         feedback.pushConsoleInfo(self.tr('Smoothing contours...'))
@@ -147,11 +148,11 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
         feedback.setProgress(55)
 
         # parameters for fixing projection
-        params_prj = {'INPUT': contours_smooth,
-                      'TARGET_CRS': crs,
+        params_prj = {'INPUT': str(contours_smooth),
+                      'CRS': crs,
                       'OUTPUT': output}
 
-        # smooth contours
+        # fix projection
         feedback.pushConsoleInfo(self.tr('Fixing CRS...'))
         processing.run('native:reprojectlayer', params_prj)
 
@@ -166,7 +167,7 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
 
         return result
 
-    def postProcessAlgorithm(self, context, feedback):  # noqa
+    def postProcessAlgorithm(self, context, feedback):
         # get layer from source and context
         contours_layer = QgsProcessingUtils.mapLayerFromString(self.output, context)
 
@@ -192,14 +193,16 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
 
         # loading Cruise Tools Contours style from QML style file
         feedback.pushConsoleInfo(self.tr('Loading style...'))
-        contours_layer.loadNamedStyle(self.style_contours)
+        contours_layer.loadNamedStyle(str(self.style_contours))
 
         # writing style to GPKG (or else)
         style_name = 'Cruise Tools Contours'
         style_desc = 'Contour style for QGIS Symbology and Labels from Cruise Tools plugin'
 
         feedback.pushConsoleInfo(self.tr('Writing style to output...\n'))
-        contours_layer.saveStyleToDatabaseV2(name=style_name, description=style_desc, useAsDefault=True,
+        contours_layer.saveStyleToDatabaseV2(name=style_name,
+                                             description=style_desc,
+                                             useAsDefault=True,
                                              uiFileContent=None)
 
         contours_layer.triggerRepaint()
@@ -212,32 +215,31 @@ class CreateContours(QgsProcessingAlgorithm, Contour):
 
         return result
 
-    def name(self):  # noqa
+    def name(self):
         return 'createcontours'
 
-    def icon(self):  # noqa
-        icon = QIcon(f'{self.plugin_dir}/icons/create_contours.png')
-        return icon
+    def icon(self):
+        return QIcon(str(self.plugin_dir / 'icons' / 'create_contours.png'))
 
-    def displayName(self):  # noqa
+    def displayName(self):
         return self.tr('Create Contours')
 
-    def group(self):  # noqa
+    def group(self):
         return self.tr('Contour')
 
-    def groupId(self):  # noqa
+    def groupId(self):
         return 'contour'
 
-    def tr(self, string):  # noqa
+    def tr(self, string):
         return QCoreApplication.translate('Processing', string)
 
-    def shortHelpString(self):  # noqa
-        doc = f'{self.plugin_dir}/doc/create_contours.help'
-        if not os.path.exists(doc):
+    def shortHelpString(self):
+        doc = Path(self.plugin_dir) / 'doc' / 'create_contours.help'
+        if not doc.is_file():
             return ''
         with open(doc) as helpf:
             help = helpf.read()
         return help
 
-    def createInstance(self):  # noqa
+    def createInstance(self):
         return CreateContours()

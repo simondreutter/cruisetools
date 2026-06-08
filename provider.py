@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-import os
+from pathlib import Path
+
 from qgis.core import QgsProcessingProvider
-from PyQt5.QtGui import QIcon
+from qgis.PyQt.QtGui import QIcon
 
 from .bathymetry import LoadBathymetry
 from .bathymetry import CalculateRasterCoverage
@@ -52,8 +53,7 @@ class CruiseToolsProvider(QgsProcessingProvider):
         self.addAlgorithm(ExportPointsToSAM())
 
     def icon(self):
-        icon = QIcon(os.path.dirname(__file__) + '/icons/icon.png')
-        return icon
+        return QIcon(str(Path(__file__).resolve().parent / 'icons' / 'icon.png'))
 
     def id(self):
         return 'cruisetools'

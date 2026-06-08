@@ -1,4 +1,5 @@
 from math import floor
+from pathlib import Path
 import os
 
 from qgis.core import edit
@@ -26,7 +27,7 @@ class Vector(object):
         """Initialize Vector."""
         self.module = 'VECTOR'
         self.config = config.CruiseToolsConfig()
-        self.plugin_dir = f'{os.path.dirname(__file__)}/..'
+        self.plugin_dir = Path(__file__).resolve().parent.parent
 
     def get_features(self, layer, selected=True):
         """Get features from vector layer.
@@ -318,15 +319,15 @@ class Vector(object):
 
             # set field values according to the calculated length
             if m:
-                len_m = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceMeters)
+                len_m = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceUnit.DistanceMeters)
                 len_m = round(len_m, 2)
                 feature.setAttribute(layer.fields().indexFromName(m_field), len_m)
             if km:
-                len_km = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceKilometers)
+                len_km = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceUnit.DistanceKilometers)
                 len_km = round(len_km, 5)
                 feature.setAttribute(layer.fields().indexFromName(km_field), len_km)
             if nm:
-                len_nm = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceNauticalMiles)
+                len_nm = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceUnit.DistanceNauticalMiles)
                 len_nm = round(len_nm, 5)
                 feature.setAttribute(layer.fields().indexFromName(nm_field), len_nm)
 
@@ -338,7 +339,7 @@ class Vector(object):
                 speed_kn = feature.attributes()[f_idx_speed]
                 if speed_kn:
                     # if value not NULL, calculate time and write it to time_h field
-                    len_nm = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceNauticalMiles)
+                    len_nm = da.convertLengthMeasurement(len, QgsUnitTypes.DistanceUnit.DistanceNauticalMiles)
                     time_h = round(len_nm / speed_kn, 2)
                     feature.setAttribute(f_idx_time, time_h)
 
@@ -417,10 +418,10 @@ class Vector(object):
 
             # set field values according to calculated AREA
             if m2:
-                area_m2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaSquareMeters)
+                area_m2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaUnit.AreaSquareMeters)
                 feature.setAttribute(layer.fields().indexFromName(m2_field), area_m2)
             if km2:
-                area_km2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaSquareKilometers)
+                area_km2 = da.convertAreaMeasurement(area, QgsUnitTypes.AreaUnit.AreaSquareKilometers)
                 feature.setAttribute(layer.fields().indexFromName(km2_field), area_km2)
 
             # update attribute table
@@ -530,13 +531,13 @@ class Vector(object):
 
         # Mapping: QGIS raster dtype → (QMetaType.Type type, length, precision)
         mapping = {
-            Qgis.Byte: (QMetaType.Type.Int, 3, 0),  # 0–255
-            Qgis.Int16: (QMetaType.Type.Int, 6, 0),  # -32768–32767
-            Qgis.UInt16: (QMetaType.Type.Int, 5, 0),  # 0–65535
-            Qgis.Int32: (QMetaType.Type.Int, 11, 0),  # full 32-bit signed
-            Qgis.UInt32: (QMetaType.Type.Double, 20, 0),  # too big for Int
-            Qgis.Float32: (QMetaType.Type.Double, 20, 8),  # ~8 digits precision
-            Qgis.Float64: (QMetaType.Type.Double, 32, 15),  # ~15 digits precision
+            Qgis.DataType.Byte: (QMetaType.Type.Int, 3, 0),  # 0–255
+            Qgis.DataType.Int16: (QMetaType.Type.Int, 6, 0),  # -32768–32767
+            Qgis.DataType.UInt16: (QMetaType.Type.Int, 5, 0),  # 0–65535
+            Qgis.DataType.Int32: (QMetaType.Type.Int, 11, 0),  # full 32-bit signed
+            Qgis.DataType.UInt32: (QMetaType.Type.Double, 20, 0),  # too big for Int
+            Qgis.DataType.Float32: (QMetaType.Type.Double, 20, 8),  # ~8 digits precision
+            Qgis.DataType.Float64: (QMetaType.Type.Double, 32, 15),  # ~15 digits precision
         }
 
         var_type, length, precision = mapping.get(dtype, (QMetaType.Type.QString, 255, 0))
